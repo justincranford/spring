@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="https://www.thymeleaf.org"
+	xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+	<title><span th:text="${appName}">${appName}</span></title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+	<h1>
+		Welcome to <u><span th:text="${appName}">Our App</span></u>
+	</h1>
+	<p>
+	<h1>
+		Local Login
+	</h1>
+	<div class="container unauthenticated">
+		<form th:action="@{/login}" method="post">
+			<div>
+				<label>Username: <input type="text" name="username" /></label>
+			</div>
+			<div>
+				<label>Password: <input type="password" name="password" /></label>
+			</div>
+			<div>
+				<input type="submit" value="Username & Password" />
+			</div>
+		</form>
+		<div th:if="${param.error}">Invalid username and password.</div>
+		<div th:if="${param.logout}">You have been logged out.</div>
+	</div>
+	<p>
+	<h1>
+		Social Login
+	</h1>
+	<p>
+	<div class="container unauthenticated">
+		<a href="/oauth2/authorization/github-login"><input type="submit" value="GitHub OAuth 2.0" /></a>
+	</div>
+	<p>
+	<div class="container unauthenticated">
+		<a href="/oauth2/authorization/google-login"><input type="submit" value="Google OIDC 1.0" /></a>
+	</div>
+	<p>
+	<div class="container unauthenticated">
+		<a href="/oauth2/authorization/facebook-login"><input type="submit" value="Facebook OAuth 2.0" /></a>
+	</div>
+	<p>
+	<div class="container unauthenticated">
+		<a href="/oauth2/authorization/okta-login"><input type="submit" value="Okta OIDC 1.0" /></a>
+	</div>
+	<p>
+	<div class="container unauthenticated">
+		<a href="/oauth2/authorization/messaging-client"><input type="submit" value="Built-in OIDC 1.0" /></a>
+	</div>
+	<h1 th:inline="text">
+		Hello <span th:remove="tag" sec:authentication="name">username</span>!
+	</h1>
+	<p>
+	<h1>
+		Logout
+	</h1>
+	<p>
+	<div class="container authenticated">
+		<form th:action="@{/logout}" method="post">
+			<input type="submit" value="Sign Out" />
+		</form>
+	</div>
+	<p>
+	<h1>
+		Error
+	</h1>
+	<p>
+    <h1>Error Occurred!</h1>    
+    <b>[<span th:text="${status}">status</span>]
+        <span th:text="${error}">error</span>
+    </b>
+    <p th:text="${message}">message</p>
+
+</body>
+</html>

@@ -19,14 +19,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 	private OpsUserCrudRepository opsUserCrudRepository;
 	private AppUserCrudRepository appUserCrudRepository;
 
-	public UserDetailsServiceImpl(
-		final OpsUserCrudRepository opsUserCrudRepository,
-		final AppUserCrudRepository appUserCrudRepository
-	) {
+	public UserDetailsServiceImpl(final OpsUserCrudRepository opsUserCrudRepository, final AppUserCrudRepository appUserCrudRepository) {
 		this.opsUserCrudRepository = opsUserCrudRepository;
 		this.appUserCrudRepository = appUserCrudRepository;
-		this.printUsers("All Operations Users", this.opsUserCrudRepository.findAll());
-		this.printUsers("All Application Users", this.appUserCrudRepository.findAll());
+//		this.printUsers("All Operations Users", this.opsUserCrudRepository.findAll());
+//		this.printUsers("All Application Users", this.appUserCrudRepository.findAll());
 	}
 
 	private void printUsers(final String message, final List<? extends BaseUser> baseUsers) {
@@ -40,24 +37,24 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
-		this.printUsers("All Operations Users", this.opsUserCrudRepository.findAll());
-		this.printUsers("All Application Users", this.appUserCrudRepository.findAll());
+//		this.printUsers("All Operations Users", this.opsUserCrudRepository.findAll());
+//		this.printUsers("All Application Users", this.appUserCrudRepository.findAll());
 
 		final List<? extends BaseUser> opsUsers = this.opsUserCrudRepository.findByUsername(username);
-		this.printUsers("Search for Operations username [" + username + "]", opsUsers);
+		this.printUsers("Found Operations users for username [" + username + "]", opsUsers);
 		assert opsUsers != null;
 		assert (opsUsers.size() == 0) || (opsUsers.size() == 1);
 		if (opsUsers.isEmpty() == false) {
-			logger.info("Found Operations username [{}]", username);
+			logger.info("Found Operations user for username [{}]", username);
 			return opsUsers.get(0);
 		}
 
 		final List<? extends BaseUser> appUsers = this.appUserCrudRepository.findByUsername(username);
-		this.printUsers("Search for Application username [" + username + "]", appUsers);
+		this.printUsers("Found Application users for username [" + username + "]", appUsers);
 		assert appUsers != null;
 		assert (appUsers.size() == 0) || (appUsers.size() == 1);
 		if (appUsers.isEmpty() == false) {
-			logger.info("Found Application username [{}]", username);
+			logger.info("Found Application user for username [{}]", username);
 			return appUsers.get(0);
 		}
 

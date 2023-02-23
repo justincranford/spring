@@ -90,7 +90,7 @@ public class SecurityFilterChainConfiguration {
 				.requestMatchers("/api/ops/**").hasAnyAuthority(OPS_ADMIN,OPS_USER,OPS_USER_ADMIN)
 				.requestMatchers("/api/app/**").hasAnyAuthority(APP_ADMIN,APP_USER_ADMIN,APP_USER)
 //				.requestMatchers("/", "/ui/index", "/ui/error", "/ui/login/prompt", "/ui/login/verify").permitAll()
-				.requestMatchers("/", "/index", "/login", "/signin", "/error").permitAll()
+				.requestMatchers("/", "/index", "/login", "/error").permitAll()
 				.anyRequest().authenticated()
 			.and()
 //				.formLogin().loginPage("/ui/login/prompt").loginProcessingUrl("/us/login/verify").defaultSuccessUrl("/authenticated", true).failureUrl("/login?error=true").permitAll()	// Request parameters => username=value1&password=value2

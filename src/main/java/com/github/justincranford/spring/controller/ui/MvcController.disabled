@@ -30,9 +30,9 @@ public class MvcController {
 //        return "error";
 //    }
 //
-//    @GetMapping("/signin")
-//    public String signinPage(final Model model) {
+//    @GetMapping("/login")
+//    public String loginPage(final Model model) {
 //        model.addAttribute("appName", appName);
-//        return "signin";
+//        return "login";
 //    }
 }

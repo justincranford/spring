@@ -102,7 +102,10 @@ public class SecurityFilterChainConfiguration {
 			.and()
 				.x509().subjectPrincipalRegex("CN=(.*?)(?:,|$)") // "CN=(.*?),"
 			.and()
-				.oauth2Login()//.loginProcessingUrl("/login")//.defaultSuccessUrl("/").failureUrl("/")
+				.oauth2Login()
+//				    	.loginPage("/login/oauth2")
+//				        .authorizationEndpoint().baseUri("/oauth2/authorization")
+	                //.loginProcessingUrl("/login")//.defaultSuccessUrl("/").failureUrl("/")
 //			.and()
 //				.oauth2Client(oauth2 -> oauth2
 //					.clientRegistrationRepository(this.clientRegistrationRepository())
@@ -196,17 +199,33 @@ public class SecurityFilterChainConfiguration {
 	}
 
 	// spring security oauth2 authorization server
+//	@Bean
+//	public AuthorizationServerSettings authorizationServerSettings() {
+//		return AuthorizationServerSettings.builder()
+//			.issuer("https://localhost:8443")
+//			.authorizationEndpoint("https://localhost:8443/oauth2/v1/authorize")
+//			.tokenEndpoint("https://localhost:8443/oauth2/v1/token")
+//			.tokenIntrospectionEndpoint("https://localhost:8443/oauth2/v1/introspect")
+//			.tokenRevocationEndpoint("https://localhost:8443/oauth2/v1/revoke")
+//			.jwkSetEndpoint("https://localhost:8443/oauth2/v1/jwks")
+//			.oidcUserInfoEndpoint("https://localhost:8443/connect/v1/userinfo")
+//			.oidcClientRegistrationEndpoint("https://localhost:8443/connect/v1/register")
+//			.build();
+//	}
+
+	// https://docs.spring.io/spring-authorization-server/docs/current/reference/html/configuration-model.html#configuring-authorization-server-settings
+	// @Import(OAuth2AuthorizationServerConfiguration.class) automatically registers an AuthorizationServerSettings @Bean, if not already provided.
+	// If the issuer identifier is not configured in AuthorizationServerSettings.builder().issuer(String), it is resolved from the current request.
 	@Bean
 	public AuthorizationServerSettings authorizationServerSettings() {
 		return AuthorizationServerSettings.builder()
-			.issuer("https://localhost:8443")
-			.authorizationEndpoint("https://localhost:8443/oauth2/v1/authorize")
-			.tokenEndpoint("https://localhost:8443/oauth2/v1/token")
-			.tokenIntrospectionEndpoint("https://localhost:8443/oauth2/v1/introspect")
-			.tokenRevocationEndpoint("https://localhost:8443/oauth2/v1/revoke")
-			.jwkSetEndpoint("https://localhost:8443/oauth2/v1/jwks")
-			.oidcUserInfoEndpoint("https://localhost:8443/connect/v1/userinfo")
-			.oidcClientRegistrationEndpoint("https://localhost:8443/connect/v1/register")
+			.authorizationEndpoint("/oauth2/authorize")
+			.tokenEndpoint("/oauth2/token")
+			.tokenIntrospectionEndpoint("/oauth2/introspect")
+			.tokenRevocationEndpoint("/oauth2/revoke")
+			.jwkSetEndpoint("/oauth2/jwks")
+			.oidcUserInfoEndpoint("/userinfo")
+			.oidcClientRegistrationEndpoint("/connect/register")
 			.build();
 	}
 

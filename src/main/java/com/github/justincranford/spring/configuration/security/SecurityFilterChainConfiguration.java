@@ -15,15 +15,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
+import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -40,9 +44,12 @@ import org.springframework.security.oauth2.server.authorization.client.InMemoryR
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings.Builder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -69,9 +76,20 @@ public class SecurityFilterChainConfiguration {
 	public static final String OAUTH2_USER     = "OAUTH2_USER";
 	public static final String OIDC_USER       = "OIDC_USER";
 
+//	@Bean
+//	@Order(1)
+//	public SecurityFilterChain authorizationServerSecurityFilterChain(final HttpSecurity http) throws Exception {
+////		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+//		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+////		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+////		http.exceptionHandling((exceptions) -> exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")));
+////		http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+//		return http.build();
+//	}
+
 	@Bean
-	@Order(Ordered.HIGHEST_PRECEDENCE)
-	public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+	@Order(2)
+	public SecurityFilterChain defaultSecurityFilterChain(final HttpSecurity http) throws Exception {
 		//TODO de-duplicate SecurityFilterChainConfiguration and OAuth2ServerConfiguration
 //		final PortMapperImpl portMapper = new PortMapperImpl();
 //		portMapper.setPortMappings(Collections.singletonMap("8080", "8443"));
@@ -81,61 +99,75 @@ public class SecurityFilterChainConfiguration {
 //		entryPoint.setPortMapper(portMapper);
 //		entryPoint.setPortResolver(portResolver);
 
-//		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+//		org.springframework.security.web.session.DisableEncodeUrlFilter
+//		org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter
+//		org.springframework.security.web.context.SecurityContextHolderFilter
+//		org.springframework.security.web.header.HeaderWriterFilter
+//		org.springframework.security.web.authentication.logout.LogoutFilter
+//		org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter
+//		org.springframework.security.web.authentication.preauth.x509.X509AuthenticationFilter
+//		org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter
+//		org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+//		org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter
+//		org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter
+//		org.springframework.security.web.authentication.www.BasicAuthenticationFilter
+//		org.springframework.security.web.savedrequest.RequestCacheAwareFilter
+//		org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter
+//		org.springframework.security.web.authentication.AnonymousAuthenticationFilter
+//		org.springframework.security.web.access.ExceptionTranslationFilter
+//		org.springframework.security.web.access.intercept.AuthorizationFilter
 
-		http.authorizeHttpRequests()
-				.requestMatchers(PathRequest.toH2Console()).hasAnyAuthority(OPS_ADMIN,APP_ADMIN)	// Default path: /h2-console
-				.requestMatchers("/api/uptime/**").hasAnyAuthority(OPS_ADMIN,OPS_USER,OPS_USER_ADMIN,APP_ADMIN,APP_USER,OAUTH2_USER,OIDC_USER)
-				.requestMatchers("/api/profile**").hasAnyAuthority(OPS_ADMIN,OPS_USER,OPS_USER_ADMIN,APP_ADMIN,APP_USER,OAUTH2_USER,OIDC_USER)
-				.requestMatchers("/api/ops/**").hasAnyAuthority(OPS_ADMIN,OPS_USER,OPS_USER_ADMIN)
-				.requestMatchers("/api/app/**").hasAnyAuthority(APP_ADMIN,APP_USER_ADMIN,APP_USER)
-//				.requestMatchers("/", "/ui/index", "/ui/error", "/ui/login/prompt", "/ui/login/verify").permitAll()
-				.requestMatchers("/", "/index", "/login", "/error").permitAll()
-				.anyRequest().authenticated()
-			.and()
-//				.formLogin().loginPage("/ui/login/prompt").loginProcessingUrl("/us/login/verify").defaultSuccessUrl("/authenticated", true).failureUrl("/login?error=true").permitAll()	// Request parameters => username=value1&password=value2
-				.formLogin()	// Request parameters => username=value1&password=value2
-			.and()
-				.httpBasic()				// Request header => Authorization: Basic Base64(username:password)
-			.and()
-				.formLogin().permitAll()	// Request parameters => username=value1&password=value2
-			.and()
-				.x509().subjectPrincipalRegex("CN=(.*?)(?:,|$)") // "CN=(.*?),"
-			.and()
-				.oauth2Login()
-//				    	.loginPage("/login/oauth2")
-//				        .authorizationEndpoint().baseUri("/oauth2/authorization")
-	                //.loginProcessingUrl("/login")//.defaultSuccessUrl("/").failureUrl("/")
-//			.and()
-//				.oauth2Client(oauth2 -> oauth2
-//					.clientRegistrationRepository(this.clientRegistrationRepository())
-//					.authorizedClientRepository(this.authorizedClientRepository())
-//					.authorizationRequestRepository(this.authorizationRequestRepository())
-//					.authenticationConverter(this.authenticationConverter())
-//					.authenticationManager(this.authenticationManager())
-//				)
-			.and()
-				.logout().deleteCookies("JSESSIONID").invalidateHttpSession(true).logoutSuccessUrl("/").permitAll()
-//				.logoutUrl("/")
-			.and()
-				.csrf().requireCsrfProtectionMatcher(new AntPathRequestMatcher("/ui/**"))
-				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-			.and()
-				.csrf().disable()
-			// Enable OpenID Connect 1.0
+		http.authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests 
+			.requestMatchers(PathRequest.toH2Console()).hasAnyAuthority(OPS_ADMIN,APP_ADMIN)	// Default path: /h2-console
+			.requestMatchers("/api/uptime/**", "/api/profile**").hasAnyAuthority(OPS_ADMIN,OPS_USER,OPS_USER_ADMIN,APP_ADMIN,APP_USER,OAUTH2_USER,OIDC_USER)
+			.requestMatchers("/api/ops/**", "/api/app/**").hasAnyAuthority(OPS_ADMIN,OPS_USER,OPS_USER_ADMIN)
+//			.requestMatchers("/", "/ui/index", "/ui/error", "/ui/login/prompt", "/ui/login/verify").permitAll()
+			.requestMatchers("/", "/index", "/login", "/error").permitAll()
+			.anyRequest().authenticated()
+		)
+		// Request parameters => username=value1&password=value2
+//		.loginPage("/login")
+		.formLogin().permitAll()//.defaultSuccessUrl("/authenticated", true).failureUrl("/login?error").permitAll()	// Request parameters => username=value1&password=value2
+//		.and()
+//			.x509().subjectPrincipalRegex("CN=(.*?)(?:,|$)") // "CN=(.*?),"
+		.and()
+		.httpBasic()				// Request header => Authorization: Basic Base64(username:password)
+		.and()
+			// /oauth2/authorization/clientId => start code grant workflow, pick client to do external auth redirect
+			// /login/oauth2/code/*           => finish code grant workflow, wrap code in token for client to send for verify
+			.oauth2Login()//.defaultSuccessUrl("/")
+//		    	.loginPage("/login/oauth2")
+//		        .authorizationEndpoint()
+                //.loginProcessingUrl("/login/oauth2/verify")//.defaultSuccessUrl("/").failureUrl("/login/oauth2?error")
+//		.and()
+//			.oauth2Client(oauth2 -> oauth2
+//				.clientRegistrationRepository(this.clientRegistrationRepository())
+//				.authorizedClientRepository(this.authorizedClientRepository())
+//				.authorizationRequestRepository(this.authorizationRequestRepository())
+//				.authenticationConverter(this.authenticationConverter())
+//				.authenticationManager(this.authenticationManager())
+//			)
+		.and()
+			.logout().deleteCookies("JSESSIONID").invalidateHttpSession(true).permitAll()
+			//.logoutUrl("/logout").logoutSuccessUrl("/login?logout").clearAuthentication(true)
+		.and()
+			.csrf().requireCsrfProtectionMatcher(new AntPathRequestMatcher("/ui/**"))
+			.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+		.and()
+			.csrf().disable()
+		// Enable OpenID Connect 1.0
 //			.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults())
-			// Accept access tokens for User Info and/or Client Registration
+		// Accept access tokens for User Info and/or Client Registration
 //			.and()
 //			.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
-			// Login HTTP => HTTPS port mapping
+//			.oauth2ResourceServer(OAuth2ResourceServerConfigurer::opaqueToken)
+		// Login HTTP => HTTPS port mapping
 //			.exceptionHandling((exceptions) -> exceptions.authenticationEntryPoint(entryPoint))
 //			.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-//			.apply(authorizationServerConfigurer)
+			.apply(new OAuth2AuthorizationServerConfigurer())
 			;
+		;
 
-
-		// OAuth2
-//		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 		return http.build();
 	}
 
@@ -177,19 +209,19 @@ public class SecurityFilterChainConfiguration {
 	@Bean 
 	public RegisteredClientRepository registeredClientRepository() {
 		final RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-			.clientIdIssuedAt(Instant.now())
+//			.clientIdIssuedAt(Instant.now())
 			.clientId("internal-oauth2-login")
-			.clientName("internal-oauth2-login")
+//			.clientName("internal-oauth2-login")
 			.clientSecret("{noop}secret")
-			.clientSecretExpiresAt(null)
+//			.clientSecretExpiresAt(null)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-			.redirectUri("https://127.0.0.1:8443/login/oauth2/code/internal-oauth2-login")
-			.redirectUri("https://127.0.0.1:8443")
+//			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+//			.redirectUri("https://127.0.0.1:8443/login/oauth2/code/internal-oauth2-login")
+			.redirectUri("https://127.0.0.1:8443/oauth2/token")
 			.scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE).scope("message.read").scope("message.write")
-			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+//			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 //			.tokenSettings(TokenSettings.builder().authorizationCodeTimeToLive(Duration.ofMinutes(5)).build())
 			.build();
 
@@ -198,35 +230,21 @@ public class SecurityFilterChainConfiguration {
 		return inMemoryRegisteredClientRepository;
 	}
 
-	// spring security oauth2 authorization server
-//	@Bean
-//	public AuthorizationServerSettings authorizationServerSettings() {
-//		return AuthorizationServerSettings.builder()
-//			.issuer("https://localhost:8443")
-//			.authorizationEndpoint("https://localhost:8443/oauth2/v1/authorize")
-//			.tokenEndpoint("https://localhost:8443/oauth2/v1/token")
-//			.tokenIntrospectionEndpoint("https://localhost:8443/oauth2/v1/introspect")
-//			.tokenRevocationEndpoint("https://localhost:8443/oauth2/v1/revoke")
-//			.jwkSetEndpoint("https://localhost:8443/oauth2/v1/jwks")
-//			.oidcUserInfoEndpoint("https://localhost:8443/connect/v1/userinfo")
-//			.oidcClientRegistrationEndpoint("https://localhost:8443/connect/v1/register")
-//			.build();
-//	}
-
 	// https://docs.spring.io/spring-authorization-server/docs/current/reference/html/configuration-model.html#configuring-authorization-server-settings
 	// @Import(OAuth2AuthorizationServerConfiguration.class) automatically registers an AuthorizationServerSettings @Bean, if not already provided.
 	// If the issuer identifier is not configured in AuthorizationServerSettings.builder().issuer(String), it is resolved from the current request.
 	@Bean
 	public AuthorizationServerSettings authorizationServerSettings() {
-		return AuthorizationServerSettings.builder()
-			.authorizationEndpoint("/oauth2/authorize")
-			.tokenEndpoint("/oauth2/token")
-			.tokenIntrospectionEndpoint("/oauth2/introspect")
-			.tokenRevocationEndpoint("/oauth2/revoke")
-			.jwkSetEndpoint("/oauth2/jwks")
-			.oidcUserInfoEndpoint("/userinfo")
-			.oidcClientRegistrationEndpoint("/connect/register")
-			.build();
+		return AuthorizationServerSettings.builder().build();
+//		return AuthorizationServerSettings.builder()
+//			.authorizationEndpoint("/oauth2/authorize")
+//			.tokenEndpoint("/oauth2/token")
+//			.jwkSetEndpoint("/oauth2/jwks")
+//			.tokenRevocationEndpoint("/oauth2/revoke")
+//			.tokenIntrospectionEndpoint("/oauth2/introspect")
+//			.oidcClientRegistrationEndpoint("/connect/register")
+//			.oidcUserInfoEndpoint("/userinfo")
+//			.build();
 	}
 
 	// spring security oauth2 authorization server
@@ -240,6 +258,13 @@ public class SecurityFilterChainConfiguration {
 	public OAuth2AuthorizationConsentService authorizationConsentService(OAuth2AuthorizationConsent... authorizationConsents) {
 		return new InMemoryOAuth2AuthorizationConsentService(authorizationConsents);
 	}
+
+//	@Bean
+//	public ProviderSettings providerSettings() {
+//	    return ProviderSettings.builder()
+//	      .issuer("http://auth-server:9000")
+//	      .build();
+//	}
 
 	// spring security oauth2 client
 	@Bean

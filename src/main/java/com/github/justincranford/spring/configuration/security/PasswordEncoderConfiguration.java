@@ -24,7 +24,7 @@ public class PasswordEncoderConfiguration {
 		final PasswordEncoder passwordEncoder = new DelegatingPasswordEncoder(defaultEncoderId,
 			Map.of(
 //				"null", org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance(),
-//				"noop", org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance(),
+				"noop", org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance(),
 				// TODO Remove v1 with only 1 iteration and SHA1
 				"pbkdf2v1", new Pbkdf2PasswordEncoder(this.springApplicationName, 16, 1, SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA1)
 //				"pbkdf2v1", new Pbkdf2PasswordEncoder(this.springApplicationName, 16, 310_000, SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256)

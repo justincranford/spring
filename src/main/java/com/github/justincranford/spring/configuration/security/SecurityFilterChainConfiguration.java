@@ -5,11 +5,9 @@ import java.security.KeyPairGenerator;
 import java.security.Security;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import javax.net.ssl.SSLContext;
 
@@ -24,23 +22,26 @@ import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
+import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
-import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -49,12 +50,8 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepo
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
-import org.springframework.security.oauth2.core.OAuth2TokenValidator;
-import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
@@ -63,14 +60,11 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.ClientSecretAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.JwtClientAssertionAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.JwtClientAssertionDecoderFactory;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ClientAuthenticationConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -144,8 +138,16 @@ public class SecurityFilterChainConfiguration {
 
 		final OAuth2AuthorizationServerConfigurer oauth2AuthorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 		oauth2AuthorizationServerConfigurer.clientAuthentication(clientAuthentication ->
-			clientAuthentication.authenticationProviders(configureJwtClientAssertionValidator(passwordEncoder)
-		));
+			clientAuthentication.authenticationProviders(
+				(authenticationProviders) -> authenticationProviders.forEach(
+					(authenticationProvider) -> {
+						if (authenticationProvider instanceof ClientSecretAuthenticationProvider p) {
+							p.setPasswordEncoder(passwordEncoder);
+						}
+					}
+				)
+			)
+		);
 
 		http.authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(PathRequest.toH2Console()).hasAnyAuthority(OPS_ADMIN, APP_ADMIN) // Default path: /h2-console
 			.requestMatchers("/api/uptime/**", "/api/profile**").hasAnyAuthority(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN, APP_ADMIN, APP_USER, OAUTH2_USER, OIDC_USER)
@@ -205,14 +207,6 @@ public class SecurityFilterChainConfiguration {
 		return http.build();
 	}
 
-	private Consumer<List<AuthenticationProvider>> configureJwtClientAssertionValidator(final PasswordEncoder passwordEncoder) {
-		return (authenticationProviders) -> authenticationProviders.forEach((authenticationProvider) -> {
-			if (authenticationProvider instanceof ClientSecretAuthenticationProvider p) {
-				p.setPasswordEncoder(passwordEncoder);
-			}
-		});
-	}
-
 	// spring security core
 	@Bean
 	SessionRegistry sessionRegistry() {
@@ -225,6 +219,21 @@ public class SecurityFilterChainConfiguration {
 		return new HttpSessionEventPublisher();
 	}
 
+	@Bean
+	public AuthenticationEventPublisher authenticationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+	    final DefaultAuthenticationEventPublisher defaultAuthenticationEventPublisher = new DefaultAuthenticationEventPublisher(applicationEventPublisher);
+//	    defaultAuthenticationEventPublisher.setDefaultAuthenticationFailureEvent(GenericAuthenticationFailureEvent.class);
+	    return defaultAuthenticationEventPublisher;
+	}
+
+//	private static class GenericAuthenticationFailureEvent extends AbstractAuthenticationFailureEvent {
+//		private Logger logger = LoggerFactory.getLogger(SecurityFilterChainConfiguration.class);
+//		public GenericAuthenticationFailureEvent(Authentication authentication, AuthenticationException exception) {
+//			super(authentication, exception);
+//			logger.error(exception.getMessage(), exception);
+//		}
+//	}
+//
 	// spring security oauth2 core
 	@Bean
 	public JWKSource<SecurityContext> jwkSource() {

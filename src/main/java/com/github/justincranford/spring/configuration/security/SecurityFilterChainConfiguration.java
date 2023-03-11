@@ -152,8 +152,8 @@ public class SecurityFilterChainConfiguration {
 		);
 
 		http.authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(PathRequest.toH2Console()).hasAnyAuthority(OPS_ADMIN, APP_ADMIN) // Default path: /h2-console
-			.requestMatchers("/api/uptime/**", "/api/profile**").hasAnyAuthority(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN, APP_ADMIN, APP_USER, OAUTH2_USER, OIDC_USER)
-			.requestMatchers("/api/ops/**", "/api/app/**").hasAnyAuthority(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN)
+			.requestMatchers("/api/uptime", "/api/profile").hasAnyRole(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN, APP_ADMIN, APP_USER, OAUTH2_USER, OIDC_USER)
+			.requestMatchers("/api/ops/**", "/api/app/**").hasAnyRole(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN)
 //			.requestMatchers("/", "/ui/index", "/ui/error", "/ui/login/prompt", "/ui/login/verify").permitAll()
 			.requestMatchers("/", "/index", "/login", "/error").permitAll().anyRequest().authenticated())
 		// Request parameters => username=value1&password=value2

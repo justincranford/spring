@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
+import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.AuthenticationMethod;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.test.context.junit.jupiter.EnabledIf;
 
 import com.github.justincranford.spring.SpringBootTestHelper;
 
@@ -33,8 +35,10 @@ public class TestOauth2Config extends SpringBootTestHelper {
 		super.afterEach();
 	}
 
+	@EnabledIf(expression = "#{environment.acceptsProfiles('oauth2')}", loadContext = true)
 	@Test
 	public void testClientRegistrationRepository() {
+//		Assumptions.assumeThat(super.profilesActive.split(",")).contains("oauth2");
 //		ClientRegistration clientRegistration1 = ClientRegistrations.fromIssuerLocation("https://idp.example.com/issuer").build();
 //		ClientRegistration clientRegistration2 = ClientRegistrations.fromOidcIssuerLocation("").build();
 
@@ -42,10 +46,10 @@ public class TestOauth2Config extends SpringBootTestHelper {
 		// Prop: spring.security.oauth2.client.registration.[registrationId].* => ClientRegistration => ClientRegistrationRepository (InMemoryClientRegistrationRepository)
 		// OAuth2ClientProperties
 		assertThat(super.clientRegistrationRepository, is(notNullValue()));
-		assertThat(super.clientRegistrationRepository.findByRegistrationId("facebook"), is(notNullValue()));
-		final ClientRegistration facebook = super.clientRegistrationRepository.findByRegistrationId("facebook");
+		assertThat(super.clientRegistrationRepository.findByRegistrationId("facebook-login"), is(notNullValue()));
+		final ClientRegistration facebook = super.clientRegistrationRepository.findByRegistrationId("facebook-login");
 		assertThat(facebook, is(notNullValue()));
-		assertThat(facebook.getRegistrationId(), is(equalTo("facebook")));
+		assertThat(facebook.getRegistrationId(), is(equalTo("facebook-login")));
 		assertThat(facebook.getClientAuthenticationMethod(), is(equalTo(ClientAuthenticationMethod.CLIENT_SECRET_POST)));
 		assertThat(facebook.getClientId(), is(notNullValue()));
 		assertThat(facebook.getClientName(), is(notNullValue()));
@@ -84,7 +88,7 @@ public class TestOauth2Config extends SpringBootTestHelper {
 	@Test
 	public void testOauth2AuthorizedClientRepository() {
 		assertThat(super.oauth2AuthorizedClientService, is(notNullValue()));
-		final OAuth2AuthorizedClient facebook = super.oauth2AuthorizedClientService.loadAuthorizedClient("facebook", "justincranford@hotmail.com");
+		final OAuth2AuthorizedClient facebook = super.oauth2AuthorizedClientService.loadAuthorizedClient("facebook-login", "justincranford@hotmail.com");
 		assertThat(facebook, is(nullValue()));
 //		assertThat(facebook, is(notNullValue()));
 //		assertThat(facebook.getClientRegistration(), is(notNullValue()));

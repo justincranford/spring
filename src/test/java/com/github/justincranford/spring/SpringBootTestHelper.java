@@ -47,6 +47,7 @@ public class SpringBootTestHelper {
 
 	protected static final AtomicLong UNIQUE_LONG = new AtomicLong(System.nanoTime());
 
+	@Value("${spring.profiles.active:}") protected String profilesActive;
 	@Autowired protected Environment environment;
     @Autowired protected ServletWebServerApplicationContext servletWebServerApplicationContext;
 	@Autowired protected TestRestTemplate restTemplate;
@@ -65,12 +66,12 @@ public class SpringBootTestHelper {
 
     @Value(value="${spring.application.name}")   protected String springApplicationName;
     @Value(value="${local.server.port}")         protected int    localServerPort;		// same as @LocalServerPort
-    @Value(value="${local.management.port}")     protected int    localManagementPort;	// same as @LocalManagementPort
+//	@Value(value="${local.management.port}")     protected int    localManagementPort;	// same as @LocalManagementPort
 	@Value(value="${server.address}")            protected String serverAddress;
     @Value(value="${server.port}")               protected int    serverPort;
-    @Value(value="${management.port}")           protected int    managementPort;
-    @Value(value="${management.server.address}") protected String managementServerAddress;
-    @Value(value="${management.server.port}")    protected String managementServerPort;
+//	@Value(value="${management.port}")           protected int    managementPort;
+//	@Value(value="${management.server.address}") protected String managementServerAddress;
+//	@Value(value="${management.server.port}")    protected String managementServerPort;
 
     // TODO: Remove relaxedHTTPSValidation(), replace with trustStore()
     // TODO: Remove allowALlHostnames()

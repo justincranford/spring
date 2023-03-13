@@ -6,7 +6,14 @@ import java.security.Security;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 
 import javax.net.ssl.SSLContext;
 
@@ -38,24 +45,43 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizationContext;
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
 import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
@@ -75,6 +101,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -83,6 +110,8 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
 @EnableWebSecurity
@@ -142,6 +171,7 @@ public class SecurityFilterChainConfiguration {
 //		org.springframework.security.web.access.ExceptionTranslationFilter
 //		org.springframework.security.web.access.intercept.AuthorizationFilter
 
+		// https://docs.spring.io/spring-authorization-server/docs/current/reference/html/configuration-model.html
 		final OAuth2AuthorizationServerConfigurer oauth2AuthorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 		oauth2AuthorizationServerConfigurer.clientAuthentication(clientAuthentication ->
 			clientAuthentication.authenticationProviders(
@@ -154,6 +184,7 @@ public class SecurityFilterChainConfiguration {
 				)
 			)
 		);
+//		oauth2AuthorizationServerConfigurer.
 
 		http.authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(PathRequest.toH2Console()).hasAnyAuthority(OPS_ADMIN, APP_ADMIN) // Default path: /h2-console
 			.requestMatchers("/api/uptime", "/api/profile").hasAnyRole(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN, APP_ADMIN, APP_USER, OAUTH2_USER, OIDC_USER)
@@ -187,6 +218,9 @@ public class SecurityFilterChainConfiguration {
 					}
 				}
 			)
+//			.userInfoEndpoint(userInfoEndpoint -> {
+//				userInfoEndpoint.userService(this.oauth2UserService());
+//			})
 //		.and()
 //			.oauth2Client(oauth2 -> oauth2
 //				.clientRegistrationRepository(this.clientRegistrationRepository())
@@ -364,6 +398,13 @@ public class SecurityFilterChainConfiguration {
 //	      .build();
 //	}
 
+//	// spring security oauth2 client
+//	@Bean
+//	public WebClient webClient(ClientRegistrationRepository clients, OAuth2AuthorizedClientRepository authz) {
+//		final ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2 = new ServletOAuth2AuthorizedClientExchangeFilterFunction(clients, authz);
+//		return WebClient.builder().filter(oauth2).build();
+//	}
+
 	// spring security oauth2 client
 	@Bean
 	public WebClient webClient(ClientRegistrationRepository clients, OAuth2AuthorizedClientRepository authz) {
@@ -371,33 +412,43 @@ public class SecurityFilterChainConfiguration {
 		return WebClient.builder().filter(oauth2).build();
 	}
 
+	// https://docs.spring.io/spring-security/reference/servlet/oauth2/login/advanced.html#oauth2login-advanced-userinfo-endpoint
 	// spring security oauth2 client
 	@Bean
-	public OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService(final WebClient webClient) {
-		// TODO Change from default?
+	public OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService() throws Exception {
 		final DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
+		delegate.setRestOperations(restTemplate());
 		return request -> {
-			OAuth2User user = delegate.loadUser(request);
-			final String login = user.getAttribute("login");
-			this.logger.info("OAuth2 login: {}", login);
+			final OAuth2User user = delegate.loadUser(request);
+//			final String login = user.getAttribute("login");
+//			this.logger.info("OAuth2 login: {}", login);
+			final OAuth2AccessToken accessToken = request.getAccessToken();
+			final Set<GrantedAuthority> authorities = new LinkedHashSet<>();
+			for (String authority : accessToken.getScopes()) {
+				authorities.add(new SimpleGrantedAuthority("SCOPE_" + authority));
+			}
 			return user;
-
-//			OAuth2AuthorizedClient client = new OAuth2AuthorizedClient(request.getClientRegistration(), user.getName(), request.getAccessToken());
-//			String url = user.getAttribute("organizations_url");
-//			List<Map<String, Object>> orgs = rest
-//					.get().uri(url)
-//					.attributes(oauth2AuthorizedClient(client))
-//					.retrieve()
-//					.bodyToMono(List.class)
-//					.block();
-//
-//			if (orgs.stream().anyMatch(org -> "spring-projects".equals(org.get("login")))) {
-//				return user;
-//			}
-//
-//			throw new OAuth2AuthenticationException(new OAuth2Error("invalid_token", "Not in Spring Team", ""));
 		};
 	}
+
+//	@Bean
+//	public GrantedAuthoritiesMapper userAuthoritiesMapper() {
+//		return (authorities) -> {
+//			final Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
+//			authorities.forEach(authority -> {
+//				if (authority instanceof OidcUserAuthority oidcUserAuthority) {
+//					final OidcIdToken idToken = oidcUserAuthority.getIdToken();
+//					final OidcUserInfo userInfo = oidcUserAuthority.getUserInfo();
+//					mappedAuthorities.add(authority);
+//				} else if (authority instanceof OAuth2UserAuthority oauth2UserAuthority) {
+//					final Map<String, Object> userAttributes = oauth2UserAuthority.getAttributes();
+//					mappedAuthorities.add(authority);
+//				}
+//			});
+//
+//			return mappedAuthorities;
+//		};
+//	}
 
 	// spring security oauth2 resource server
 
@@ -464,7 +515,57 @@ public class SecurityFilterChainConfiguration {
         accessTokenResponseClient.setRestOperations(restTemplate()); 
         return accessTokenResponseClient;
 	}
-	// TODO
+
+//    private OAuth2UserService<OidcUserRequest, OidcUser> oidcUserService() {
+//		final OidcUserService delegate = new OidcUserService();
+//
+//		return (userRequest) -> {
+//			// Delegate to the default implementation for loading a user
+//			OidcUser oidcUser = delegate.loadUser(userRequest);
+//
+//			OAuth2AccessToken accessToken = userRequest.getAccessToken();
+//			Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
+//
+//			// TODO
+//			// 1) Fetch the authority information from the protected resource using accessToken
+//			// 2) Map the authority information to one or more GrantedAuthority's and add it to mappedAuthorities
+//
+//			// 3) Create a copy of oidcUser but use the mappedAuthorities instead
+//			oidcUser = new DefaultOidcUser(mappedAuthorities, oidcUser.getIdToken(), oidcUser.getUserInfo());
+//			return oidcUser;
+//		};
+//	}
+
+//	@Bean
+//	public OAuth2AuthorizedClientManager authorizedClientManager(
+//		ClientRegistrationRepository clientRegistrationRepository,
+//		OAuth2AuthorizedClientRepository authorizedClientRepository
+//	) {
+//		DefaultOAuth2AuthorizedClientManager authorizedClientManager = new DefaultOAuth2AuthorizedClientManager(clientRegistrationRepository, authorizedClientRepository);
+//		authorizedClientManager.setAuthorizedClientProvider(OAuth2AuthorizedClientProviderBuilder.builder().password().refreshToken().build());
+//		// Assuming the `username` and `password` are supplied as `HttpServletRequest` parameters,
+//		// map the `HttpServletRequest` parameters to `OAuth2AuthorizationContext.getAttributes()`
+//		authorizedClientManager.setContextAttributesMapper(contextAttributesMapper());
+//		return authorizedClientManager;
+//	}
+//
+//	private Function<OAuth2AuthorizeRequest, Map<String, Object>> contextAttributesMapper() {
+//		return authorizeRequest -> {
+//			Map<String, Object> contextAttributes = Collections.emptyMap();
+//			HttpServletRequest servletRequest = authorizeRequest.getAttribute(HttpServletRequest.class.getName());
+//			String username = servletRequest.getParameter(OAuth2ParameterNames.USERNAME);
+//			String password = servletRequest.getParameter(OAuth2ParameterNames.PASSWORD);
+//			if (StringUtils.hasText(username) && StringUtils.hasText(password)) {
+//				contextAttributes = new HashMap<>();
+//				// `PasswordOAuth2AuthorizedClientProvider` requires both attributes
+//				contextAttributes.put(OAuth2AuthorizationContext.USERNAME_ATTRIBUTE_NAME, username);
+//				contextAttributes.put(OAuth2AuthorizationContext.PASSWORD_ATTRIBUTE_NAME, password);
+//			}
+//			return contextAttributes;
+//		};
+//	}
+
+    // TODO
 	// @Bean webServerStartStop
 	// @Bean webServerGracefulShutdown
 

@@ -5,6 +5,8 @@ import java.security.KeyPairGenerator;
 import java.security.Security;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -42,18 +44,15 @@ import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationC
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
-import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
-import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
@@ -68,13 +67,15 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings.Builder;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -278,20 +279,27 @@ public class SecurityFilterChainConfig {
 			.clientId("internal-oauth2-login")
 			.clientName("Internal OAuth2 Login")
 			.clientSecret("{noop}secret")
-//			.clientIdIssuedAt(Instant.now())
-//			.clientSecretExpiresAt(null)
-			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC).authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+			.clientIdIssuedAt(Instant.now())
+			.clientSecretExpiresAt(null)
+			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-//			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-			.redirectUri("https://127.0.0.1:8443/login/oauth2/code/internal-oauth2-login").redirectUri("https://127.0.0.1:8443/oauth2/token")
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.redirectUri("https://127.0.0.1:8443/login/oauth2/code/internal-oauth2-login")
 //			.scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE)
 			.scope("message.read").scope("message.write")
 //			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-//			.tokenSettings(TokenSettings.builder().authorizationCodeTimeToLive(Duration.ofMinutes(5)).build())
-			.build();
-
-		final InMemoryRegisteredClientRepository inMemoryRegisteredClientRepository = new InMemoryRegisteredClientRepository(registeredClient);
-		return inMemoryRegisteredClientRepository;
+			.tokenSettings(
+				TokenSettings.builder()									// Defaults below:
+				.authorizationCodeTimeToLive(Duration.ofMinutes(2))		// Duration.ofMinutes(5)
+				.accessTokenTimeToLive(Duration.ofDays(7))				// Duration.ofMinutes(5)
+				.refreshTokenTimeToLive(Duration.ofDays(30))			// Duration.ofMinutes(60)
+				.accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)	// OAuth2TokenFormat.SELF_CONTAINED
+				.reuseRefreshTokens(false)								// true
+				.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256)	// RS256
+				.build()
+			).build();
+		return new InMemoryRegisteredClientRepository(registeredClient);
 	}
 
 	// https://docs.spring.io/spring-authorization-server/docs/current/reference/html/configuration-model.html#configuring-authorization-server-settings

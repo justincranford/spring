@@ -23,24 +23,16 @@ import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
-import org.springframework.security.authentication.AuthenticationEventPublisher;
-import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
-import org.springframework.security.authentication.event.AbstractAuthenticationEvent;
-import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.session.SessionRegistry;
@@ -119,7 +111,7 @@ public class SecurityFilterChainConfig {
 	@Bean
 	@Order(2)
 	public SecurityFilterChain defaultSecurityFilterChain(final HttpSecurity http, final PasswordEncoder passwordEncoder, final ApplicationEventPublisher applicationEventPublisher) throws Exception {
-		applicationEventPublisher.publishEvent(new Event<>("defaultSecurityFilterChain started"));
+		applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
 		// TODO de-duplicate SecurityFilterChainConfiguration and
 		// OAuth2ServerConfiguration
 //		final PortMapperImpl portMapper = new PortMapperImpl();
@@ -241,7 +233,7 @@ public class SecurityFilterChainConfig {
 		;
 
 		final DefaultSecurityFilterChain build = http.build();
-		applicationEventPublisher.publishEvent(new Event<>("defaultSecurityFilterChain started"));
+		applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
 		return build;
 	}
 
@@ -255,59 +247,6 @@ public class SecurityFilterChainConfig {
 	@Bean
 	HttpSessionEventPublisher httpSessionEventPublisher() {
 		return new HttpSessionEventPublisher();
-	}
-
-	@Bean
-	public AuthenticationEventPublisher authenticationEventPublisher(final ApplicationEventPublisher applicationEventPublisher) {
-	    final DefaultAuthenticationEventPublisher defaultAuthenticationEventPublisher = new DefaultAuthenticationEventPublisher(applicationEventPublisher);
-	    defaultAuthenticationEventPublisher.setDefaultAuthenticationFailureEvent(NonMappedAuthenticationFailureEvent.class);
-	    return defaultAuthenticationEventPublisher;
-	}
-
-	public static class NonMappedAuthenticationFailureEvent extends AbstractAuthenticationFailureEvent {
-		private static final long serialVersionUID = 1L;
-	    public NonMappedAuthenticationFailureEvent(final Authentication authentication, final AuthenticationException exception) {
-	    	super(authentication, exception);
-    	}
-	}
-
-	@Bean
-	public ApplicationListener<AbstractAuthenticationEvent> allAuthenticationEventsListener() {
-		return new ApplicationListener<AbstractAuthenticationEvent>() {
-			private Logger logger = LoggerFactory.getLogger("AllAuthenticationEventsListener");
-		    @Override public void onApplicationEvent(AbstractAuthenticationEvent event) {
-		    	if (event instanceof AbstractAuthenticationFailureEvent failure) {
-			    	// DefaultAuthenticationEventPublisher wraps exceptions in these events, and then publishes them
-		    		//  AuthenticationFailureBadCredentialsEvent
-		    		//  AuthenticationFailureCredentialsExpiredEvent
-		    		//  AuthenticationFailureDisabledEvent
-		    		//  AuthenticationFailureExpiredEvent
-		    		//  AuthenticationFailureLockedEvent
-		    		//  AuthenticationFailureProviderNotFoundEvent
-		    		//  AuthenticationFailureProxyUntrustedEvent
-		    		//  AuthenticationFailureServiceExceptionEvent
-			        this.logger.warn("{} [source={}]", event.getClass().getSimpleName(), event.getSource(), failure.getException());
-		    	} else {
-			    	// DefaultAuthenticationEventPublisher has helpers for publishing some of these events
-		    		//  AuthenticationSuccessEvent
-		    		//  AuthenticationSwitchUserEvent
-		    		//  InteractiveAuthenticationSuccessEvent
-		    		//  LogoutSuccessEvent
-		    		//  SessionFixationProtectionEvent
-			        this.logger.info("{} [source={}]", event.getClass().getSimpleName(), event.getSource());
-		    	}
-		    }
-		};
-	}
-
-	@Bean
-	public ApplicationListener<ApplicationEvent> allApplicationEventsListener() {
-		return new ApplicationListener<ApplicationEvent>() {
-			private Logger logger = LoggerFactory.getLogger("AllApplicationEventsListener");
-		    @Override public void onApplicationEvent(ApplicationEvent event) {
-		        this.logger.trace("{} [source={}]", event.getClass().getSimpleName(), event.getSource());
-		    }
-		};
 	}
 
 	// spring security oauth2 core
@@ -564,9 +503,4 @@ public class SecurityFilterChainConfig {
     // TODO
 	// @Bean webServerStartStop
 	// @Bean webServerGracefulShutdown
-
-	public static class Event<T> extends ApplicationEvent {
-		private static final long serialVersionUID = 1L;
-	    public Event(final T t) { super(t); }
-	}
 }

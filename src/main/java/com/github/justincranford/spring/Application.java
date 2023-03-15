@@ -1,12 +1,10 @@
 package com.github.justincranford.spring;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -16,6 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.github.justincranford.spring.model.user.Uptime;
 import com.github.justincranford.spring.model.user.app.AppUserCrudRepositoryInit;
 import com.github.justincranford.spring.model.user.ops.OpsUserCrudRepositoryInit;
 
@@ -32,8 +31,6 @@ public class Application implements CommandLineRunner {
 	@Autowired OpsUserCrudRepositoryInit opsUserCrudRepositoryInit;
 	@Autowired AppUserCrudRepositoryInit appUserCrudRepositoryInit;
 
-    public record Uptime(long nanos, float micros, float millis, float secs) {}
-
 	public static void main(final String[] args) {
 		SpringApplication.run(Application.class, args);
 //        final SpringApplication application = new SpringApplication(Application.class);
@@ -46,28 +43,14 @@ public class Application implements CommandLineRunner {
 	@Override
 	public void run(final String... args) throws Exception {
 		logger.info("Active profiles: {}", this.environment.getActiveProfiles().toString());
+		// populate default users in DB
 		this.opsUserCrudRepositoryInit.run();
 		this.appUserCrudRepositoryInit.run();
     }
 
     @Bean
-    public UptimeFactory uptimeFactory() {
-		return new UptimeFactory(Instant.now(Clock.systemUTC()));
-    }
-
-    public static class UptimeFactory implements ObjectFactory<Uptime> {
-    	private final Instant start;
-    	public UptimeFactory(final Instant start) {
-    		this.start = start;
-    	}
-    	public Uptime getObject() {
-    		final Duration duration = Duration.between(this.start, Instant.now(Clock.systemUTC()));
-			final long  nanos  = duration.toNanos();
-			final float micros = nanos / 1000F;
-			final float millis = nanos / 1000000F;
-			final float secs   = nanos / 1000000000F;
-    		return new Uptime(nanos, micros, millis, secs);
-    	}
+    public Uptime.Factory uptimeFactory() {
+		return new Uptime.Factory(Instant.now(Clock.systemUTC()));
     }
 
 //	@Bean

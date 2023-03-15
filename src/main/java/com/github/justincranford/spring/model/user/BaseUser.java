@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.github.justincranford.spring.common.JsonUtil;
+import com.github.justincranford.spring.model.JsonUtil;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;

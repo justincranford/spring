@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.github.justincranford.spring.common.JsonUtil;
+import com.github.justincranford.spring.model.JsonUtil;
 import com.github.justincranford.spring.model.user.Uptime;
 
 @CrossOrigin(origins={"https://localhost:8443"})

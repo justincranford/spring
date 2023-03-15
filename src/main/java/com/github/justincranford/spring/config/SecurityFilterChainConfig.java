@@ -290,16 +290,12 @@ public class SecurityFilterChainConfig {
 			.build();
 
 		final InMemoryRegisteredClientRepository inMemoryRegisteredClientRepository = new InMemoryRegisteredClientRepository(registeredClient);
-//		inMemoryRegisteredClientRepository.save(registeredClient);
 		return inMemoryRegisteredClientRepository;
 	}
 
 	// https://docs.spring.io/spring-authorization-server/docs/current/reference/html/configuration-model.html#configuring-authorization-server-settings
-	// @Import(OAuth2AuthorizationServerConfiguration.class) automatically registers
-	// an AuthorizationServerSettings @Bean, if not already provided.
-	// If the issuer identifier is not configured in
-	// AuthorizationServerSettings.builder().issuer(String), it is resolved from the
-	// current request.
+	// @Import(OAuth2AuthorizationServerConfiguration.class) automatically registers an AuthorizationServerSettings @Bean, if not already provided.
+	// If the issuer identifier is not configured in AuthorizationServerSettings.builder().issuer(String), it is resolved from the current request.
 	@Bean
 	public AuthorizationServerSettings authorizationServerSettings() {
 		return AuthorizationServerSettings.builder().build();
@@ -333,20 +329,6 @@ public class SecurityFilterChainConfig {
 //	      .build();
 //	}
 
-//	// spring security oauth2 client
-//	@Bean
-//	public WebClient webClient(ClientRegistrationRepository clients, OAuth2AuthorizedClientRepository authz) {
-//		final ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2 = new ServletOAuth2AuthorizedClientExchangeFilterFunction(clients, authz);
-//		return WebClient.builder().filter(oauth2).build();
-//	}
-
-	// spring security oauth2 client
-	@Bean
-	public WebClient webClient(ClientRegistrationRepository clients, OAuth2AuthorizedClientRepository authz) {
-		final ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2 = new ServletOAuth2AuthorizedClientExchangeFilterFunction(clients, authz);
-		return WebClient.builder().filter(oauth2).build();
-	}
-
 	// https://docs.spring.io/spring-security/reference/servlet/oauth2/login/advanced.html#oauth2login-advanced-userinfo-endpoint
 	// spring security oauth2 client
 	@Bean
@@ -365,43 +347,6 @@ public class SecurityFilterChainConfig {
 			return user;
 		};
 	}
-
-//	@Bean
-//	public GrantedAuthoritiesMapper userAuthoritiesMapper() {
-//		return (authorities) -> {
-//			final Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
-//			authorities.forEach(authority -> {
-//				if (authority instanceof OidcUserAuthority oidcUserAuthority) {
-//					final OidcIdToken idToken = oidcUserAuthority.getIdToken();
-//					final OidcUserInfo userInfo = oidcUserAuthority.getUserInfo();
-//					mappedAuthorities.add(authority);
-//				} else if (authority instanceof OAuth2UserAuthority oauth2UserAuthority) {
-//					final Map<String, Object> userAttributes = oauth2UserAuthority.getAttributes();
-//					mappedAuthorities.add(authority);
-//				}
-//			});
-//
-//			return mappedAuthorities;
-//		};
-//	}
-
-	// spring security oauth2 resource server
-
-//	@Bean
-//	SecurityWebFilterChain springSecurityFilterChain(final ServerHttpSecurity serverHttpSecurity) {
-//		serverHttpSecurity
-//			.authorizeExchange(exchanges -> exchanges.anyExchange().authenticated())
-//			.oauth2ResourceServer(ServerHttpSecurity.OAuth2ResourceServerSpec::opaqueToken);
-//		return serverHttpSecurity.build();
-//	}
-
-//	@ConfigurationProperties("rest.ssl")
-//	@Data
-//	public class SecureRestTemplateProperties {
-//	  String trustStore;
-//	  char[] trustStorePassword;
-//	  String protocol = "TLSv1.2";
-//	}	
 
 	@Bean
 	public RestTemplate restTemplate() throws Exception {
@@ -424,17 +369,6 @@ public class SecurityFilterChainConfig {
 	    	.setConnectionManager(cm)
 	    	.build();
 
-//	    final HttpGet httpGet = new HttpGet("https://www.google.com/");
-//	    final CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
-//		final int responseCode = httpResponse.getCode();
-//		System.out.println("responseCode: " + responseCode);
-//		final HttpEntity httpEntity = httpResponse.getEntity();
-//	    final InputStream content = httpEntity.getContent();
-//		final Scanner sc = new Scanner(content);
-//		while (sc.hasNext()) {
-//			System.out.println(sc.nextLine());
-//		}
-	      
 	    final ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 	    // https://docs.spring.io/spring-security/reference/servlet/oauth2/client/authorization-grants.html#oauth2Client-client-creds-grant
 	    final RestTemplate restTemplate = new RestTemplate(Arrays.asList(new FormHttpMessageConverter(), new OAuth2AccessTokenResponseHttpMessageConverter()));

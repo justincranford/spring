@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.github.justincranford.spring.model.JsonUtil;
-import com.github.justincranford.spring.model.user.Uptime;
+import com.github.justincranford.spring.model.Uptime;
 
 @CrossOrigin(origins={"https://localhost:8443"})
 @RestController
@@ -25,7 +25,7 @@ public class UptimeController {
     public Uptime.Factory uptimeFactory;
 
     @GetMapping(path = "/uptime")
-    public com.github.justincranford.spring.model.user.Uptime uptime() {
+    public com.github.justincranford.spring.model.Uptime uptime() {
     	final Uptime uptime = uptimeFactory.getObject();
         final String uptimeJsonString = JsonUtil.pojoToJsonString(uptime);
 		this.logger.info(uptimeJsonString);

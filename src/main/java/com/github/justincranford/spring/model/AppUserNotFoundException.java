@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.model.user;
+package com.github.justincranford.spring.model;
 
 public class AppUserNotFoundException extends RuntimeException {
 	private static final long serialVersionUID = 1L;

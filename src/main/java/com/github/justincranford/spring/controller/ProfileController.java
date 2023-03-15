@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.github.justincranford.spring.model.user.BaseUser;
+import com.github.justincranford.spring.model.BaseUser;
 
 import net.minidev.json.JSONObject;
 

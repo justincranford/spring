@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.model.user;
+package com.github.justincranford.spring.model;
 
 import java.time.Clock;
 import java.time.Duration;

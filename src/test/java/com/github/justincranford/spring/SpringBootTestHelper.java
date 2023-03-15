@@ -28,9 +28,9 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.test.context.TestPropertySource;
 
 import com.github.justincranford.spring.controller.OpsUserController;
-import com.github.justincranford.spring.model.user.OpsUserCrudRepository;
-import com.github.justincranford.spring.model.user.Uptime;
-import com.github.justincranford.spring.model.user.AppUserCrudRepository;
+import com.github.justincranford.spring.model.AppUserCrudRepository;
+import com.github.justincranford.spring.model.OpsUserCrudRepository;
+import com.github.justincranford.spring.model.Uptime;
 import com.github.justincranford.spring.security.PasswordEncoderTestConfiguration;
 
 import io.restassured.RestAssured;

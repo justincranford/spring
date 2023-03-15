@@ -59,6 +59,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class TlsServletWebServerFactoryConfig {
+	public static final SecureRandom SECURE_DEFAULT = new SecureRandom();
+
 	@Value(value="${server.port}")
     protected int serverPort;
 
@@ -120,26 +122,12 @@ public class TlsServletWebServerFactoryConfig {
 				final String serverCertChainPem  = toPem("CERTIFICATE",     server.getCertificateChain()[0].getEncoded());
 				final String caCertChainPem      = toPem("CERTIFICATE",     server.getCertificateChain()[1].getEncoded());
 
-//				final KeyStoreManager ca     = this.createCa    (null, "RSA", "DC=CA",     "CaPwd".toCharArray());
-//				final KeyStoreManager server = this.createServer(ca,   "RSA", "CN=Server", "ServerPwd".toCharArray());
-////			final KeyStoreManager client = this.createClient(ca,   "RSA", "CN=Client", "ClientPwd".toCharArray());
-//				final String caCertChainPem      = PemUtil.toString("CERTIFICATE",     ca.entry().getCertificateChain()[0].getEncoded());
-//				final String serverCertChainPem  = PemUtil.toString("CERTIFICATE",     server.entry().getCertificateChain()[0].getEncoded());
-//				final String serverPrivateKeyPem = PemUtil.toString("RSA PRIVATE KEY", PrivateKeyInfo.getInstance(server.entry().getPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
-////			final String serverPrivateKeyPem = PemUtil.toString("RSA PRIVATE KEY", server.entry().getPrivateKey().getEncoded());
-////			final String clientCertChainPem  = PemUtil.toString("CERTIFICATE",     client.entry().getCertificateChain()[0].getEncoded());
-////			final String clientPrivateKeyPem = PemUtil.toString("RSA PRIVATE KEY", PrivateKeyInfo.getInstance(client.entry().getPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
-//////			final String clientPrivateKeyPem = PemUtil.toString("RSA PRIVATE KEY", client.entry().getPrivateKey().getEncoded());
 				this.logger.info("CA certificate chain:\n{}\n",     caCertChainPem);
 				this.logger.info("Server certificate chain:\n{}\n", serverCertChainPem);
 				this.logger.info("Server private key:\n{}\n",       serverPrivateKeyPem);
-////			this.logger.info("Client certificate chain:\n{}\n", clientCertChainPem);
-////			this.logger.info("Client private key:\n{}\n",       clientPrivateKeyPem);
 				final Path caCertificateChainPath     = Files.writeString(Files.createTempFile("ca",     ".crt"), caCertChainPem,      StandardOpenOption.CREATE);
 				final Path serverCertificateChainPath = Files.writeString(Files.createTempFile("server", ".crt"), serverCertChainPem,  StandardOpenOption.CREATE);
 				final Path serverPrivateKeyPath       = Files.writeString(Files.createTempFile("server", ".p8"),  serverPrivateKeyPem, StandardOpenOption.CREATE);
-////			final Path clientCertificateChainPath = Files.writeString(Files.createTempFile("client", ".crt"), clientCertChainPem,  StandardOpenOption.CREATE);
-////			final Path clientPrivateKeyPath       = Files.writeString(Files.createTempFile("client", ".p8"),  clientPrivateKeyPem, StandardOpenOption.CREATE);
 				ssl.setTrustCertificate(caCertificateChainPath.toFile().toString());
 				ssl.setCertificate(serverCertificateChainPath.toFile().toString());
 				ssl.setCertificatePrivateKey(serverPrivateKeyPath.toFile().toString());
@@ -149,25 +137,6 @@ public class TlsServletWebServerFactoryConfig {
 			}
 			super.customizeConnector(connector);
 		}
-
-//		private KeyStoreManager createCa(final KeyStoreManager issuer, String keyPairAlg, String rdn, final char[] password) throws Exception {
-//			Extension bc = new Extension(Extension.basicConstraints, true, new BasicConstraints(0)           .toASN1Primitive().getEncoded());
-//			Extension ku = new Extension(Extension.keyUsage,         true, new KeyUsage(KeyUsage.keyCertSign).toASN1Primitive().getEncoded());
-//			final Extensions extensions = new Extensions(new Extension[] {bc, ku});
-//			return KeyStoreManager.create(issuer, rdn, keyPairAlg, password, password, extensions, null);
-//		}
-//
-//		private KeyStoreManager createServer(final KeyStoreManager issuer, String keyPairAlg, String rdn, final char[] password) throws Exception {
-//			final Map<Integer, String> san = Map.of(GeneralName.dNSName, "localhost", GeneralName.iPAddress, "127.0.0.1");
-//			final Extensions extensions = ExtensionUtil.extensions(ExtensionUtil.EXTENSION_KU_DIGITALSIGNATURE, ExtensionUtil.EXTENSION_EKU_SERVER, ExtensionUtil.sanExtension(san));
-//			return KeyStoreManager.create(issuer, rdn, keyPairAlg, password, password, extensions, null);
-//		}
-//
-//		private KeyStoreManager createClient(final KeyStoreManager issuer, String keyPairAlg, String subjectRDN, final char[] password) throws Exception {
-//			final Map<Integer, String> san = Map.of(GeneralName.rfc822Name, "client1@example.com");
-//			final Extensions extensions = ExtensionUtil.extensions(ExtensionUtil.EXTENSION_KU_DIGITALSIGNATURE, ExtensionUtil.EXTENSION_EKU_CLIENT, ExtensionUtil.sanExtension(san));
-//			return KeyStoreManager.create(issuer, "CN=client+serialNumber=1", "RSA", password, password, extensions, null);
-//		}
 	}
 
 	private Connector createRedirectConnector() {
@@ -181,29 +150,11 @@ public class TlsServletWebServerFactoryConfig {
 	    return connector;
 	}
 
-    private static class MyLifecycleLogger implements LifecycleListener {
-    	private Logger logger = LoggerFactory.getLogger(MyLifecycleLogger.class);
-    	@Override
-		public void lifecycleEvent(final LifecycleEvent lifecycleEvent) {
-			this.logger.info("type={}", lifecycleEvent.getType());
-		}
-	}
-
-	public static final SecureRandom SECURE_DEFAULT = new SecureRandom();
-
-	record CertChainKey(Certificate[] certChain, PrivateKey key) {}
-
-//	final String certPem = toPem("CERTIFICATE", cert.getEncoded());
-//	final String keyPem  = toPem("PRIVATE KEY", cert.getEncoded());
-
-//	final KeyStore keyStore = KeyStore.getInstance("PKCS12", Security.getProvider("SunJSSE"));
-//	keyStore.load(null, null);
-//	keyStore.setKeyEntry("ca", keyPair.getPrivate(), "ca".toCharArray(), new Certificate[] {cert});
-
-	public static KeyStore.PrivateKeyEntry createTlsServer() throws Exception {
+	private static KeyStore.PrivateKeyEntry createTlsServer() throws Exception {
 		final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", Security.getProvider("SunRsaSign"));
 		keyPairGenerator.initialize(2048, SECURE_DEFAULT);
 
+		// create CA key pair and cert
 		final KeyPair caKeyPair = keyPairGenerator.generateKeyPair();
 		final Certificate caCert = createCert(
 			Date.from(ZonedDateTime.of(1970,  1,  1,  0,  0,  0,         0, ZoneOffset.UTC).toInstant()),
@@ -221,6 +172,7 @@ public class TlsServletWebServerFactoryConfig {
 			})
 		);
 
+		// create TLS Server key pair and cert (signed by CA private key)
 		final KeyPair serverKeyPair = keyPairGenerator.generateKeyPair();
 		final Certificate serverCert = createCert(
 			Date.from(ZonedDateTime.of(1970,  1,  1,  0,  0,  0,         0, ZoneOffset.UTC).toInstant()),
@@ -241,7 +193,7 @@ public class TlsServletWebServerFactoryConfig {
 		return new KeyStore.PrivateKeyEntry(serverKeyPair.getPrivate(), new Certificate[] {serverCert, caCert});
 	}
 
-	public static X509Certificate createCert(
+	private static X509Certificate createCert(
 		final Date       notBefore,
 		final Date       notAfter,
 		final BigInteger serialNumber,
@@ -267,7 +219,7 @@ public class TlsServletWebServerFactoryConfig {
 		return jcaX509CertificateConverter.getCertificate(x509CertificateHolder);
 	}
 
-	public static String toPem(final String type, final byte[]... payloads) {
+	private static String toPem(final String type, final byte[]... payloads) {
         final Encoder mimeEncoder = Base64.getMimeEncoder(64, "\n".getBytes());
 		final StringBuilder sb = new StringBuilder();
 		for (final byte[] payload : payloads) {
@@ -276,5 +228,13 @@ public class TlsServletWebServerFactoryConfig {
 			sb.append("\n-----END ").append(type).append("-----\n");
         }
 		return sb.toString();
+	}
+
+    private static class MyLifecycleLogger implements LifecycleListener {
+    	private Logger logger = LoggerFactory.getLogger(MyLifecycleLogger.class);
+    	@Override
+		public void lifecycleEvent(final LifecycleEvent lifecycleEvent) {
+			this.logger.info("type={}", lifecycleEvent.getType());
+		}
 	}
 }

@@ -1,9 +1,24 @@
 package com.github.justincranford.spring.config;
 
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.Provider;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Base64;
+import java.util.Base64.Encoder;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -13,7 +28,21 @@ import org.apache.catalina.LifecycleListener;
 import org.apache.catalina.connector.Connector;
 import org.apache.tomcat.util.descriptor.web.SecurityCollection;
 import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.RFC4519Style;
+import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.Extensions;
+import org.bouncycastle.asn1.x509.KeyPurposeId;
+import org.bouncycastle.asn1.x509.KeyUsage;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -27,8 +56,6 @@ import org.springframework.boot.web.server.Ssl.ClientAuth;
 import org.springframework.boot.web.servlet.server.ServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import com.github.justincranford.spring.crypto.PkiUtil;
 
 @Configuration
 public class TlsServletWebServerFactoryConfig {
@@ -88,10 +115,10 @@ public class TlsServletWebServerFactoryConfig {
 				ssl.setEnabledProtocols(PROTOCOLS_TLS13_TLS12.toArray(new String[0]));
 				ssl.setCiphers(CIPHERS_TLS13_TLS12.toArray(new String[0]));
 
-				final KeyStore.PrivateKeyEntry server = PkiUtil.createTlsServer();
-				final String serverPrivateKeyPem = PkiUtil.toPem("RSA PRIVATE KEY", PrivateKeyInfo.getInstance(server.getPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
-				final String serverCertChainPem  = PkiUtil.toPem("CERTIFICATE",     server.getCertificateChain()[0].getEncoded());
-				final String caCertChainPem      = PkiUtil.toPem("CERTIFICATE",     server.getCertificateChain()[1].getEncoded());
+				final KeyStore.PrivateKeyEntry server = createTlsServer();
+				final String serverPrivateKeyPem = toPem("RSA PRIVATE KEY", PrivateKeyInfo.getInstance(server.getPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
+				final String serverCertChainPem  = toPem("CERTIFICATE",     server.getCertificateChain()[0].getEncoded());
+				final String caCertChainPem      = toPem("CERTIFICATE",     server.getCertificateChain()[1].getEncoded());
 
 //				final KeyStoreManager ca     = this.createCa    (null, "RSA", "DC=CA",     "CaPwd".toCharArray());
 //				final KeyStoreManager server = this.createServer(ca,   "RSA", "CN=Server", "ServerPwd".toCharArray());
@@ -160,5 +187,94 @@ public class TlsServletWebServerFactoryConfig {
 		public void lifecycleEvent(final LifecycleEvent lifecycleEvent) {
 			this.logger.info("type={}", lifecycleEvent.getType());
 		}
+	}
+
+	public static final SecureRandom SECURE_DEFAULT = new SecureRandom();
+
+	record CertChainKey(Certificate[] certChain, PrivateKey key) {}
+
+//	final String certPem = toPem("CERTIFICATE", cert.getEncoded());
+//	final String keyPem  = toPem("PRIVATE KEY", cert.getEncoded());
+
+//	final KeyStore keyStore = KeyStore.getInstance("PKCS12", Security.getProvider("SunJSSE"));
+//	keyStore.load(null, null);
+//	keyStore.setKeyEntry("ca", keyPair.getPrivate(), "ca".toCharArray(), new Certificate[] {cert});
+
+	public static KeyStore.PrivateKeyEntry createTlsServer() throws Exception {
+		final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", Security.getProvider("SunRsaSign"));
+		keyPairGenerator.initialize(2048, SECURE_DEFAULT);
+
+		final KeyPair caKeyPair = keyPairGenerator.generateKeyPair();
+		final Certificate caCert = createCert(
+			Date.from(ZonedDateTime.of(1970,  1,  1,  0,  0,  0,         0, ZoneOffset.UTC).toInstant()),
+			Date.from(ZonedDateTime.of(2099, 12, 31, 23, 59, 59, 999999999, ZoneOffset.UTC).toInstant()),
+			new BigInteger(159, SECURE_DEFAULT),
+			caKeyPair.getPublic(),
+			new X500Name(RFC4519Style.INSTANCE, "DC=example.com"),
+			caKeyPair.getPrivate(),
+			new X500Name(RFC4519Style.INSTANCE, "DC=example.com"),
+			"SHA256withRSA",
+			Security.getProvider("SunRsaSign"),
+			new Extensions(new Extension[] {
+				new Extension(Extension.basicConstraints, true, new BasicConstraints(0)           .toASN1Primitive().getEncoded()),
+				new Extension(Extension.keyUsage,         true, new KeyUsage(KeyUsage.keyCertSign).toASN1Primitive().getEncoded())
+			})
+		);
+
+		final KeyPair serverKeyPair = keyPairGenerator.generateKeyPair();
+		final Certificate serverCert = createCert(
+			Date.from(ZonedDateTime.of(1970,  1,  1,  0,  0,  0,         0, ZoneOffset.UTC).toInstant()),
+			Date.from(ZonedDateTime.of(2099, 12, 31, 23, 59, 59, 999999999, ZoneOffset.UTC).toInstant()),
+			new BigInteger(159, SECURE_DEFAULT),
+			serverKeyPair.getPublic(),
+			new X500Name(RFC4519Style.INSTANCE, "CN=server,DC=example.com"),
+			caKeyPair.getPrivate(),
+			new X500Name(RFC4519Style.INSTANCE, "DC=example.com"),
+			"SHA256withRSA",
+			Security.getProvider("SunRsaSign"),
+			new Extensions(new Extension[] {
+				new Extension(Extension.keyUsage,         true,  new KeyUsage(KeyUsage.digitalSignature)            .toASN1Primitive().getEncoded()),
+				new Extension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(KeyPurposeId.id_kp_serverAuth).toASN1Primitive().getEncoded())
+			})
+		);
+
+		return new KeyStore.PrivateKeyEntry(serverKeyPair.getPrivate(), new Certificate[] {serverCert, caCert});
+	}
+
+	public static X509Certificate createCert(
+		final Date       notBefore,
+		final Date       notAfter,
+		final BigInteger serialNumber,
+		final PublicKey  subjectPublicKey,
+		final X500Name   subjectDN,
+		final PrivateKey issuerPrivateKey,
+		final X500Name   issuerDN,
+		final String     issuerSigningAlgorithm,
+		final Provider   issuerSigningProvider,
+		final Extensions extensions
+	) throws Exception {
+		final JcaX509v3CertificateBuilder jcaX509v3CertificateBuilder = new JcaX509v3CertificateBuilder(issuerDN, serialNumber, notBefore, notAfter, subjectDN, subjectPublicKey);
+		for (final ASN1ObjectIdentifier oid : extensions.getExtensionOIDs()) {
+			jcaX509v3CertificateBuilder.addExtension(extensions.getExtension(oid));
+		}
+		final JcaContentSignerBuilder jcaContentSignerBuilder = new JcaContentSignerBuilder(issuerSigningAlgorithm);
+		if (issuerSigningProvider != null) {
+			jcaContentSignerBuilder.setProvider(issuerSigningProvider);
+		}
+		final ContentSigner contentSigner = jcaContentSignerBuilder.build(issuerPrivateKey);
+		X509CertificateHolder x509CertificateHolder = jcaX509v3CertificateBuilder.build(contentSigner);
+		final JcaX509CertificateConverter jcaX509CertificateConverter = new JcaX509CertificateConverter();
+		return jcaX509CertificateConverter.getCertificate(x509CertificateHolder);
+	}
+
+	public static String toPem(final String type, final byte[]... payloads) {
+        final Encoder mimeEncoder = Base64.getMimeEncoder(64, "\n".getBytes());
+		final StringBuilder sb = new StringBuilder();
+		for (final byte[] payload : payloads) {
+			sb.append("-----BEGIN ").append(type).append("-----\n");
+			sb.append(mimeEncoder.encodeToString(payload));
+			sb.append("\n-----END ").append(type).append("-----\n");
+        }
+		return sb.toString();
 	}
 }

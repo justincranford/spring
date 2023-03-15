@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.controller.ui;
+package com.github.justincranford.spring.controller;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;

@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.controller.oauth2;
+package com.github.justincranford.spring.controller;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 

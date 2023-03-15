@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.configuration.security;
+package com.github.justincranford.spring.configuration;
 
 import java.util.Map;
 

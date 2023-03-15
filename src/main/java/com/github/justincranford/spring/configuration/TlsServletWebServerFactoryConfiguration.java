@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.configuration.web;
+package com.github.justincranford.spring.configuration;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

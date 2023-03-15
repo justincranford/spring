@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.configuration.db;
+package com.github.justincranford.spring.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

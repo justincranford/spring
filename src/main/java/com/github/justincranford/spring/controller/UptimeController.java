@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.controller.api.uptime;
+package com.github.justincranford.spring.controller;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.APPLICATION_XML_VALUE;

@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.controller.exception;
+package com.github.justincranford.spring.controller;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;

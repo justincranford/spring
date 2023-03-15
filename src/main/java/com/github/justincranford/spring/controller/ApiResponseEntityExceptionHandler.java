@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.controller.api.exception;
+package com.github.justincranford.spring.controller;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

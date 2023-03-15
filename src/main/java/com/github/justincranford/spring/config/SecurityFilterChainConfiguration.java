@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.configuration;
+package com.github.justincranford.spring.config;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;

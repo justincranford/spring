@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.model.user.ops.exception;
+package com.github.justincranford.spring.model.user;
 
 public class OpsUserNotFoundException extends RuntimeException {
 	private static final long serialVersionUID = 1L;

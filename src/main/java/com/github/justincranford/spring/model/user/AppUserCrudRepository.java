@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.model.user.app;
+package com.github.justincranford.spring.model.user;
 
 import java.util.List;
 

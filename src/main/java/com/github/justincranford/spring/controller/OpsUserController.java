@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.github.justincranford.spring.model.user.ops.OpsUser;
-import com.github.justincranford.spring.model.user.ops.OpsUserCrudRepository;
-import com.github.justincranford.spring.model.user.ops.exception.OpsUserNotFoundException;
+import com.github.justincranford.spring.model.user.OpsUser;
+import com.github.justincranford.spring.model.user.OpsUserCrudRepository;
+import com.github.justincranford.spring.model.user.OpsUserNotFoundException;
 
 @CrossOrigin(origins={"https://localhost:8443"})
 @RestController

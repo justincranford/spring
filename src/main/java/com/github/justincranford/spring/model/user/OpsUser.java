@@ -1,24 +1,22 @@
-package com.github.justincranford.spring.model.user.app;
+package com.github.justincranford.spring.model.user;
 
 import org.springframework.transaction.annotation.Transactional;
-
-import com.github.justincranford.spring.model.user.BaseUser;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
 @Transactional
 @Entity()
-@Table(name = "app_users")
-public class AppUser extends BaseUser {
+@Table(name = "ops_users")
+public class OpsUser extends BaseUser {
 
 	private static final long serialVersionUID = 1L;
 
-	public AppUser() {
+	public OpsUser() {
 		super();
 	}
 
-	public AppUser(
+	public OpsUser(
 		final String username, 
 		final String password, 
 		final String emailAddress,
@@ -35,7 +33,7 @@ public class AppUser extends BaseUser {
 	}
 
 	@Override public boolean equals(final Object o) {
-		return (o instanceof AppUser that) && super.equals(that);
+		return (o instanceof OpsUser that) && super.equals(that);
 	}
 
 	@Override public int hashCode() {

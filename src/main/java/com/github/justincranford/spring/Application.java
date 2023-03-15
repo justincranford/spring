@@ -14,9 +14,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.github.justincranford.spring.model.user.AppUserCrudRepositoryInit;
+import com.github.justincranford.spring.model.user.OpsUserCrudRepositoryInit;
 import com.github.justincranford.spring.model.user.Uptime;
-import com.github.justincranford.spring.model.user.app.AppUserCrudRepositoryInit;
-import com.github.justincranford.spring.model.user.ops.OpsUserCrudRepositoryInit;
 
 //@EnableTransactionManagement // JTA
 //@EnableJpaRepositories("com.github.justincranford.spring.model")

@@ -27,10 +27,10 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepo
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.test.context.TestPropertySource;
 
-import com.github.justincranford.spring.Application.UptimeFactory;
-import com.github.justincranford.spring.controller.api.user.ops.OpsUserController;
-import com.github.justincranford.spring.model.user.app.AppUserCrudRepository;
-import com.github.justincranford.spring.model.user.ops.OpsUserCrudRepository;
+import com.github.justincranford.spring.controller.OpsUserController;
+import com.github.justincranford.spring.model.user.OpsUserCrudRepository;
+import com.github.justincranford.spring.model.user.Uptime;
+import com.github.justincranford.spring.model.user.AppUserCrudRepository;
 import com.github.justincranford.spring.security.PasswordEncoderTestConfiguration;
 
 import io.restassured.RestAssured;
@@ -51,7 +51,7 @@ public class SpringBootTestHelper {
 	@Autowired protected Environment environment;
     @Autowired protected ServletWebServerApplicationContext servletWebServerApplicationContext;
 	@Autowired protected TestRestTemplate restTemplate;
-	@Autowired protected UptimeFactory uptimeFactory;
+	@Autowired protected Uptime.Factory uptimeFactory;
 	@Autowired protected UserDetailsService userDetailsService;
 	@Autowired protected OpsUserController opsUserController;
 //	@Autowired protected AppUserController appUserController;

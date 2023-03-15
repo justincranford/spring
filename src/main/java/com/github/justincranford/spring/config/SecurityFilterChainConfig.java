@@ -93,8 +93,8 @@ import com.nimbusds.jose.proc.SecurityContext;
 @Configuration
 @EnableWebSecurity
 //@EnableGlobalMethodSecurity(prePostEnabled = true)
-public class SecurityFilterChainConfiguration {
-	private Logger logger = LoggerFactory.getLogger(SecurityFilterChainConfiguration.class);
+public class SecurityFilterChainConfig {
+	private Logger logger = LoggerFactory.getLogger(SecurityFilterChainConfig.class);
 
 	public static final String OPS_ADMIN = "OPS_ADMIN";
 	public static final String OPS_USER_ADMIN = "OPS_USER_ADMIN";

@@ -11,7 +11,7 @@ import com.github.justincranford.spring.model.UserDetailsServiceImpl;
 
 @Configuration
 @EnableWebSecurity
-public class UserDetailsServiceConfiguration {
+public class UserDetailsServiceConfig {
 	@Bean
 	public UserDetailsService userDetailsService(
 		final OpsUserCrudRepository opsUserCrudRepository,

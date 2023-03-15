@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import com.github.justincranford.spring.crypto.PkiUtil;
 
 @Configuration
-public class TlsServletWebServerFactoryConfiguration {
+public class TlsServletWebServerFactoryConfig {
 	@Value(value="${server.port}")
     protected int serverPort;
 

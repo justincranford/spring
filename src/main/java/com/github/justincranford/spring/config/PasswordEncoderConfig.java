@@ -13,7 +13,7 @@ import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder.Secret
 
 @Configuration
 @EnableWebSecurity
-public class PasswordEncoderConfiguration {
+public class PasswordEncoderConfig {
     @Value(value="${spring.application.name}") protected String springApplicationName;
 
 	@Bean

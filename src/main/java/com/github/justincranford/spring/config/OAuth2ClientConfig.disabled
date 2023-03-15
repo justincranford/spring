@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.configuration.security;
+package com.github.justincranford.spring.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +16,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 @EnableWebSecurity
-public class OAuth2ClientConfiguration {
-	private Logger logger = LoggerFactory.getLogger(OAuth2ServerConfiguration.class);
+public class OAuth2ClientConfig {
+	private Logger logger = LoggerFactory.getLogger(OAuth2ClientConfig.class);
 
 	@Bean
 	public WebClient webClient(ClientRegistrationRepository clients, OAuth2AuthorizedClientRepository authz) {

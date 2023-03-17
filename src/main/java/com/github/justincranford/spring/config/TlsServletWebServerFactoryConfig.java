@@ -60,7 +60,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class TlsServletWebServerFactoryConfig {
 	@Value(value="${server.port}")
-    protected int serverPort;
+	protected int serverPort;
 
 	@Bean
 	public ServletWebServerFactory servletWebServerFactory(
@@ -77,30 +77,30 @@ public class TlsServletWebServerFactoryConfig {
 		factory.getTomcatProtocolHandlerCustomizers().addAll(protocolHandlerCustomizers.orderedStream().toList());
 
 		// add "http://${server.address}:80" listener to redirect to "https://${server.address}:${server.port}"
-    	factory.addAdditionalTomcatConnectors(this.createRedirectConnector());
+		factory.addAdditionalTomcatConnectors(this.createRedirectConnector());
 
-    	// add life cycle listener to log all Tomcat life cycle events
-    	factory.setContextLifecycleListeners(Stream.concat(factory.getContextLifecycleListeners().stream(), List.of(new MyLifecycleLogger()).stream()).toList());
+		// add life cycle listener to log all Tomcat life cycle events
+		factory.setContextLifecycleListeners(Stream.concat(factory.getContextLifecycleListeners().stream(), List.of(new MyLifecycleLogger()).stream()).toList());
 
-    	return factory;
+		return factory;
 	}
 
 	// create "http://${server.address}:80" listener to redirect to "https://${server.address}:${server.port}"
 	private Connector createRedirectConnector() {
-	    final Connector connector = new Connector(TomcatServletWebServerFactory.DEFAULT_PROTOCOL);	// Http11NioProtocol
-	    connector.setRejectSuspiciousURIs(true);
-	    connector.setSecure(false);
-	    connector.setScheme("http");
-	    connector.setPort(80);
-	    connector.setRedirectPort(this.serverPort);
+		final Connector connector = new Connector(TomcatServletWebServerFactory.DEFAULT_PROTOCOL);	// Http11NioProtocol
+		connector.setRejectSuspiciousURIs(true);
+		connector.setSecure(false);
+		connector.setScheme("http");
+		connector.setPort(80);
+		connector.setRedirectPort(this.serverPort);
 		connector.setProperty("bindOnInit", "false");
-	    return connector;
+		return connector;
 	}
 
 	// create life cycle listener to log all Tomcat life cycle events
-    private static class MyLifecycleLogger implements LifecycleListener {
-    	private Logger logger = LoggerFactory.getLogger(MyLifecycleLogger.class);
-    	@Override
+	private static class MyLifecycleLogger implements LifecycleListener {
+		private Logger logger = LoggerFactory.getLogger(MyLifecycleLogger.class);
+		@Override
 		public void lifecycleEvent(final LifecycleEvent lifecycleEvent) {
 			this.logger.info("type={}", lifecycleEvent.getType());
 		}
@@ -119,14 +119,14 @@ public class TlsServletWebServerFactoryConfig {
 		private static final List<String> CIPHERS_TLS13_TLS12 = Stream.concat(CIPHERS_TLS13.stream(), CIPHERS_TLS12.stream()).toList();
 
 		@Override
-	    protected void postProcessContext(final Context servletContext) {
-	        final SecurityCollection webResourceCollection = new SecurityCollection();
-	        webResourceCollection.addPattern("/*");
-	        final SecurityConstraint securityConstraint = new SecurityConstraint();
-	        securityConstraint.addCollection(webResourceCollection);
-	        securityConstraint.setUserConstraint("CONFIDENTIAL");	// "NONE", "INTEGRAL", or "CONFIDENTIAL"
-	        servletContext.addConstraint(securityConstraint);
-	    }
+		protected void postProcessContext(final Context servletContext) {
+			final SecurityCollection webResourceCollection = new SecurityCollection();
+			webResourceCollection.addPattern("/*");
+			final SecurityConstraint securityConstraint = new SecurityConstraint();
+			securityConstraint.addCollection(webResourceCollection);
+			securityConstraint.setUserConstraint("CONFIDENTIAL");	// "NONE", "INTEGRAL", or "CONFIDENTIAL"
+			servletContext.addConstraint(securityConstraint);
+		}
 
 		@Override
 		public void customizeConnector(final Connector connector) {
@@ -136,18 +136,18 @@ public class TlsServletWebServerFactoryConfig {
 
 				// Encode server privateKey, server cert, and root CA cert as PEM
 				final String serverPrivateKeyPem = toPem("RSA PRIVATE KEY", PrivateKeyInfo.getInstance(server.getPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
-				final String serverCertChainPem  = toPem("CERTIFICATE",     server.getCertificateChain()[0].getEncoded());
-				final String caCertChainPem      = toPem("CERTIFICATE",     server.getCertificateChain()[1].getEncoded());
+				final String serverCertChainPem  = toPem("CERTIFICATE",	 server.getCertificateChain()[0].getEncoded());
+				final String caCertChainPem	  = toPem("CERTIFICATE",	 server.getCertificateChain()[1].getEncoded());
 
 				// Log server privateKey, server cert, and root CA cert as PEM
-				this.logger.info("Server private key:\n{}\n",       serverPrivateKeyPem);
+				this.logger.info("Server private key:\n{}\n",	   serverPrivateKeyPem);
 				this.logger.info("Server certificate chain:\n{}\n", serverCertChainPem);
-				this.logger.info("CA certificate chain:\n{}\n",     caCertChainPem);
+				this.logger.info("CA certificate chain:\n{}\n",	 caCertChainPem);
 
 				// Save server privateKey, server cert, and root CA cert as PEM to temp files (JVM shutdown hooks delete them)
-				final Path caCertificateChainPath     = Files.writeString(Files.createTempFile("ca",     ".crt"), caCertChainPem,      StandardOpenOption.CREATE);
+				final Path caCertificateChainPath	 = Files.writeString(Files.createTempFile("ca",	 ".crt"), caCertChainPem,	  StandardOpenOption.CREATE);
 				final Path serverCertificateChainPath = Files.writeString(Files.createTempFile("server", ".crt"), serverCertChainPem,  StandardOpenOption.CREATE);
-				final Path serverPrivateKeyPath       = Files.writeString(Files.createTempFile("server", ".p8"),  serverPrivateKeyPem, StandardOpenOption.CREATE);
+				final Path serverPrivateKeyPath	   = Files.writeString(Files.createTempFile("server", ".p8"),  serverPrivateKeyPem, StandardOpenOption.CREATE);
 
 				// Replace server.ssl.* properties in memory, pointing to the temp PEM files
 				final Ssl ssl = new Ssl();
@@ -175,7 +175,7 @@ public class TlsServletWebServerFactoryConfig {
 			// create root CA: key pair, and self-signed certificate containing root CA related extensions
 			final KeyPair caKeyPair = keyPairGenerator.generateKeyPair();
 			final Certificate caCert = createCert(
-				Date.from(ZonedDateTime.of(1970,  1,  1,  0,  0,  0,         0, ZoneOffset.UTC).toInstant()),
+				Date.from(ZonedDateTime.of(1970,  1,  1,  0,  0,  0,		 0, ZoneOffset.UTC).toInstant()),
 				Date.from(ZonedDateTime.of(2099, 12, 31, 23, 59, 59, 999999999, ZoneOffset.UTC).toInstant()),
 				new BigInteger(159, secureRandom),
 				caKeyPair.getPublic(),
@@ -185,15 +185,15 @@ public class TlsServletWebServerFactoryConfig {
 				"SHA256withRSA",
 				Security.getProvider("SunRsaSign"),
 				new Extensions(new Extension[] {
-					new Extension(Extension.basicConstraints, true, new BasicConstraints(0)           .toASN1Primitive().getEncoded()),
-					new Extension(Extension.keyUsage,         true, new KeyUsage(KeyUsage.keyCertSign).toASN1Primitive().getEncoded())
+					new Extension(Extension.basicConstraints, true, new BasicConstraints(0)		   .toASN1Primitive().getEncoded()),
+					new Extension(Extension.keyUsage,		 true, new KeyUsage(KeyUsage.keyCertSign).toASN1Primitive().getEncoded())
 				})
 			);
 
 			// create TLS Server: key pair, and CA-signed certificate containing TLS server related extensions
 			final KeyPair serverKeyPair = keyPairGenerator.generateKeyPair();
 			final Certificate serverCert = createCert(
-				Date.from(ZonedDateTime.of(1970,  1,  1,  0,  0,  0,         0, ZoneOffset.UTC).toInstant()),
+				Date.from(ZonedDateTime.of(1970,  1,  1,  0,  0,  0,		 0, ZoneOffset.UTC).toInstant()),
 				Date.from(ZonedDateTime.of(2099, 12, 31, 23, 59, 59, 999999999, ZoneOffset.UTC).toInstant()),
 				new BigInteger(159, secureRandom),
 				serverKeyPair.getPublic(),
@@ -203,7 +203,7 @@ public class TlsServletWebServerFactoryConfig {
 				"SHA256withRSA",
 				Security.getProvider("SunRsaSign"),
 				new Extensions(new Extension[] {
-					new Extension(Extension.keyUsage,         true,  new KeyUsage(KeyUsage.digitalSignature)            .toASN1Primitive().getEncoded()),
+					new Extension(Extension.keyUsage,		 true,  new KeyUsage(KeyUsage.digitalSignature)			.toASN1Primitive().getEncoded()),
 					new Extension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(KeyPurposeId.id_kp_serverAuth).toASN1Primitive().getEncoded())
 				})
 			);
@@ -213,14 +213,14 @@ public class TlsServletWebServerFactoryConfig {
 
 		// general purpose code for signing any X509Certificate (e.g. root CA, sub CA, end entity CA, etc)
 		private static X509Certificate createCert(
-			final Date       notBefore,
-			final Date       notAfter,
+			final Date	   notBefore,
+			final Date	   notAfter,
 			final BigInteger serialNumber,
 			final PublicKey  subjectPublicKey,
 			final X500Name   subjectDN,
 			final PrivateKey issuerPrivateKey,
 			final X500Name   issuerDN,
-			final String     issuerSigningAlgorithm,
+			final String	 issuerSigningAlgorithm,
 			final Provider   issuerSigningProvider,
 			final Extensions extensions
 		) throws Exception {

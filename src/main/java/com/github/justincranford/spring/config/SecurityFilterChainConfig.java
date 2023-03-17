@@ -118,7 +118,12 @@ public class SecurityFilterChainConfig {
     //    org.springframework.security.web.access.intercept.AuthorizationFilter
     @Bean
     @Order(2)
-    public SecurityFilterChain defaultSecurityFilterChain(final HttpSecurity http, final PasswordEncoder passwordEncoder, final ApplicationEventPublisher applicationEventPublisher) throws Exception {
+    public SecurityFilterChain defaultSecurityFilterChain(
+        final HttpSecurity http,
+        final PasswordEncoder passwordEncoder,
+        final ApplicationEventPublisher applicationEventPublisher,
+        final ClientRegistrationRepository clientRegistrationRepository
+    ) throws Exception {
         applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
 
         // https://docs.spring.io/spring-authorization-server/docs/current/reference/html/configuration-model.html
@@ -151,6 +156,10 @@ public class SecurityFilterChainConfig {
                     this.logger.error(e.getMessage(), e);
                 }
             })
+            .authorizationEndpoint()
+                .authorizationRequestResolver(
+                    oauth2AuthorizationRequestResolverWithPkce(clientRegistrationRepository)
+                )
         .and().logout().deleteCookies("JSESSIONID").invalidateHttpSession(true).permitAll()
         .and().csrf().requireCsrfProtectionMatcher(new AntPathRequestMatcher("/ui/**")).csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and().csrf().disable()
         .apply(oauth2AuthorizationServerConfigurer)
@@ -307,6 +316,13 @@ public class SecurityFilterChainConfig {
         final DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
         accessTokenResponseClient.setRestOperations(restTemplate()); 
         return accessTokenResponseClient;
+    }
+
+    @Bean
+    public OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolverWithPkce(final ClientRegistrationRepository clientRegistrationRepository) throws Exception {
+        final OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolver = new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository, OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI);
+        oauth2AuthorizationRequestResolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
+        return oauth2AuthorizationRequestResolver;
     }
 
 //    TODO: Add OIDC support in the future?

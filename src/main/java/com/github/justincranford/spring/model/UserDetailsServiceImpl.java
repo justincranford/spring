@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 //public class UserDetailsServiceImpl implements UserDetailsManager, UserDetailsPasswordService {
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-	Logger logger = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
+	private Logger logger = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
 
 	private OpsUserCrudRepository opsUserCrudRepository;
 	private AppUserCrudRepository appUserCrudRepository;
@@ -19,30 +19,18 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 	public UserDetailsServiceImpl(final OpsUserCrudRepository opsUserCrudRepository, final AppUserCrudRepository appUserCrudRepository) {
 		this.opsUserCrudRepository = opsUserCrudRepository;
 		this.appUserCrudRepository = appUserCrudRepository;
-//		this.printUsers("All Operations Users", this.opsUserCrudRepository.findAll());
-//		this.printUsers("All Application Users", this.appUserCrudRepository.findAll());
 	}
 
-	private void printUsers(final String message, final List<? extends BaseUser> baseUsers) {
-		assert baseUsers != null;
-		final StringBuilder sb = new StringBuilder(message).append("[").append(baseUsers.size()).append("]:\n");
-		for (final BaseUser baseUser : baseUsers) {
-			sb.append(baseUser).append('\n');
-		}
-		logger.info(sb.toString());
-	}
+    // UserDetailsService
 
 	@Override
 	public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
-//		this.printUsers("All Operations Users", this.opsUserCrudRepository.findAll());
-//		this.printUsers("All Application Users", this.appUserCrudRepository.findAll());
-
 		final List<? extends BaseUser> opsUsers = this.opsUserCrudRepository.findByUsername(username);
 		this.printUsers("Found Operations users for username [" + username + "]", opsUsers);
 		assert opsUsers != null;
 		assert (opsUsers.size() == 0) || (opsUsers.size() == 1);
 		if (opsUsers.isEmpty() == false) {
-			logger.info("Found Operations user for username [{}]", username);
+			logger.debug("Found Operations user for username [{}]", username);
 			return opsUsers.get(0);
 		}
 
@@ -51,12 +39,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 		assert appUsers != null;
 		assert (appUsers.size() == 0) || (appUsers.size() == 1);
 		if (appUsers.isEmpty() == false) {
-			logger.info("Found Application user for username [{}]", username);
+			logger.debug("Found Application user for username [{}]", username);
 			return appUsers.get(0);
 		}
 
 		throw new UsernameNotFoundException("Username " + username + " not found");
 	}
+
+    // UserDetailsManager
 
 //	@Override
 //	public boolean userExists(final String username) {
@@ -79,12 +69,25 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 //	}
 //
 //	@Override
-//	public UserDetails updatePassword(final UserDetails user, final String newPassword) {
-//		throw new UsernameNotFoundException("Not supported");
-//	}
-//
-//	@Override
 //	public void changePassword(final String oldPassword, final String newPassword) {
 //		throw new UsernameNotFoundException("Not supported");
 //	}
+
+    // UserDetailsPasswordService
+
+//	@Override
+//	public UserDetails updatePassword(final UserDetails user, final String newPassword) {
+//		throw new UsernameNotFoundException("Not supported");
+//	}
+
+    // Helper
+
+	private void printUsers(final String message, final List<? extends BaseUser> baseUsers) {
+		assert baseUsers != null;
+		final StringBuilder sb = new StringBuilder(message).append("[").append(baseUsers.size()).append("]:\n");
+		for (final BaseUser baseUser : baseUsers) {
+			sb.append(baseUser).append('\n');
+		}
+		logger.trace(sb.toString());
+	}
 }

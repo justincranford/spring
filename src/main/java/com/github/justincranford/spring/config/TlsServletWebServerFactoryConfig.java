@@ -58,6 +58,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@EnableWebSecurity
 public class TlsServletWebServerFactoryConfig {
     @Value(value="${server.port}")
     protected int serverPort;

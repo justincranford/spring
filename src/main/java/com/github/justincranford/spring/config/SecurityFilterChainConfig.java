@@ -220,7 +220,7 @@ public class SecurityFilterChainConfig {
             .redirectUri("https://127.0.0.1:8443/login/oauth2/code/internal-oauth2-login")
 //          .scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE)
             .scope("message.read").scope("message.write")
-//          .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+//          .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build()) // TODO jwkSetUrl, isRequireProofKey
             .tokenSettings(
                 TokenSettings.builder()                              // Defaults below:
                 .authorizationCodeTimeToLive(Duration.ofMinutes(2))  // Duration.ofMinutes(5)

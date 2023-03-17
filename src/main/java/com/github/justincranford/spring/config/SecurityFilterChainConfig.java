@@ -122,7 +122,8 @@ public class SecurityFilterChainConfig {
         final HttpSecurity http,
         final PasswordEncoder passwordEncoder,
         final ApplicationEventPublisher applicationEventPublisher,
-        final ClientRegistrationRepository clientRegistrationRepository
+        final OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> oauth2AccessTokenResponseClient,
+        final OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolverWithPkce
     ) throws Exception {
         applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
 
@@ -151,14 +152,14 @@ public class SecurityFilterChainConfig {
         .and().oauth2Login()
             .tokenEndpoint(tokenEndpoint -> {
                 try {
-                    tokenEndpoint.accessTokenResponseClient(accessTokenResponseClient());
+                    tokenEndpoint.accessTokenResponseClient(oauth2AccessTokenResponseClient);
                 } catch (Exception e) {
                     this.logger.error(e.getMessage(), e);
                 }
             })
             .authorizationEndpoint()
                 .authorizationRequestResolver(
-                    oauth2AuthorizationRequestResolverWithPkce(clientRegistrationRepository)
+                    oauth2AuthorizationRequestResolverWithPkce(oauth2AuthorizationRequestResolverWithPkce)
                 )
         .and().logout().deleteCookies("JSESSIONID").invalidateHttpSession(true).permitAll()
         .and().csrf().requireCsrfProtectionMatcher(new AntPathRequestMatcher("/ui/**")).csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and().csrf().disable()

@@ -10,7 +10,6 @@ import com.github.justincranford.spring.model.OpsUserCrudRepository;
 import com.github.justincranford.spring.model.UserDetailsServiceImpl;
 
 @Configuration
-@EnableWebSecurity
 public class UserDetailsServiceConfig {
 	@Bean
 	public UserDetailsService userDetailsService(

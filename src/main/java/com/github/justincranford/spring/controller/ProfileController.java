@@ -24,12 +24,12 @@ import net.minidev.json.JSONObject;
 @CrossOrigin(origins={"https://localhost:8443"})
 @RestController
 @RequestMapping(path="/api", produces={APPLICATION_JSON_VALUE})
-public class ProfileController {
-	private Logger logger = LoggerFactory.getLogger(ProfileController.class);
+public class SelfController {
+	private Logger logger = LoggerFactory.getLogger(SelfController.class);
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	@GetMapping(path = "/profile1")
+	@GetMapping(path = "/self1")
 	public String getBuildInUser(final Principal principal) {
 		// UsernamePasswordAuthenticationToken > AbstractAuthenticationToken > Authentication+CredentialsContainer > Principal
 		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -43,7 +43,7 @@ public class ProfileController {
 			)
 		);
 	}
-	@GetMapping(path = "/profile2")
+	@GetMapping(path = "/self2")
 	public String getOAuth2User(@AuthenticationPrincipal OAuth2User principal) {
 		if (principal == null) {
 			throw new UsernameNotFoundException("OAuth2User not found");

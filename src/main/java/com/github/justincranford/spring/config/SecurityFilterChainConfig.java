@@ -240,7 +240,7 @@ public class SecurityFilterChainConfig {
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
 //      return AuthorizationServerSettings.builder().build();
-        return AuthorizationServerSettings.builder()
+        return AuthorizationServerSettings.builder() // TODO: Issuer URL?
             .authorizationEndpoint("/oauth2/authorize")
             .tokenEndpoint("/oauth2/token")
             .jwkSetEndpoint("/oauth2/jwks")

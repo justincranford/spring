@@ -25,6 +25,7 @@ import net.minidev.json.JSONObject;
 @RestController
 @RequestMapping(path="/api", produces={APPLICATION_JSON_VALUE})
 public class SelfController {
+	@SuppressWarnings("unused")
 	private Logger logger = LoggerFactory.getLogger(SelfController.class);
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////

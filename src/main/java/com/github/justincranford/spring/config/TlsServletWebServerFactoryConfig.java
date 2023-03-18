@@ -56,6 +56,7 @@ import org.springframework.boot.web.server.Ssl.ClientAuth;
 import org.springframework.boot.web.servlet.server.ServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
 @Configuration
 @EnableWebSecurity
@@ -117,7 +118,7 @@ public class TlsServletWebServerFactoryConfig {
         private static final List<String> PROTOCOLS_TLS13_TLS12 = Stream.concat(PROTOCOLS_TLS13_ONLY.stream(), PROTOCOLS_TLS12_ONLY.stream()).toList();
         private static final List<String> CIPHERS_TLS13_ONLY = List.of("TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_256_GCM_SHA384", "TLS_AES_128_GCM_SHA256");
         private static final List<String> CIPHERS_TLS12_ONLY = List.of("ECDHE-ECDSA-CHACHA20-POLY1305", "ECDHE-RSA-CHACHA20-POLY1305", "ECDHE-ECDSA-AES256-GCM-SHA384", "ECDHE-RSA-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-RSA-AES128-GCM-SHA256", "DHE-RSA-AES256-GCM-SHA384", "DHE-RSA-AES128-GCM-SHA256");
-        private static final List<String> CIPHERS_TLS13_TLS12 = Stream.concat(CIPHERS_TLS13.stream(), CIPHERS_TLS12.stream()).toList();
+        private static final List<String> CIPHERS_TLS13_TLS12 = Stream.concat(CIPHERS_TLS13_ONLY.stream(), CIPHERS_TLS12_ONLY.stream()).toList();
 
         @Override
         protected void postProcessContext(final Context servletContext) {

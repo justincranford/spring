@@ -22,6 +22,7 @@ import org.springframework.test.context.junit.jupiter.EnabledIf;
 import com.github.justincranford.spring.SpringBootTestHelper;
 
 public class TestOauth2Config extends SpringBootTestHelper {
+	@SuppressWarnings("unused")
 	private Logger logger = LoggerFactory.getLogger(TestOauth2Config.class);
 
 	@BeforeEach

@@ -22,10 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(path="/api/oauth2", produces={APPLICATION_JSON_VALUE})
 public class OAuth2Controller {
+	@SuppressWarnings("unused")
 	private Logger logger = LoggerFactory.getLogger(OAuth2Controller.class);
 
 	@Autowired private ClientRegistrationRepository     clientRegistrationRepository;		// InMemoryReactiveClientRegistrationRepository
 	@Autowired private OAuth2AuthorizedClientService    oauth2AuthorizedClientService;		// InMemoryReactiveOAuth2AuthorizedClientService
+	@SuppressWarnings("unused")
 	@Autowired private OAuth2AuthorizedClientRepository oauth2AuthorizedClientRepository;
 //	@Autowired private OAuth2AuthorizedClientManager    oauth2AuthorizedClientManager;
 

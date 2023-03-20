@@ -22,6 +22,7 @@ import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.TrustAllStrategy;
 import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.apache.hc.core5.util.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -32,6 +33,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.GrantedAuthority;
@@ -66,6 +68,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OidcUserInfoEndpointConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
@@ -126,6 +129,10 @@ public class SecurityFilterChainConfig {
     ) throws Exception {
         applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
 
+//    	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+//    	http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+//    	http.apply(authorizationServerConfigurer);
+
         // https://docs.spring.io/spring-authorization-server/docs/current/reference/html/configuration-model.html
         final OAuth2AuthorizationServerConfigurer oauth2AuthorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         oauth2AuthorizationServerConfigurer.clientAuthentication(clientAuthentication ->
@@ -138,9 +145,24 @@ public class SecurityFilterChainConfig {
                     }
                 )
             )
-        );
+        )
+		.oidc(oidc -> Customizer.withDefaults())
+		;
+//			.userInfoEndpoint(userInfoEndpoint ->
+//				userInfoEndpoint
+//					.userInfoRequestConverter(userInfoRequestConverter) 
+//					.userInfoRequestConverters(userInfoRequestConvertersConsumer) 
+//					.authenticationProvider(authenticationProvider) 
+//					.authenticationProviders(authenticationProvidersConsumer) 
+//					.userInfoResponseHandler(userInfoResponseHandler) 
+//					.errorResponseHandler(errorResponseHandler) 
+//					.userInfoMapper(userInfoMapper) 
+//			)
+//		);
+    	http.apply(oauth2AuthorizationServerConfigurer);
 
         final DefaultSecurityFilterChain build = http
+//        	.addFilterBefore(MyCustomLoggingFilter(), WebAsyncManagerIntegrationFilter::class.java)
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(PathRequest.toH2Console()).hasAnyAuthority(OPS_ADMIN, APP_ADMIN) // Default path: /h2-console
             .requestMatchers("/api/uptime", "/api/profile").hasAnyRole(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN, APP_ADMIN, APP_USER, OAUTH2_USER, OIDC_USER)
             .requestMatchers("/api/ops/**", "/api/app/**").hasAnyRole(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN)
@@ -163,10 +185,17 @@ public class SecurityFilterChainConfig {
 //          .authorizationRequestResolver(
 //              oauth2AuthorizationRequestResolverWithPkce(oauth2AuthorizationRequestResolverWithPkce)
 //          )
+//            .userInfoEndpoint(userInfoEndpoint -> {
+//            	try {
+//					userInfoEndpoint.userService(this.oauth2UserService());
+//				} catch (Exception e) {
+//                    this.logger.error(e.getMessage(), e);
+//				}
+//            })
         .and().logout().deleteCookies("JSESSIONID").invalidateHttpSession(true).permitAll()
         .and().csrf().requireCsrfProtectionMatcher(new AntPathRequestMatcher("/ui/**")).csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and().csrf().disable()
-        .apply(oauth2AuthorizationServerConfigurer)
-        .and()
+//        .apply(oauth2AuthorizationServerConfigurer)
+//        .and()
         .build();
 
         applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
@@ -250,7 +279,7 @@ public class SecurityFilterChainConfig {
             .tokenRevocationEndpoint("/oauth2/revoke")
             .tokenIntrospectionEndpoint("/oauth2/introspect")
 //          .oidcClientRegistrationEndpoint("/connect/register")
-//          .oidcUserInfoEndpoint("/userinfo")
+            .oidcUserInfoEndpoint("/userinfo")
             .build();
     }
 
@@ -272,17 +301,7 @@ public class SecurityFilterChainConfig {
     public OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService() throws Exception {
         final DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
         delegate.setRestOperations(restTemplate());
-        return request -> {
-            final OAuth2User user = delegate.loadUser(request);
-//          final String login = user.getAttribute("login");
-//          this.logger.info("OAuth2 login: {}", login);
-            final OAuth2AccessToken accessToken = request.getAccessToken();
-            final Set<GrantedAuthority> authorities = new LinkedHashSet<>();
-            for (String authority : accessToken.getScopes()) {
-                authorities.add(new SimpleGrantedAuthority("SCOPE_" + authority));
-            }
-            return user;
-        };
+        return request -> delegate.loadUser(request);
     }
 
     // Used implicitly and directly as HTTPS client for various API calls
@@ -300,6 +319,9 @@ public class SecurityFilterChainConfig {
         );
         final HttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create()
             .setSSLSocketFactory(sslConnectionSocketFactory)
+        	.setMaxConnTotal(25) // default: 25
+        	.setMaxConnPerRoute(5) // default: 5
+        	.setConnectionTimeToLive(TimeValue.ofMinutes(10)) // default: -1 milliseconds
             .build();
         final CloseableHttpClient httpClient = HttpClientBuilder
             .create()

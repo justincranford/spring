@@ -131,7 +131,7 @@ public class SecurityFilterChainConfig {
 //        );
         http.apply(oauth2AuthorizationServerConfigurer);
 
-        final HttpSecurity build = http
+        final HttpSecurity builder = http
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(PathRequest.toH2Console()).hasAnyAuthority(OPS_ADMIN, APP_ADMIN) // Default path: /h2-console
             .requestMatchers("/api/uptime", "/api/profile").hasAnyRole(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN, APP_ADMIN, APP_USER, OAUTH2_USER, OIDC_USER)
             .requestMatchers("/api/ops/**", "/api/app/**").hasAnyRole(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN)
@@ -165,7 +165,7 @@ public class SecurityFilterChainConfig {
         .and().csrf().requireCsrfProtectionMatcher(new AntPathRequestMatcher("/ui/**")).csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and().csrf().disable()
         ;
 
-        final DefaultSecurityFilterChain defaultSecurityFilterChain = http.build();
+        final DefaultSecurityFilterChain defaultSecurityFilterChain = builder.build();
         applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
         return defaultSecurityFilterChain;
     }

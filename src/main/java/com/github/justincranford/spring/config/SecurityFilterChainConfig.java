@@ -8,8 +8,6 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.net.ssl.SSLContext;
@@ -36,8 +34,6 @@ import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,10 +44,8 @@ import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorH
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
@@ -68,7 +62,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OidcUserInfoEndpointConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
@@ -100,26 +93,7 @@ public class SecurityFilterChainConfig {
     public static final String OAUTH2_USER = "OAUTH2_USER";
     public static final String OIDC_USER = "OIDC_USER";
 
-    /////// Interesting filters programmatically configured by Spring using the configuration below
-    //    org.springframework.security.web.session.DisableEncodeUrlFilter
-    //    org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter
-    //    org.springframework.security.web.context.SecurityContextHolderFilter
-    //    org.springframework.security.web.header.HeaderWriterFilter
-    //    org.springframework.security.web.authentication.logout.LogoutFilter
-    //    org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter
-    //    org.springframework.security.web.authentication.preauth.x509.X509AuthenticationFilter
-    //    org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter
-    //    org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-    //    org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter
-    //    org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter
-    //    org.springframework.security.web.authentication.www.BasicAuthenticationFilter
-    //    org.springframework.security.web.savedrequest.RequestCacheAwareFilter
-    //    org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter
-    //    org.springframework.security.web.authentication.AnonymousAuthenticationFilter
-    //    org.springframework.security.web.access.ExceptionTranslationFilter
-    //    org.springframework.security.web.access.intercept.AuthorizationFilter
     @Bean
-    @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(
         final HttpSecurity http,
         final PasswordEncoder passwordEncoder,
@@ -128,10 +102,6 @@ public class SecurityFilterChainConfig {
 //        final OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolverWithPkce
     ) throws Exception {
         applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
-
-//    	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
-//    	http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
-//    	http.apply(authorizationServerConfigurer);
 
         // https://docs.spring.io/spring-authorization-server/docs/current/reference/html/configuration-model.html
         final OAuth2AuthorizationServerConfigurer oauth2AuthorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
@@ -146,23 +116,22 @@ public class SecurityFilterChainConfig {
                 )
             )
         )
-		.oidc(oidc -> Customizer.withDefaults())
-		;
-//			.userInfoEndpoint(userInfoEndpoint ->
-//				userInfoEndpoint
-//					.userInfoRequestConverter(userInfoRequestConverter) 
-//					.userInfoRequestConverters(userInfoRequestConvertersConsumer) 
-//					.authenticationProvider(authenticationProvider) 
-//					.authenticationProviders(authenticationProvidersConsumer) 
-//					.userInfoResponseHandler(userInfoResponseHandler) 
-//					.errorResponseHandler(errorResponseHandler) 
-//					.userInfoMapper(userInfoMapper) 
-//			)
-//		);
-    	http.apply(oauth2AuthorizationServerConfigurer);
+        .oidc(oidc -> Customizer.withDefaults())
+        ;
+//            .userInfoEndpoint(userInfoEndpoint ->
+//                userInfoEndpoint
+//                    .userInfoRequestConverter(userInfoRequestConverter) 
+//                    .userInfoRequestConverters(userInfoRequestConvertersConsumer) 
+//                    .authenticationProvider(authenticationProvider) 
+//                    .authenticationProviders(authenticationProvidersConsumer) 
+//                    .userInfoResponseHandler(userInfoResponseHandler) 
+//                    .errorResponseHandler(errorResponseHandler) 
+//                    .userInfoMapper(userInfoMapper) 
+//            )
+//        );
+        http.apply(oauth2AuthorizationServerConfigurer);
 
-        final DefaultSecurityFilterChain build = http
-//        	.addFilterBefore(MyCustomLoggingFilter(), WebAsyncManagerIntegrationFilter::class.java)
+        final HttpSecurity build = http
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(PathRequest.toH2Console()).hasAnyAuthority(OPS_ADMIN, APP_ADMIN) // Default path: /h2-console
             .requestMatchers("/api/uptime", "/api/profile").hasAnyRole(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN, APP_ADMIN, APP_USER, OAUTH2_USER, OIDC_USER)
             .requestMatchers("/api/ops/**", "/api/app/**").hasAnyRole(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN)
@@ -185,21 +154,20 @@ public class SecurityFilterChainConfig {
 //          .authorizationRequestResolver(
 //              oauth2AuthorizationRequestResolverWithPkce(oauth2AuthorizationRequestResolverWithPkce)
 //          )
-//            .userInfoEndpoint(userInfoEndpoint -> {
-//            	try {
-//					userInfoEndpoint.userService(this.oauth2UserService());
-//				} catch (Exception e) {
-//                    this.logger.error(e.getMessage(), e);
-//				}
-//            })
+//          .userInfoEndpoint(userInfoEndpoint -> {
+//              try {
+//                  userInfoEndpoint.userService(this.oauth2UserService());
+//              } catch (Exception e) {
+//                  this.logger.error(e.getMessage(), e);
+//              }
+//          })
         .and().logout().deleteCookies("JSESSIONID").invalidateHttpSession(true).permitAll()
         .and().csrf().requireCsrfProtectionMatcher(new AntPathRequestMatcher("/ui/**")).csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and().csrf().disable()
-//        .apply(oauth2AuthorizationServerConfigurer)
-//        .and()
-        .build();
+        ;
 
+        final DefaultSecurityFilterChain defaultSecurityFilterChain = http.build();
         applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
-        return build;
+        return defaultSecurityFilterChain;
     }
 
     // spring security core
@@ -319,9 +287,9 @@ public class SecurityFilterChainConfig {
         );
         final HttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create()
             .setSSLSocketFactory(sslConnectionSocketFactory)
-        	.setMaxConnTotal(25) // default: 25
-        	.setMaxConnPerRoute(5) // default: 5
-        	.setConnectionTimeToLive(TimeValue.ofMinutes(10)) // default: -1 milliseconds
+            .setMaxConnTotal(25) // default: 25
+            .setMaxConnPerRoute(5) // default: 5
+            .setConnectionTimeToLive(TimeValue.ofMinutes(10)) // default: -1 milliseconds
             .build();
         final CloseableHttpClient httpClient = HttpClientBuilder
             .create()

@@ -31,7 +31,6 @@ import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.config.Customizer;
@@ -90,14 +89,14 @@ import com.nimbusds.jose.proc.SecurityContext;
 public class SecurityFilterChainConfig {
     private Logger logger = LoggerFactory.getLogger(SecurityFilterChainConfig.class);
 
-    public static final String OPS_ADMIN = "OPS_ADMIN";
-    public static final String OPS_USER_ADMIN = "OPS_USER_ADMIN";
-    public static final String OPS_USER = "OPS_USER";
-    public static final String APP_ADMIN = "APP_ADMIN";
-    public static final String APP_USER_ADMIN = "APP_USER_ADMIN";
-    public static final String APP_USER = "APP_USER";
-    public static final String OAUTH2_USER = "OAUTH2_USER";
-    public static final String OIDC_USER = "OIDC_USER";
+    public static final String ROLE_OPS_ADMIN      = "ROLE_OPS_ADMIN";
+    public static final String ROLE_OPS_USER_ADMIN = "ROLE_OPS_USER_ADMIN";
+    public static final String ROLE_OPS_USER       = "ROLE_OPS_USER";
+    public static final String ROLE_APP_ADMIN      = "ROLE_APP_ADMIN";
+    public static final String ROLE_APP_USER_ADMIN = "ROLE_APP_USER_ADMIN";
+    public static final String ROLE_APP_USER       = "ROLE_APP_USER";
+    public static final String OAUTH2_USER         = "OAUTH2_USER";
+    public static final String OIDC_USER           = "OIDC_USER";
 
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(
@@ -139,9 +138,10 @@ public class SecurityFilterChainConfig {
         http.apply(oauth2AuthorizationServerConfigurer);
 
         final HttpSecurity builder = http
-            .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(PathRequest.toH2Console()).hasAnyAuthority(OPS_ADMIN, APP_ADMIN) // Default path: /h2-console
-            .requestMatchers("/api/uptime", "/api/profile").hasAnyRole(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN, APP_ADMIN, APP_USER, OAUTH2_USER, OIDC_USER)
-            .requestMatchers("/api/ops/**", "/api/app/**").hasAnyRole(OPS_ADMIN, OPS_USER, OPS_USER_ADMIN)
+            .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(PathRequest.toH2Console()).hasAnyAuthority(ROLE_OPS_ADMIN, ROLE_APP_ADMIN) // Default path: /h2-console
+            .requestMatchers("/api/uptime", "/api/profile").hasAnyAuthority(ROLE_OPS_ADMIN, ROLE_OPS_USER, ROLE_OPS_USER_ADMIN, ROLE_APP_ADMIN, ROLE_APP_USER_ADMIN, ROLE_APP_USER, OAUTH2_USER, OIDC_USER)
+            .requestMatchers("/api/ops/**").hasAnyAuthority(ROLE_OPS_ADMIN, ROLE_OPS_USER, ROLE_OPS_USER_ADMIN)
+            .requestMatchers("/api/app/**").hasAnyAuthority(ROLE_APP_ADMIN, ROLE_APP_USER_ADMIN, ROLE_APP_USER, OAUTH2_USER, OIDC_USER)
             .requestMatchers("/", "/index", "/login", "/error").permitAll().anyRequest().authenticated())
         .formLogin().permitAll()
 //      .and().x509().subjectPrincipalRegex("CN=(.*?)(?:,|$)") // "CN=(.*?),"

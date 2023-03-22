@@ -8,10 +8,14 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.net.ssl.SSLContext;
 
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
@@ -27,8 +31,7 @@ import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.config.Customizer;
@@ -41,15 +44,19 @@ import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationC
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
@@ -60,7 +67,6 @@ import org.springframework.security.oauth2.server.authorization.authentication.C
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
@@ -98,14 +104,15 @@ public class SecurityFilterChainConfig {
         final HttpSecurity http,
         final PasswordEncoder passwordEncoder,
         final ApplicationEventPublisher applicationEventPublisher,
-        final OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> oauth2AccessTokenResponseClient
+        final OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> oauth2AccessTokenResponseClient,
+        final OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService
 //        final OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolverWithPkce
     ) throws Exception {
         applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
 
         // https://docs.spring.io/spring-authorization-server/docs/current/reference/html/configuration-model.html
-        final OAuth2AuthorizationServerConfigurer oauth2AuthorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
-        oauth2AuthorizationServerConfigurer.clientAuthentication(clientAuthentication ->
+        final OAuth2AuthorizationServerConfigurer oauth2AuthorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer()
+        .clientAuthentication(clientAuthentication ->
             clientAuthentication.authenticationProviders(
                 (authenticationProviders) -> authenticationProviders.forEach(
                     (authenticationProvider) -> {
@@ -154,13 +161,13 @@ public class SecurityFilterChainConfig {
 //          .authorizationRequestResolver(
 //              oauth2AuthorizationRequestResolverWithPkce(oauth2AuthorizationRequestResolverWithPkce)
 //          )
-//          .userInfoEndpoint(userInfoEndpoint -> {
-//              try {
-//                  userInfoEndpoint.userService(this.oauth2UserService());
-//              } catch (Exception e) {
-//                  this.logger.error(e.getMessage(), e);
-//              }
-//          })
+            .userInfoEndpoint(userInfoEndpoint -> {
+                try {
+                    userInfoEndpoint.userService(oauth2UserService);
+                } catch (Exception e) {
+                    this.logger.error(e.getMessage(), e);
+                }
+            })
         .and().logout().deleteCookies("JSESSIONID").invalidateHttpSession(true).permitAll()
         .and().csrf().requireCsrfProtectionMatcher(new AntPathRequestMatcher("/ui/**")).csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and().csrf().disable()
         ;
@@ -191,17 +198,62 @@ public class SecurityFilterChainConfig {
             final KeyPair keyPair = keyPairGenerator.generateKeyPair();
             final RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
             final RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-            final RSAKey rsaKey = new RSAKey.Builder(publicKey).privateKey(privateKey).keyID(UUID.randomUUID().toString()).build();
+            final RSAKey rsaKey = new RSAKey.Builder(publicKey).privateKey(privateKey).keyID("1").build();
             return new ImmutableJWKSet<>(new JWKSet(rsaKey));
         } catch (Exception ex) {
             throw new IllegalStateException(ex);
         }
     }
 
+    @Bean
+	public HttpClient httpsClient() throws Exception {
+		final SSLContext sslContext = SSLContextBuilder
+            .create()
+            .loadTrustMaterial(TrustAllStrategy.INSTANCE) // TODO: Use root CA cert generated by TlsServletWebServerFactoryConfig
+            .build();
+        final SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(
+            sslContext,
+            new String[] { "TLSv1.2", "TLSv1.3" },
+            null,
+            NoopHostnameVerifier.INSTANCE // TODO: HttpsSupport.getDefaultHostnameVerifier()
+        );
+        final HttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create()
+            .setSSLSocketFactory(sslConnectionSocketFactory)
+            .setMaxConnTotal(25) // default: 25
+            .setMaxConnPerRoute(5) // default: 5
+            .setConnectionTimeToLive(TimeValue.ofMinutes(10)) // default: -1 milliseconds
+            .build();
+        final CloseableHttpClient httpClient = HttpClientBuilder
+            .create()
+            .setConnectionManager(cm)
+            .build();
+		return httpClient;
+	}
+
     // spring security oauth2 core
     @Bean
-    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+    public JwtDecoderFactory<ClientRegistration> jwtDecoderFactory(final RestTemplate restTemplate) {
+    	return new MyJwtDecoderFactory(restTemplate);
+    }
+
+    public class MyJwtDecoderFactory implements JwtDecoderFactory<ClientRegistration> {
+        private final Map<String, JwtDecoder> jwtDecoders;
+    	private final RestTemplate restTemplate;
+    	public MyJwtDecoderFactory(final RestTemplate restTemplate) {
+    		this.jwtDecoders = new ConcurrentHashMap<>();
+    		this.restTemplate = restTemplate;
+    	}
+        @Override
+        public JwtDecoder createDecoder(final ClientRegistration clientRegistration) {
+			final String clientRegistrationJwkSetUri = clientRegistration.getProviderDetails().getJwkSetUri();
+            final List<SignatureAlgorithm> signatureAlgorithms = Arrays.asList(SignatureAlgorithm.values());
+            return this.jwtDecoders.computeIfAbsent(clientRegistration.getRegistrationId(),
+                    (r) -> NimbusJwtDecoder
+                            .withJwkSetUri(clientRegistrationJwkSetUri)
+                            .restOperations(this.restTemplate)
+                            .jwsAlgorithms(algorithms -> algorithms.addAll(signatureAlgorithms))
+                            .build());
+        }
     }
 
     // spring security oauth2 authorization server
@@ -218,7 +270,7 @@ public class SecurityFilterChainConfig {
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
             .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
             .redirectUri("https://127.0.0.1:8443/login/oauth2/code/internal-oauth2-login")
-//          .scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE)
+            .scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE)
             .scope("message.read").scope("message.write")
 //          .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build()) // TODO jwkSetUrl, isRequireProofKey
             .tokenSettings(
@@ -247,7 +299,7 @@ public class SecurityFilterChainConfig {
             .tokenRevocationEndpoint("/oauth2/revoke")
             .tokenIntrospectionEndpoint("/oauth2/introspect")
 //          .oidcClientRegistrationEndpoint("/connect/register")
-            .oidcUserInfoEndpoint("/userinfo")
+//          .oidcUserInfoEndpoint("/userinfo")
             .build();
     }
 
@@ -266,49 +318,32 @@ public class SecurityFilterChainConfig {
     // https://docs.spring.io/spring-security/reference/servlet/oauth2/login/advanced.html#oauth2login-advanced-userinfo-endpoint
     // spring security oauth2 client
     @Bean
-    public OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService() throws Exception {
+    public OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService(final RestTemplate restTemplate) throws Exception {
         final DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
-        delegate.setRestOperations(restTemplate());
+        delegate.setRestOperations(restTemplate);
         return request -> delegate.loadUser(request);
     }
 
     // Used implicitly and directly as HTTPS client for various API calls
     @Bean
-    public RestTemplate restTemplate() throws Exception {
-        final SSLContext sslContext = SSLContextBuilder
-            .create()
-            .loadTrustMaterial(TrustAllStrategy.INSTANCE) // TODO: Use root CA cert generated by TlsServletWebServerFactoryConfig
-            .build();
-        final SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(
-            sslContext,
-            new String[] { "TLSv1.2", "TLSv1.3" },
-            null,
-            NoopHostnameVerifier.INSTANCE // TODO: HttpsSupport.getDefaultHostnameVerifier()
-        );
-        final HttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create()
-            .setSSLSocketFactory(sslConnectionSocketFactory)
-            .setMaxConnTotal(25) // default: 25
-            .setMaxConnPerRoute(5) // default: 5
-            .setConnectionTimeToLive(TimeValue.ofMinutes(10)) // default: -1 milliseconds
-            .build();
-        final CloseableHttpClient httpClient = HttpClientBuilder
-            .create()
-            .setConnectionManager(cm)
-            .build();
-
-        final ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+    public RestTemplate restTemplate(final HttpClient httpsClient) throws Exception {
         // https://docs.spring.io/spring-security/reference/servlet/oauth2/client/authorization-grants.html#oauth2Client-client-creds-grant
-        final RestTemplate restTemplate = new RestTemplate(Arrays.asList(new FormHttpMessageConverter(), new OAuth2AccessTokenResponseHttpMessageConverter()));
+        final RestTemplate restTemplate = new RestTemplate();
+//        restTemplate.getMessageConverters().add(new OAuth2AccessTokenResponseHttpMessageConverter());
         restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
-        restTemplate.setRequestFactory(requestFactory);
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpsClient));
         return restTemplate;
     }
 
     @Bean
-    public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() throws Exception {
+    public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient(final HttpClient httpsClient) throws Exception {
+        final RestTemplate restTemplate = new RestTemplate(Arrays.asList(new FormHttpMessageConverter(), new OAuth2AccessTokenResponseHttpMessageConverter()));
+        restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpsClient));
+
         // TODO: NimbusAuthorizationCodeTokenResponseClient instead of DefaultAuthorizationCodeTokenResponseClient?
         final DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
-        accessTokenResponseClient.setRestOperations(restTemplate()); 
+        accessTokenResponseClient.setRestOperations(restTemplate); 
         return accessTokenResponseClient;
     }
 

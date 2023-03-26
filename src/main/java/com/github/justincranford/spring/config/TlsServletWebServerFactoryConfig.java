@@ -64,7 +64,7 @@ public class TlsServletWebServerFactoryConfig {
     @Value(value="${server.port}")
     public int serverPort;
 
-    @Value(value="${server.ssl.enabled}")
+    @Value(value="${server.ssl.enabled:false}")
     public boolean serverSslEnabled;
 
     @Value(value="${server.ssl.auto-generate-certificates:false}")

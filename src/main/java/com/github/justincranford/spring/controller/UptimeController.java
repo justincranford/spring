@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.github.justincranford.spring.model.JsonUtil;
 import com.github.justincranford.spring.model.Uptime;
 
-@CrossOrigin(origins={"http://127.0.0.1:8080"})
+@CrossOrigin(origins={"https://127.0.0.1:8443"})
 @RestController
 @RequestMapping(path="/api", produces={APPLICATION_JSON_VALUE,APPLICATION_XML_VALUE})
 public class UptimeController {

@@ -72,7 +72,7 @@ public class SpringBootTestHelper {
 //	@Value(value="${management.port}")                             protected int    managementPort;
 //	@Value(value="${management.server.address}")                   protected String managementServerAddress;
 //	@Value(value="${management.server.port}")                      protected String managementServerPort;
-    @Value(value="${server.ssl.enabled}")                          public boolean serverSslEnabled;
+    @Value(value="${server.ssl.enabled:false}")                    public boolean serverSslEnabled;
     @Value(value="${server.ssl.auto-generate-certificates:false}") public boolean serverSslAutoGenerateCertificates;
 
     // TODO: Remove relaxedHTTPSValidation(), replace with trustStore()

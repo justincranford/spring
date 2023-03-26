@@ -112,6 +112,9 @@ public class TlsServletWebServerFactoryConfig {
     public static class TlsTomcatServletWebServerFactory extends TomcatServletWebServerFactory {
         private Logger logger = LoggerFactory.getLogger(TlsTomcatServletWebServerFactory.class);
 
+        @Value(value="${server.ssl.auto-generate-certificates:false}")
+        protected boolean serverSslAutoGenerateCertificates;
+
         // Mozilla recommended "intermediate" ciphersuites (January 2023)
         private static final List<String> PROTOCOLS_TLS13_ONLY = List.of("TLSv1.3");
         private static final List<String> PROTOCOLS_TLS12_ONLY = List.of("TLSv1.2");
@@ -132,39 +135,41 @@ public class TlsServletWebServerFactoryConfig {
 
         @Override
         public void customizeConnector(final Connector connector) {
-            try {
-                // PrivateKeyEntry = [ privateKey, certificateChain ]
-                final KeyStore.PrivateKeyEntry server = createTlsServer();
+        	if (this.serverSslAutoGenerateCertificates) {
+                try {
+                    // PrivateKeyEntry = [ privateKey, certificateChain ]
+                    final KeyStore.PrivateKeyEntry server = createTlsServer();
 
-                // Encode server privateKey, server cert, and root CA cert as PEM
-                final String serverPrivateKeyPem = toPem("RSA PRIVATE KEY", PrivateKeyInfo.getInstance(server.getPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
-                final String serverCertChainPem  = toPem("CERTIFICATE",     server.getCertificateChain()[0].getEncoded());
-                final String caCertChainPem      = toPem("CERTIFICATE",     server.getCertificateChain()[1].getEncoded());
+                    // Encode server privateKey, server cert, and root CA cert as PEM
+                    final String serverPrivateKeyPem = toPem("RSA PRIVATE KEY", PrivateKeyInfo.getInstance(server.getPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
+                    final String serverCertChainPem  = toPem("CERTIFICATE",     server.getCertificateChain()[0].getEncoded());
+                    final String caCertChainPem      = toPem("CERTIFICATE",     server.getCertificateChain()[1].getEncoded());
 
-                // Log server privateKey, server cert, and root CA cert as PEM
-                this.logger.info("Server private key:\n{}\n",       serverPrivateKeyPem);
-                this.logger.info("Server certificate chain:\n{}\n", serverCertChainPem);
-                this.logger.info("CA certificate chain:\n{}\n",     caCertChainPem);
+                    // Log server privateKey, server cert, and root CA cert as PEM
+                    this.logger.info("Server private key:\n{}\n",       serverPrivateKeyPem);
+                    this.logger.info("Server certificate chain:\n{}\n", serverCertChainPem);
+                    this.logger.info("CA certificate chain:\n{}\n",     caCertChainPem);
 
-                // Save server privateKey, server cert, and root CA cert as PEM to temp files (JVM shutdown hooks delete them)
-                final Path caCertificateChainPath     = Files.writeString(Files.createTempFile("ca",     ".crt"), caCertChainPem,      StandardOpenOption.CREATE);
-                final Path serverCertificateChainPath = Files.writeString(Files.createTempFile("server", ".crt"), serverCertChainPem,  StandardOpenOption.CREATE);
-                final Path serverPrivateKeyPath       = Files.writeString(Files.createTempFile("server", ".p8"),  serverPrivateKeyPem, StandardOpenOption.CREATE);
+                    // Save server privateKey, server cert, and root CA cert as PEM to temp files (JVM shutdown hooks delete them)
+                    final Path caCertificateChainPath     = Files.writeString(Files.createTempFile("ca",     ".crt"), caCertChainPem,      StandardOpenOption.CREATE);
+                    final Path serverCertificateChainPath = Files.writeString(Files.createTempFile("server", ".crt"), serverCertChainPem,  StandardOpenOption.CREATE);
+                    final Path serverPrivateKeyPath       = Files.writeString(Files.createTempFile("server", ".p8"),  serverPrivateKeyPem, StandardOpenOption.CREATE);
 
-                // Replace server.ssl.* properties in memory, pointing to the temp PEM files
-                final Ssl ssl = new Ssl();
-                ssl.setEnabled(true);
-                ssl.setProtocol(PROTOCOLS_TLS13_ONLY.get(0));
-                ssl.setClientAuth(ClientAuth.WANT);
-                ssl.setEnabledProtocols(PROTOCOLS_TLS13_TLS12.toArray(new String[0]));
-                ssl.setCiphers(CIPHERS_TLS13_TLS12.toArray(new String[0]));
-                ssl.setTrustCertificate(caCertificateChainPath.toFile().toString());
-                ssl.setCertificate(serverCertificateChainPath.toFile().toString());
-                ssl.setCertificatePrivateKey(serverPrivateKeyPath.toFile().toString());
-                this.setSsl(ssl);
-            } catch(Exception e) {
-                throw new RuntimeException("Cert creation failed during Tomcat TLS customization", e);
-            }
+                    // Replace server.ssl.* properties in memory, pointing to the temp PEM files
+                    final Ssl ssl = new Ssl();
+                    ssl.setEnabled(true);
+                    ssl.setProtocol(PROTOCOLS_TLS13_ONLY.get(0));
+                    ssl.setClientAuth(ClientAuth.WANT);
+                    ssl.setEnabledProtocols(PROTOCOLS_TLS13_TLS12.toArray(new String[0]));
+                    ssl.setCiphers(CIPHERS_TLS13_TLS12.toArray(new String[0]));
+                    ssl.setTrustCertificate(caCertificateChainPath.toFile().toString());
+                    ssl.setCertificate(serverCertificateChainPath.toFile().toString());
+                    ssl.setCertificatePrivateKey(serverPrivateKeyPath.toFile().toString());
+                    this.setSsl(ssl);
+                } catch(Exception e) {
+                    throw new RuntimeException("Cert creation failed during Tomcat TLS customization", e);
+                }
+        	}
             // Must do this after, otherwise super code will cache objects built with original config
             super.customizeConnector(connector);
         }

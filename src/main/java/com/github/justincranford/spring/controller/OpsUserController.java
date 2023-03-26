@@ -24,7 +24,7 @@ import com.github.justincranford.spring.model.OpsUser;
 import com.github.justincranford.spring.model.OpsUserCrudRepository;
 import com.github.justincranford.spring.model.OpsUserNotFoundException;
 
-@CrossOrigin(origins={"https://localhost:8443"})
+@CrossOrigin(origins={"http://127.0.0.1:8080"})
 @RestController
 @RequestMapping(path="/api/ops", produces={APPLICATION_JSON_VALUE})
 public class OpsUserController {

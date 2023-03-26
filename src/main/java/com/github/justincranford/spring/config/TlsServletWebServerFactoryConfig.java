@@ -62,7 +62,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 @EnableWebSecurity
 public class TlsServletWebServerFactoryConfig {
     @Value(value="${server.port}")
-    protected int serverPort;
+    public int serverPort;
+
+    @Value(value="${server.ssl.enabled}")
+    public boolean serverSslEnabled;
+
+    @Value(value="${server.ssl.auto-generate-certificates:false}")
+    public boolean serverSslAutoGenerateCertificates;
 
     @Bean
     public ServletWebServerFactory servletWebServerFactory(
@@ -79,7 +85,9 @@ public class TlsServletWebServerFactoryConfig {
         factory.getTomcatProtocolHandlerCustomizers().addAll(protocolHandlerCustomizers.orderedStream().toList());
 
         // add "http://${server.address}:80" listener to redirect to "https://${server.address}:${server.port}"
-        factory.addAdditionalTomcatConnectors(this.createRedirectConnector());
+//      if (this.serverSslEnabled || this.serverSslAutoGenerateCertificates) {
+            factory.addAdditionalTomcatConnectors(this.createRedirectConnector());
+//      }
 
         // add life cycle listener to log all Tomcat life cycle events
         factory.setContextLifecycleListeners(Stream.concat(factory.getContextLifecycleListeners().stream(), List.of(new MyLifecycleLogger()).stream()).toList());
@@ -109,11 +117,8 @@ public class TlsServletWebServerFactoryConfig {
     }
 
     // create ${server.ssl.*} settings to start Tomcat with auto-generated TLS server PEM files
-    public static class TlsTomcatServletWebServerFactory extends TomcatServletWebServerFactory {
+    public class TlsTomcatServletWebServerFactory extends TomcatServletWebServerFactory {
         private Logger logger = LoggerFactory.getLogger(TlsTomcatServletWebServerFactory.class);
-
-        @Value(value="${server.ssl.auto-generate-certificates:false}")
-        protected boolean serverSslAutoGenerateCertificates;
 
         // Mozilla recommended "intermediate" ciphersuites (January 2023)
         private static final List<String> PROTOCOLS_TLS13_ONLY = List.of("TLSv1.3");
@@ -125,17 +130,19 @@ public class TlsServletWebServerFactoryConfig {
 
         @Override
         protected void postProcessContext(final Context servletContext) {
-            final SecurityCollection webResourceCollection = new SecurityCollection();
-            webResourceCollection.addPattern("/*");
-            final SecurityConstraint securityConstraint = new SecurityConstraint();
-            securityConstraint.addCollection(webResourceCollection);
-            securityConstraint.setUserConstraint("CONFIDENTIAL");    // "NONE", "INTEGRAL", or "CONFIDENTIAL"
-            servletContext.addConstraint(securityConstraint);
+            if (TlsServletWebServerFactoryConfig.this.serverSslEnabled || TlsServletWebServerFactoryConfig.this.serverSslAutoGenerateCertificates) {
+                final SecurityCollection webResourceCollection = new SecurityCollection();
+                webResourceCollection.addPattern("/*");
+                final SecurityConstraint securityConstraint = new SecurityConstraint();
+                securityConstraint.addCollection(webResourceCollection);
+                securityConstraint.setUserConstraint("CONFIDENTIAL");    // "NONE", "INTEGRAL", or "CONFIDENTIAL"
+                servletContext.addConstraint(securityConstraint);
+            }
         }
 
         @Override
         public void customizeConnector(final Connector connector) {
-        	if (this.serverSslAutoGenerateCertificates) {
+        	if (TlsServletWebServerFactoryConfig.this.serverSslAutoGenerateCertificates) {
                 try {
                     // PrivateKeyEntry = [ privateKey, certificateChain ]
                     final KeyStore.PrivateKeyEntry server = createTlsServer();

@@ -124,7 +124,7 @@ public class Application implements CommandLineRunner {
 //		return new WebMvcConfigurer() {
 //			@Override
 //			public void addCorsMappings(CorsRegistry registry) {
-//				registry.addMapping("/api").allowedOrigins("https://localhost:8443");
+//				registry.addMapping("/api").allowedOrigins("http://127.0.0.1:8080");
 //			}
 //		};
 //	}

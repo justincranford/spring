@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@CrossOrigin(origins={"https://localhost:8443"})
+@CrossOrigin(origins={"http://127.0.0.1:8080"})
 @RestController
 @RequestMapping(path="/api/oauth2", produces={APPLICATION_JSON_VALUE})
 public class OAuth2Controller {

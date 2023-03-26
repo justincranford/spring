@@ -30,6 +30,7 @@ import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.apache.hc.core5.util.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -115,6 +116,15 @@ public class SecurityFilterChainConfig {
     public static final String ROLE_APP_USER       = "ROLE_APP_USER";
     public static final String OAUTH2_USER         = "OAUTH2_USER";
     public static final String OIDC_USER           = "OIDC_USER";
+
+    @Value(value="${server.port}")
+    public int serverPort;
+
+    @Value(value="${server.ssl.enabled}")
+    public boolean serverSslEnabled;
+
+    @Value(value="${server.ssl.auto-generate-certificates:false}")
+    public boolean serverSslAutoGenerateCertificates;
 
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(
@@ -252,6 +262,7 @@ public class SecurityFilterChainConfig {
     // spring security oauth2 authorization server
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
+        final boolean useHttps = (this.serverSslEnabled || this.serverSslAutoGenerateCertificates);
         final RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("internal-oauth2-login")
             .clientName("Internal OAuth2 Login")
@@ -262,7 +273,7 @@ public class SecurityFilterChainConfig {
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
             .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-            .redirectUri("https://127.0.0.1:8443/login/oauth2/code/internal-oauth2-login")
+            .redirectUri((useHttps ? "https" : "http") + "://127.0.0.1:" + this.serverPort + "/login/oauth2/code/internal-oauth2-login")
             .scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE)
             .scope("message.read").scope("message.write")
 //          .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build()) // TODO jwkSetUrl, isRequireProofKey

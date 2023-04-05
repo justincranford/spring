@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 import javax.net.ssl.SSLContext;
 
@@ -44,7 +43,6 @@ import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizationContext;
-import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
@@ -57,13 +55,11 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
-import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizedClientManager;
-import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
+import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -200,6 +196,26 @@ public class SecurityFilterChainConfig {
         .and().csrf().requireCsrfProtectionMatcher(new AntPathRequestMatcher("/ui/**")).csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and().csrf().disable()
         ;
 
+        // See https://docs.spring.io/spring-security/reference/servlet/architecture.html#servlet-security-filters
+        // OAuth2AuthorizationRequestRedirectFilter (authz client redirects to authz server, adds state)
+        //  #DefaultRedirectStrategy
+        //   DefaultOAuth2AuthorizationRequestResolver
+        //   HttpSessionOAuth2AuthorizationRequestRepository
+        //  #HttpSessionRequestCache
+        // OAuth2LoginAuthenticationFilter (authz server redirects to authz client, adds code)
+        //   ClientRegistrationRepository
+        //   OAuth2AuthorizedClientRepository
+        //   HttpSessionOAuth2AuthorizationRequestRepository
+        //  #Converter<OAuth2LoginAuthenticationToken, OAuth2AuthenticationToken>
+        // OAuth2AuthorizationCodeGrantFilter
+		//   ClientRegistrationRepository
+		//   OAuth2AuthorizedClientRepository
+		//   AuthenticationManager authenticationManager;
+		//   HttpSessionOAuth2AuthorizationRequestRepository
+		//   WebAuthenticationDetailsSource
+		//  #DefaultRedirectStrategy
+		//  #HttpSessionRequestCache
+
         final DefaultSecurityFilterChain defaultSecurityFilterChain = builder.build();
         applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
         return defaultSecurityFilterChain;
@@ -207,13 +223,13 @@ public class SecurityFilterChainConfig {
 
     // spring security core
     @Bean
-    SessionRegistry sessionRegistry() {
+    public SessionRegistry sessionRegistry() {
         return new SessionRegistryImpl();
     }
 
     // spring security core
     @Bean
-    HttpSessionEventPublisher httpSessionEventPublisher() {
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
         return new HttpSessionEventPublisher();
     }
 
@@ -259,6 +275,89 @@ public class SecurityFilterChainConfig {
         }
     }
 
+    // spring security oauth2 authorization client
+    // not used?
+//    @Bean
+//    public AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
+//    	return new HttpSessionOAuth2AuthorizationRequestRepository();
+//    }
+
+    // spring security oauth2 authorization client
+    @Bean
+    public OAuth2AuthorizedClientRepository authorizedClientRepository() {
+    	return new HttpSessionOAuth2AuthorizedClientRepository(); // or AuthenticatedPrincipalOAuth2AuthorizedClientRepository?
+    }
+
+    // OAuth2ClientRegistrationRepositoryConfiguration creates this bean
+    // spring security oauth2 authorization client
+//    @Bean
+//    public ClientRegistrationRepository clientRegistrationRepository(ClientRegistration... registrations) {
+//    	return new InMemoryClientRegistrationRepository(registrations); // cannot be empty
+//    }
+
+    @Bean
+    public OAuth2AuthorizedClientManager authorizedClientManager(
+        final ClientRegistrationRepository clientRegistrationRepository,
+        final OAuth2AuthorizedClientRepository authorizedClientRepository
+    ) {
+    	final OAuth2AuthorizedClientProvider authorizedClientProvider =
+			OAuth2AuthorizedClientProviderBuilder.builder()
+					.authorizationCode()
+					.refreshToken()
+					.clientCredentials()
+//					.password()
+					.build();
+
+    	final DefaultOAuth2AuthorizedClientManager authorizedClientManager = new DefaultOAuth2AuthorizedClientManager(clientRegistrationRepository, authorizedClientRepository);
+		authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
+        // Assuming the `username` and `password` are supplied as `HttpServletRequest` parameters,
+        // map the `HttpServletRequest` parameters to `OAuth2AuthorizationContext.getAttributes()`
+        authorizedClientManager.setContextAttributesMapper(authorizeRequest -> {
+            Map<String, Object> contextAttributes = Collections.emptyMap();
+            HttpServletRequest servletRequest = authorizeRequest.getAttribute(HttpServletRequest.class.getName());
+            String username = servletRequest.getParameter(OAuth2ParameterNames.USERNAME);
+            String password = servletRequest.getParameter(OAuth2ParameterNames.PASSWORD);
+            if (StringUtils.hasText(username) && StringUtils.hasText(password)) {
+                contextAttributes = new HashMap<>();
+                // `PasswordOAuth2AuthorizedClientProvider` requires both attributes
+                contextAttributes.put(OAuth2AuthorizationContext.USERNAME_ATTRIBUTE_NAME, username);
+                contextAttributes.put(OAuth2AuthorizationContext.PASSWORD_ATTRIBUTE_NAME, password);
+            }
+            return contextAttributes;
+        });
+        return authorizedClientManager;
+    }
+
+    // spring security oauth2 authorization client
+    @Bean
+    public OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService(final RestTemplate restTemplate) throws Exception {
+        final DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
+        delegate.setRestOperations(restTemplate);
+        return request -> delegate.loadUser(request);
+    }
+
+    // spring security oauth2 authorization client
+    @Bean
+    public RestTemplate restTemplate(final HttpClient httpsClient) throws Exception {
+        // https://docs.spring.io/spring-security/reference/servlet/oauth2/client/authorization-grants.html#oauth2Client-client-creds-grant
+        final RestTemplate restTemplate = new RestTemplate(); // use default converters
+        restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpsClient));
+        return restTemplate;
+    }
+
+    // spring security oauth2 authorization client
+    @Bean
+    public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient(final HttpClient httpsClient) throws Exception {
+        final RestTemplate restTemplate = new RestTemplate(Arrays.asList(new FormHttpMessageConverter(), new OAuth2AccessTokenResponseHttpMessageConverter()));
+        restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpsClient));
+
+        final DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
+        accessTokenResponseClient.setRestOperations(restTemplate); 
+        return accessTokenResponseClient;
+    }
+
     // spring security oauth2 authorization server
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
@@ -290,6 +389,7 @@ public class SecurityFilterChainConfig {
         return new InMemoryRegisteredClientRepository(registeredClient);
     }
 
+    // spring security oauth2 authorization server
     // https://docs.spring.io/spring-authorization-server/docs/current/reference/html/configuration-model.html#configuring-authorization-server-settings
     // @Import(OAuth2AuthorizationServerConfiguration.class) automatically registers an AuthorizationServerSettings @Bean, if not already provided.
     // If the issuer identifier is not configured in AuthorizationServerSettings.builder().issuer(String), it is resolved from the current request.
@@ -306,12 +406,6 @@ public class SecurityFilterChainConfig {
 //          .oidcUserInfoEndpoint("/userinfo")
             .build();
     }
-
-    // spring security oauth2 authorization client
-    @Bean
-    public AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
-    	return new HttpSessionOAuth2AuthorizationRequestRepository();
-    }
     
     // spring security oauth2 authorization server
     @Bean
@@ -326,58 +420,6 @@ public class SecurityFilterChainConfig {
     }
 
     // https://docs.spring.io/spring-security/reference/servlet/oauth2/login/advanced.html#oauth2login-advanced-userinfo-endpoint
-    // spring security oauth2 client
-    @Bean
-    public OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService(final RestTemplate restTemplate) throws Exception {
-        final DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
-        delegate.setRestOperations(restTemplate);
-        return request -> delegate.loadUser(request);
-    }
-
-    @Bean
-	public HttpClient httpsClient() throws Exception {
-		final SSLContext sslContext = SSLContextBuilder
-            .create()
-            .loadTrustMaterial(TrustAllStrategy.INSTANCE) // TODO: Use root CA cert generated by TlsServletWebServerFactoryConfig
-            .build();
-        final SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(
-            sslContext,
-            new String[] { "TLSv1.2", "TLSv1.3" },
-            null,
-            NoopHostnameVerifier.INSTANCE // TODO: HttpsSupport.getDefaultHostnameVerifier()
-        );
-        final HttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create()
-            .setSSLSocketFactory(sslConnectionSocketFactory)
-            .setMaxConnTotal(25) // default: 25
-            .setMaxConnPerRoute(5) // default: 5
-            .setConnectionTimeToLive(TimeValue.ofMinutes(10)) // default: -1 milliseconds
-            .build();
-        final CloseableHttpClient httpClient = HttpClientBuilder
-            .create()
-            .setConnectionManager(cm)
-            .build();
-		return httpClient;
-	}
-
-    @Bean
-    public RestTemplate restTemplate(final HttpClient httpsClient) throws Exception {
-        // https://docs.spring.io/spring-security/reference/servlet/oauth2/client/authorization-grants.html#oauth2Client-client-creds-grant
-        final RestTemplate restTemplate = new RestTemplate(); // use default converters
-        restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
-        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpsClient));
-        return restTemplate;
-    }
-
-    @Bean
-    public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient(final HttpClient httpsClient) throws Exception {
-        final RestTemplate restTemplate = new RestTemplate(Arrays.asList(new FormHttpMessageConverter(), new OAuth2AccessTokenResponseHttpMessageConverter()));
-        restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
-        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpsClient));
-
-        final DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
-        accessTokenResponseClient.setRestOperations(restTemplate); 
-        return accessTokenResponseClient;
-    }
 
 //    @Bean
 //    public OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolverWithPkce(final ClientRegistrationRepository clientRegistrationRepository) throws Exception {
@@ -408,43 +450,32 @@ public class SecurityFilterChainConfig {
 //        };
 //    }
 
-    @Bean
-    public OAuth2AuthorizedClientManager authorizedClientManager(
-        ClientRegistrationRepository clientRegistrationRepository,
-        OAuth2AuthorizedClientRepository authorizedClientRepository
-    ) {
-    	OAuth2AuthorizedClientProvider authorizedClientProvider =
-			OAuth2AuthorizedClientProviderBuilder.builder()
-					.authorizationCode()
-					.refreshToken()
-					.clientCredentials()
-					.build();
-
-    	DefaultOAuth2AuthorizedClientManager authorizedClientManager = new DefaultOAuth2AuthorizedClientManager(clientRegistrationRepository, authorizedClientRepository);
-		authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
-        // Assuming the `username` and `password` are supplied as `HttpServletRequest` parameters,
-        // map the `HttpServletRequest` parameters to `OAuth2AuthorizationContext.getAttributes()`
-        authorizedClientManager.setContextAttributesMapper(contextAttributesMapper());
-        return authorizedClientManager;
-    }
-
-    private Function<OAuth2AuthorizeRequest, Map<String, Object>> contextAttributesMapper() {
-        return authorizeRequest -> {
-            Map<String, Object> contextAttributes = Collections.emptyMap();
-            HttpServletRequest servletRequest = authorizeRequest.getAttribute(HttpServletRequest.class.getName());
-            String username = servletRequest.getParameter(OAuth2ParameterNames.USERNAME);
-            String password = servletRequest.getParameter(OAuth2ParameterNames.PASSWORD);
-            if (StringUtils.hasText(username) && StringUtils.hasText(password)) {
-                contextAttributes = new HashMap<>();
-                // `PasswordOAuth2AuthorizedClientProvider` requires both attributes
-                contextAttributes.put(OAuth2AuthorizationContext.USERNAME_ATTRIBUTE_NAME, username);
-                contextAttributes.put(OAuth2AuthorizationContext.PASSWORD_ATTRIBUTE_NAME, password);
-            }
-            return contextAttributes;
-        };
-    }
-
     // TODO
     // @Bean webServerStartStop
     // @Bean webServerGracefulShutdown
+
+    @Bean
+	public HttpClient httpsClient() throws Exception {
+		final SSLContext sslContext = SSLContextBuilder
+            .create()
+            .loadTrustMaterial(TrustAllStrategy.INSTANCE) // TODO: Use root CA cert generated by TlsServletWebServerFactoryConfig
+            .build();
+        final SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(
+            sslContext,
+            new String[] { "TLSv1.2", "TLSv1.3" },
+            null,
+            NoopHostnameVerifier.INSTANCE // TODO: HttpsSupport.getDefaultHostnameVerifier()
+        );
+        final HttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create()
+            .setSSLSocketFactory(sslConnectionSocketFactory)
+            .setMaxConnTotal(25) // default: 25
+            .setMaxConnPerRoute(5) // default: 5
+            .setConnectionTimeToLive(TimeValue.ofMinutes(10)) // default: -1 milliseconds
+            .build();
+        final CloseableHttpClient httpClient = HttpClientBuilder
+            .create()
+            .setConnectionManager(cm)
+            .build();
+		return httpClient;
+	}
 }

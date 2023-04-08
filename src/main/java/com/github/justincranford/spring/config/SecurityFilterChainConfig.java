@@ -167,6 +167,7 @@ public class SecurityFilterChainConfig {
             .requestMatchers("/api/ops/**").hasAnyAuthority(ROLE_OPS_ADMIN, ROLE_OPS_USER, ROLE_OPS_USER_ADMIN)
             .requestMatchers("/api/app/**").hasAnyAuthority(ROLE_APP_ADMIN, ROLE_APP_USER_ADMIN, ROLE_APP_USER, OAUTH2_USER, OIDC_USER)
             .requestMatchers("/", "/index", "/login", "/error").permitAll().anyRequest().authenticated())
+//            .requestMatchers("/**").permitAll().anyRequest().authenticated())
         .formLogin().permitAll()
 //      .and().x509().subjectPrincipalRegex("CN=(.*?)(?:,|$)") // "CN=(.*?),"
         .and().httpBasic()

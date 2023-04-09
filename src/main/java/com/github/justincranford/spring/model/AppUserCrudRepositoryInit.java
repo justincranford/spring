@@ -26,7 +26,7 @@ public class AppUserCrudRepositoryInit {
 		final List<AppUser> appadminSearch = this.appUserCrudRepository.findByUsername("appadmin");
 		final AppUser appAdmin;
 		if (appadminSearch.isEmpty()) {
-			final AppUser contructAppAdmin = contructAppAdmin();	// PBKDF2 is intentionally expensive for short passwords (i.e. low entropy)
+			final AppUser contructAppAdmin = contructAppAdmin();
 			appAdmin = this.appUserCrudRepository.save(contructAppAdmin);
 			this.logger.info("AppUser 'appadmin' added:\n{}", appAdmin);
 		} else {
@@ -39,7 +39,7 @@ public class AppUserCrudRepositoryInit {
 		final List<AppUser> appuserSearch = this.appUserCrudRepository.findByUsername("appuser");
 		final AppUser appUser;
 		if (appuserSearch.isEmpty()) {
-			final AppUser contructAppUser = contructAppUser();	// PBKDF2 is intentionally expensive for short passwords (i.e. low entropy)
+			final AppUser contructAppUser = contructAppUser();
 			appUser = this.appUserCrudRepository.save(contructAppUser);
 			this.logger.info("AppUser 'appuser' added:\n{}", appUser);
 		} else {

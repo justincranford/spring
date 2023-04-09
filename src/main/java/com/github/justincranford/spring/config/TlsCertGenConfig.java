@@ -60,7 +60,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 
 @Configuration
 @EnableWebSecurity
-public class TlsServletWebServerFactoryConfig {
+public class TlsCertGenConfig {
     @Value(value="${server.port}")
     public int serverPort;
 
@@ -132,7 +132,7 @@ public class TlsServletWebServerFactoryConfig {
 
         @Override
         protected void postProcessContext(final Context servletContext) {
-            if (TlsServletWebServerFactoryConfig.this.serverSslEnabled || TlsServletWebServerFactoryConfig.this.serverSslAutoGenerateCertificates) {
+            if (TlsCertGenConfig.this.serverSslEnabled || TlsCertGenConfig.this.serverSslAutoGenerateCertificates) {
                 final SecurityCollection webResourceCollection = new SecurityCollection();
                 webResourceCollection.addPattern("/*");
                 final SecurityConstraint securityConstraint = new SecurityConstraint();
@@ -144,7 +144,7 @@ public class TlsServletWebServerFactoryConfig {
 
         @Override
         public void customizeConnector(final Connector connector) {
-        	if (TlsServletWebServerFactoryConfig.this.serverSslAutoGenerateCertificates) {
+        	if (TlsCertGenConfig.this.serverSslAutoGenerateCertificates) {
                 try {
                     // PrivateKeyEntry = [ privateKey, certificateChain ]
                     final KeyStore.PrivateKeyEntry server = createTlsServer();

@@ -104,10 +104,8 @@ public class SecurityFilterChainConfig {
     private Logger logger = LoggerFactory.getLogger(SecurityFilterChainConfig.class);
 
     public static final String ROLE_OPS_ADMIN      = "ROLE_OPS_ADMIN";
-    public static final String ROLE_OPS_USER_ADMIN = "ROLE_OPS_USER_ADMIN";
     public static final String ROLE_OPS_USER       = "ROLE_OPS_USER";
     public static final String ROLE_APP_ADMIN      = "ROLE_APP_ADMIN";
-    public static final String ROLE_APP_USER_ADMIN = "ROLE_APP_USER_ADMIN";
     public static final String ROLE_APP_USER       = "ROLE_APP_USER";
     public static final String OAUTH2_USER         = "OAUTH2_USER";
     public static final String OIDC_USER           = "OIDC_USER";
@@ -150,9 +148,9 @@ public class SecurityFilterChainConfig {
 
         final HttpSecurity builder = http
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(PathRequest.toH2Console()).hasAnyAuthority(ROLE_OPS_ADMIN, ROLE_APP_ADMIN) // Default path: /h2-console
-            .requestMatchers("/api/uptime", "/api/profile").hasAnyAuthority(ROLE_OPS_ADMIN, ROLE_OPS_USER, ROLE_OPS_USER_ADMIN, ROLE_APP_ADMIN, ROLE_APP_USER_ADMIN, ROLE_APP_USER, OAUTH2_USER, OIDC_USER)
-            .requestMatchers("/api/ops/**").hasAnyAuthority(ROLE_OPS_ADMIN, ROLE_OPS_USER, ROLE_OPS_USER_ADMIN)
-            .requestMatchers("/api/app/**").hasAnyAuthority(ROLE_APP_ADMIN, ROLE_APP_USER_ADMIN, ROLE_APP_USER, OAUTH2_USER, OIDC_USER)
+            .requestMatchers("/api/uptime", "/api/profile").hasAnyAuthority(ROLE_OPS_ADMIN, ROLE_OPS_USER, ROLE_APP_ADMIN, ROLE_APP_USER, OAUTH2_USER, OIDC_USER)
+            .requestMatchers("/api/ops/**").hasAnyAuthority(ROLE_OPS_ADMIN, ROLE_OPS_USER)
+            .requestMatchers("/api/app/**").hasAnyAuthority(ROLE_APP_ADMIN, ROLE_APP_USER, OAUTH2_USER, OIDC_USER)
             .requestMatchers("/", "/index", "/login", "/error").permitAll()
             .anyRequest().authenticated())
         .formLogin().permitAll()

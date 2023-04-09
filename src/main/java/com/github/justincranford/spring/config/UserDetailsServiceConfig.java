@@ -15,6 +15,7 @@ public class UserDetailsServiceConfig {
 		final OpsUserCrudRepository opsUserCrudRepository,
 		final AppUserCrudRepository appUserCrudRepository
 	) {
+		// Impl uses separate repos for Operations vs Application users
 		return new UserDetailsServiceImpl(opsUserCrudRepository, appUserCrudRepository);
 	}
 }

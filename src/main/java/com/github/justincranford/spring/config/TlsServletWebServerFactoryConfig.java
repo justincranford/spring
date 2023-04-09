@@ -112,7 +112,9 @@ public class TlsServletWebServerFactoryConfig {
         private Logger logger = LoggerFactory.getLogger(MyLifecycleLogger.class);
         @Override
         public void lifecycleEvent(final LifecycleEvent lifecycleEvent) {
-            this.logger.info("type={}", lifecycleEvent.getType());
+        	if (!lifecycleEvent.getType().equals("periodic")) {
+                this.logger.info("type={}", lifecycleEvent.getType());
+        	}
         }
     }
 

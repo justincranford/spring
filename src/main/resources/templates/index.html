@@ -13,6 +13,11 @@
 	<p>
 		Hello <span th:remove="tag" sec:authentication="name">username</span>!
 	<p>
+	    <b><span th:text="${status}">status</span>
+    	    <span th:text="${error}">error</span>
+    	</b>
+	    <p th:text="${message}">message</p>
+	<p>
 	<div class="container authenticated">
 		<form th:action="@{/logout}" method="post">
 			<div>
@@ -32,6 +37,7 @@
 			<div>
 				<label>Password: <input type="password" name="password" value="appuser"/></label>
 			</div>
+			<p>
 			<div>
 				<input type="submit" value="Username & Password" />
 			</div>
@@ -41,12 +47,16 @@
 	</div>
 	<p>
 	<h1>
-		OAuth2 Client (Authorization Code Grant Flow)
+		Internal OAuth2 Client
 	</h1>
 	<p>
 	<div class="container unauthenticated">
 		<a href="/oauth2/authorization/internal-oauth2-login"><input type="submit" value="Internal OAuth 2.0" /></a>
 	</div>
+	<p>
+	<h1>
+		External OAuth2 Client(s)
+	</h1>
 	<p>
 	<div class="container unauthenticated">
 		<a href="/oauth2/authorization/github-login"><input type="submit" value="GitHub OAuth 2.0" /></a>
@@ -63,14 +73,6 @@
 	<div class="container unauthenticated">
 		<a href="/oauth2/authorization/okta-login"><input type="submit" value="Okta OIDC 1.0" /></a>
 	</div>
-	<h1>
-		Error
-	</h1>
-	<p>
-	    <b><span th:text="${status}">status</span>
-    	    <span th:text="${error}">error</span>
-    	</b>
-	    <p th:text="${message}">message</p>
 
 </body>
 </html>

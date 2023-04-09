@@ -100,7 +100,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
 @EnableWebSecurity
-//@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityFilterChainConfig {
     private Logger logger = LoggerFactory.getLogger(SecurityFilterChainConfig.class);
 
@@ -129,7 +128,6 @@ public class SecurityFilterChainConfig {
         final ApplicationEventPublisher applicationEventPublisher,
         final OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> oauth2AccessTokenResponseClient,
         final OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService
-//        final OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolverWithPkce
     ) throws Exception {
         applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
 
@@ -148,17 +146,6 @@ public class SecurityFilterChainConfig {
         )
         .oidc(oidc -> Customizer.withDefaults())
         ;
-//            .userInfoEndpoint(userInfoEndpoint ->
-//                userInfoEndpoint
-//                    .userInfoRequestConverter(userInfoRequestConverter) 
-//                    .userInfoRequestConverters(userInfoRequestConvertersConsumer) 
-//                    .authenticationProvider(authenticationProvider) 
-//                    .authenticationProviders(authenticationProvidersConsumer) 
-//                    .userInfoResponseHandler(userInfoResponseHandler) 
-//                    .errorResponseHandler(errorResponseHandler) 
-//                    .userInfoMapper(userInfoMapper) 
-//            )
-//        );
         http.apply(oauth2AuthorizationServerConfigurer);
 
         final HttpSecurity builder = http
@@ -166,8 +153,8 @@ public class SecurityFilterChainConfig {
             .requestMatchers("/api/uptime", "/api/profile").hasAnyAuthority(ROLE_OPS_ADMIN, ROLE_OPS_USER, ROLE_OPS_USER_ADMIN, ROLE_APP_ADMIN, ROLE_APP_USER_ADMIN, ROLE_APP_USER, OAUTH2_USER, OIDC_USER)
             .requestMatchers("/api/ops/**").hasAnyAuthority(ROLE_OPS_ADMIN, ROLE_OPS_USER, ROLE_OPS_USER_ADMIN)
             .requestMatchers("/api/app/**").hasAnyAuthority(ROLE_APP_ADMIN, ROLE_APP_USER_ADMIN, ROLE_APP_USER, OAUTH2_USER, OIDC_USER)
-            .requestMatchers("/", "/index", "/login", "/error").permitAll().anyRequest().authenticated())
-//            .requestMatchers("/**").permitAll().anyRequest().authenticated())
+            .requestMatchers("/", "/index", "/login", "/error").permitAll()
+            .anyRequest().authenticated())
         .formLogin().permitAll()
 //      .and().x509().subjectPrincipalRegex("CN=(.*?)(?:,|$)") // "CN=(.*?),"
         .and().httpBasic()
@@ -179,13 +166,6 @@ public class SecurityFilterChainConfig {
                     this.logger.error(e.getMessage(), e);
                 }
             })
-//          .authorizationEndpoint()
-//              .authorizationRedirectStrategy(
-//                  null
-//              )
-//          .authorizationRequestResolver(
-//              oauth2AuthorizationRequestResolverWithPkce(oauth2AuthorizationRequestResolverWithPkce)
-//          )
             .userInfoEndpoint(userInfoEndpoint -> {
                 try {
                     userInfoEndpoint.userService(oauth2UserService);
@@ -193,29 +173,9 @@ public class SecurityFilterChainConfig {
                     this.logger.error(e.getMessage(), e);
                 }
             })
-        .and().logout().deleteCookies("JSESSIONID").invalidateHttpSession(true).permitAll()
+        .and().logout().logoutSuccessUrl("/").deleteCookies("JSESSIONID").invalidateHttpSession(true).permitAll()
         .and().csrf().requireCsrfProtectionMatcher(new AntPathRequestMatcher("/ui/**")).csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and().csrf().disable()
         ;
-
-        // See https://docs.spring.io/spring-security/reference/servlet/architecture.html#servlet-security-filters
-        // OAuth2AuthorizationRequestRedirectFilter (authz client redirects to authz server, adds state)
-        //  #DefaultRedirectStrategy
-        //   DefaultOAuth2AuthorizationRequestResolver
-        //   HttpSessionOAuth2AuthorizationRequestRepository
-        //  #HttpSessionRequestCache
-        // OAuth2LoginAuthenticationFilter (authz server redirects to authz client, adds code)
-        //   ClientRegistrationRepository
-        //   OAuth2AuthorizedClientRepository
-        //   HttpSessionOAuth2AuthorizationRequestRepository
-        //  #Converter<OAuth2LoginAuthenticationToken, OAuth2AuthenticationToken>
-        // OAuth2AuthorizationCodeGrantFilter
-		//   ClientRegistrationRepository
-		//   OAuth2AuthorizedClientRepository
-		//   AuthenticationManager authenticationManager;
-		//   HttpSessionOAuth2AuthorizationRequestRepository
-		//   WebAuthenticationDetailsSource
-		//  #DefaultRedirectStrategy
-		//  #HttpSessionRequestCache
 
         final DefaultSecurityFilterChain defaultSecurityFilterChain = builder.build();
         applicationEventPublisher.publishEvent(new EventsConfig.Event<>("defaultSecurityFilterChain started"));
@@ -277,24 +237,10 @@ public class SecurityFilterChainConfig {
     }
 
     // spring security oauth2 authorization client
-    // not used?
-//    @Bean
-//    public AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
-//    	return new HttpSessionOAuth2AuthorizationRequestRepository();
-//    }
-
-    // spring security oauth2 authorization client
     @Bean
     public OAuth2AuthorizedClientRepository authorizedClientRepository() {
     	return new HttpSessionOAuth2AuthorizedClientRepository(); // or AuthenticatedPrincipalOAuth2AuthorizedClientRepository?
     }
-
-    // OAuth2ClientRegistrationRepositoryConfiguration creates this bean
-    // spring security oauth2 authorization client
-//    @Bean
-//    public ClientRegistrationRepository clientRegistrationRepository(ClientRegistration... registrations) {
-//    	return new InMemoryClientRegistrationRepository(registrations); // cannot be empty
-//    }
 
     @Bean
     public OAuth2AuthorizedClientManager authorizedClientManager(
@@ -376,7 +322,6 @@ public class SecurityFilterChainConfig {
             .redirectUri((useHttps ? "https" : "http") + "://127.0.0.1:" + this.serverPort + "/login/oauth2/code/internal-oauth2-login")
             .scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE)
             .scope("message.read").scope("message.write")
-//          .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build()) // TODO jwkSetUrl, isRequireProofKey
             .tokenSettings(
                 TokenSettings.builder()                              // Defaults below:
                 .authorizationCodeTimeToLive(Duration.ofMinutes(2))  // Duration.ofMinutes(5)
@@ -420,37 +365,6 @@ public class SecurityFilterChainConfig {
         return new InMemoryOAuth2AuthorizationConsentService(authorizationConsents);
     }
 
-    // https://docs.spring.io/spring-security/reference/servlet/oauth2/login/advanced.html#oauth2login-advanced-userinfo-endpoint
-
-//    @Bean
-//    public OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolverWithPkce(final ClientRegistrationRepository clientRegistrationRepository) throws Exception {
-//        final ServerWebExchangeMatcher authorizationRequestMatcher = new PathPatternParserServerWebExchangeMatcher("/login/oauth2/authorization/{registrationId}");
-//        final OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolver = new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository, OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI);
-//        oauth2AuthorizationRequestResolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
-//        return oauth2AuthorizationRequestResolver;
-//    }
-
-//    TODO: Add OIDC support in the future?
-//    private OAuth2UserService<OidcUserRequest, OidcUser> oidcUserService() {
-//        final OidcUserService delegate = new OidcUserService();
-//
-//        return (userRequest) -> {
-//            // Delegate to the default implementation for loading a user
-//            OidcUser oidcUser = delegate.loadUser(userRequest);
-//
-//            OAuth2AccessToken accessToken = userRequest.getAccessToken();
-//            Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
-//
-//            // TODO
-//            // 1) Fetch the authority information from the protected resource using accessToken
-//            // 2) Map the authority information to one or more GrantedAuthority's and add it to mappedAuthorities
-//
-//            // 3) Create a copy of oidcUser but use the mappedAuthorities instead
-//            oidcUser = new DefaultOidcUser(mappedAuthorities, oidcUser.getIdToken(), oidcUser.getUserInfo());
-//            return oidcUser;
-//        };
-//    }
-
     // TODO
     // @Bean webServerStartStop
     // @Bean webServerGracefulShutdown
@@ -479,4 +393,24 @@ public class SecurityFilterChainConfig {
             .build();
 		return httpClient;
 	}
+
+    // See https://docs.spring.io/spring-security/reference/servlet/architecture.html#servlet-security-filters
+    // OAuth2AuthorizationRequestRedirectFilter (authz client redirects to authz server, adds state)
+    //  #DefaultRedirectStrategy
+    //   DefaultOAuth2AuthorizationRequestResolver
+    //   HttpSessionOAuth2AuthorizationRequestRepository
+    //  #HttpSessionRequestCache
+    // OAuth2LoginAuthenticationFilter (authz server redirects to authz client, adds code)
+    //   ClientRegistrationRepository
+    //   OAuth2AuthorizedClientRepository
+    //   HttpSessionOAuth2AuthorizationRequestRepository
+    //  #Converter<OAuth2LoginAuthenticationToken, OAuth2AuthenticationToken>
+    // OAuth2AuthorizationCodeGrantFilter
+	//   ClientRegistrationRepository
+	//   OAuth2AuthorizedClientRepository
+	//   AuthenticationManager authenticationManager;
+	//   HttpSessionOAuth2AuthorizationRequestRepository
+	//   WebAuthenticationDetailsSource
+	//  #DefaultRedirectStrategy
+	//  #HttpSessionRequestCache
 }

@@ -17,6 +17,7 @@
 	<description>Spring Applications</description>
 
 	<modules>
+		<module>spring-util</module>
 		<module>spring-authn-server</module>
 		<module>spring-authz-server</module>
 	</modules>

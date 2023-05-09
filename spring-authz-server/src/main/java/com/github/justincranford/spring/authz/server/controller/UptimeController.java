@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.github.justincranford.spring.authz.server.model.Uptime;
-import com.github.justincranford.spring.authz.server.util.JsonUtil;
+import com.github.justincranford.spring.util.util.JsonUtil;
 
 @CrossOrigin(origins={"https://127.0.0.1:8443"})
 @RestController

@@ -10,6 +10,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +23,7 @@ import com.github.justincranford.spring.authz.server.model.Uptime;
 //@EnableJpaRepositories("com.github.justincranford.spring.model")
 //@EntityScan("com.github.justincranford.spring.model")
 @SpringBootApplication // = @Configuration(@Component) + @EnableAutoConfiguration + @EnableWebMvc + @ComponentScan
-//@ComponentScan(basePackages={"com.github.justincranford.spring.config","com.github.justincranford.spring.controller"}) // TODO Causes tests to fail
+@ComponentScan(basePackages={"com.github.justincranford"}) // TODO Causes tests to fail
 @Profile({"default"}) // TODO "production" doesn't work due to missing servletWebServerFactory() bean
 public class SpringAuthzServer implements CommandLineRunner {
 	private Logger logger = LoggerFactory.getLogger(SpringAuthzServer.class);

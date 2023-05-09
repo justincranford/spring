@@ -24,15 +24,15 @@ import com.github.justincranford.spring.model.Uptime;
 @SpringBootApplication // = @Configuration(@Component) + @EnableAutoConfiguration + @EnableWebMvc + @ComponentScan
 //@ComponentScan(basePackages={"com.github.justincranford.spring.config","com.github.justincranford.spring.controller"}) // TODO Causes tests to fail
 @Profile({"default"}) // TODO "production" doesn't work due to missing servletWebServerFactory() bean
-public class Application implements CommandLineRunner {
-	private Logger logger = LoggerFactory.getLogger(Application.class);
+public class SpringAuthzServer implements CommandLineRunner {
+	private Logger logger = LoggerFactory.getLogger(SpringAuthzServer.class);
 
 	@Autowired Environment               environment;
 	@Autowired OpsUserCrudRepositoryInit opsUserCrudRepositoryInit;
 	@Autowired AppUserCrudRepositoryInit appUserCrudRepositoryInit;
 
 	public static void main(final String[] args) {
-		SpringApplication.run(Application.class, args);
+		SpringApplication.run(SpringAuthzServer.class, args);
 //        final SpringApplication application = new SpringApplication(Application.class);
 //        application.setBannerMode(Banner.Mode.OFF);
 //        application.run(args);

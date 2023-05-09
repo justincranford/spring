@@ -21,16 +21,11 @@ import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.test.context.TestPropertySource;
 
 import com.github.justincranford.spring.controller.OpsUserController;
 import com.github.justincranford.spring.model.AppUserCrudRepository;
 import com.github.justincranford.spring.model.OpsUserCrudRepository;
-import com.github.justincranford.spring.model.Uptime;
 import com.github.justincranford.spring.security.PasswordEncoderTestConfiguration;
 
 import io.restassured.RestAssured;
@@ -38,7 +33,7 @@ import io.restassured.config.RestAssuredConfig;
 import io.restassured.config.SSLConfig;
 import io.restassured.specification.RequestSpecification;
 
-@SpringBootTest(classes={SpringAuthzServer.class,PasswordEncoderTestConfiguration.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
+@SpringBootTest(classes={SpringAuthnServer.class,PasswordEncoderTestConfiguration.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
 //@ActiveProfiles(profiles = { "default","test" })
 public class SpringBootTestHelper {
@@ -51,18 +46,11 @@ public class SpringBootTestHelper {
 	@Autowired protected Environment environment;
     @Autowired protected ServletWebServerApplicationContext servletWebServerApplicationContext;
 	@Autowired protected TestRestTemplate restTemplate;
-	@Autowired protected Uptime.Factory uptimeFactory;
 	@Autowired protected UserDetailsService userDetailsService;
 	@Autowired protected OpsUserController opsUserController;
 //	@Autowired protected AppUserController appUserController;
 	@Autowired protected OpsUserCrudRepository opsUserCrudRepository;
 	@Autowired protected AppUserCrudRepository appUserCrudRepository;
-	// Oauth2 Client
-	@Autowired protected ClientRegistrationRepository     clientRegistrationRepository;
-	@Autowired protected OAuth2AuthorizedClientService    oauth2AuthorizedClientService;
-	@Autowired protected OAuth2AuthorizedClientRepository oauth2AuthorizedClientRepository;
-	// Oauth2 Authorization Server
-	@Autowired protected RegisteredClientRepository       registeredClientRepository;
 
     @Value(value="${spring.application.name}")                     protected String springApplicationName;
     @Value(value="${local.server.port}")                           protected int    localServerPort;		// same as @LocalServerPort

@@ -1,0 +1,38 @@
+package com.github.justincranford.spring.controller.ui;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@Controller
+//@RestController
+public class MvcController {
+    @Value("${spring.application.name}")
+    String appName;
+
+//    @GetMapping("/")
+//    public String rootPage(final Model model) {
+//        model.addAttribute("appName", appName);
+//        return "index";
+//    }
+
+//    @GetMapping("/index")
+//    public String homePage(final Model model) {
+//        model.addAttribute("appName", appName);
+//        return "index";
+//    }
+
+//    @GetMapping("/error")
+//    public String errorPage(final Model model) {
+//        model.addAttribute("appName", appName);
+//        return "error";
+//    }
+//
+//    @GetMapping("/login")
+//    public String loginPage(final Model model) {
+//        model.addAttribute("appName", appName);
+//        return "login";
+//    }
+}

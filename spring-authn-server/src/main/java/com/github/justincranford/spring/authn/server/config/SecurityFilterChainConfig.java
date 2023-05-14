@@ -18,6 +18,8 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+import com.github.justincranford.spring.util.config.EventsConfig;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityFilterChainConfig {

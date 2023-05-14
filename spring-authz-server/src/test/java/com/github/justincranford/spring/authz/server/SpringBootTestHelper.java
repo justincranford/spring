@@ -27,19 +27,17 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepo
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.test.context.TestPropertySource;
 
-import com.github.justincranford.spring.authz.server.SpringAuthzServer;
 import com.github.justincranford.spring.authz.server.controller.OpsUserController;
 import com.github.justincranford.spring.authz.server.model.AppUserCrudRepository;
 import com.github.justincranford.spring.authz.server.model.OpsUserCrudRepository;
 import com.github.justincranford.spring.authz.server.model.Uptime;
-import com.github.justincranford.spring.authz.server.security.PasswordEncoderTestConfiguration;
 
 import io.restassured.RestAssured;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.config.SSLConfig;
 import io.restassured.specification.RequestSpecification;
 
-@SpringBootTest(classes={SpringAuthzServer.class,PasswordEncoderTestConfiguration.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
+@SpringBootTest(classes={SpringAuthzServer.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
 //@ActiveProfiles(profiles = { "default","test" })
 public class SpringBootTestHelper {

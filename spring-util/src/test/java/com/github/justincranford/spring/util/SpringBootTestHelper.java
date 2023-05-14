@@ -20,6 +20,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestPropertySource;
 
 import com.github.justincranford.spring.util.security.PasswordEncoderTestConfiguration;
@@ -42,6 +43,7 @@ public class SpringBootTestHelper {
 	@Autowired protected Environment environment;
     @Autowired protected ServletWebServerApplicationContext servletWebServerApplicationContext;
 	@Autowired protected TestRestTemplate restTemplate;
+	@Autowired protected PasswordEncoder passwordEncoder;
 
     @Value(value="${spring.application.name}")                     protected String springApplicationName;
     @Value(value="${local.server.port}")                           protected int    localServerPort;		// same as @LocalServerPort

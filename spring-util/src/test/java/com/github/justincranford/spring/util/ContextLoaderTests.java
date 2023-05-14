@@ -47,5 +47,6 @@ public class ContextLoaderTests extends SpringBootTestHelper {
 		assertThat(super.environment,                        is(notNullValue()));
 		assertThat(super.servletWebServerApplicationContext, is(notNullValue()));
 		assertThat(super.restTemplate,                       is(notNullValue()));
+		assertThat(super.passwordEncoder,                    is(notNullValue()));
     }
 }

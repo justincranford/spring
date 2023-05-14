@@ -27,14 +27,13 @@ import com.github.justincranford.spring.authn.server.SpringAuthnServer;
 import com.github.justincranford.spring.authn.server.controller.OpsUserController;
 import com.github.justincranford.spring.authn.server.model.AppUserCrudRepository;
 import com.github.justincranford.spring.authn.server.model.OpsUserCrudRepository;
-import com.github.justincranford.spring.authn.server.security.PasswordEncoderTestConfiguration;
 
 import io.restassured.RestAssured;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.config.SSLConfig;
 import io.restassured.specification.RequestSpecification;
 
-@SpringBootTest(classes={SpringAuthnServer.class,PasswordEncoderTestConfiguration.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
+@SpringBootTest(classes={SpringAuthnServer.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
 //@ActiveProfiles(profiles = { "default","test" })
 public class SpringBootTestHelper {

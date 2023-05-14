@@ -45,22 +45,23 @@ public class SpringBootTestHelper {
 	@Autowired protected TestRestTemplate restTemplate;
 	@Autowired protected PasswordEncoder passwordEncoder;
 
-    @Value(value="${spring.application.name}")                     protected String springApplicationName;
-    @Value(value="${local.server.port}")                           protected int    localServerPort;		// same as @LocalServerPort
-//	@Value(value="${local.management.port}")                       protected int    localManagementPort;	// same as @LocalManagementPort
-	@Value(value="${server.address}")                              protected String serverAddress;
-    @Value(value="${server.port}")                                 protected int    serverPort;
-//	@Value(value="${management.port}")                             protected int    managementPort;
-//	@Value(value="${management.server.address}")                   protected String managementServerAddress;
-//	@Value(value="${management.server.port}")                      protected String managementServerPort;
-    @Value(value="${server.ssl.enabled:false}")                    public boolean serverSslEnabled;
-    @Value(value="${server.ssl.auto-generate-certificates:false}") public boolean serverSslAutoGenerateCertificates;
+    @Value(value="${spring.application.name}")                     protected String  springApplicationName;
+    @Value(value="${local.server.port}")                           protected int     localServerPort;		// same as @LocalServerPort
+//	@Value(value="${local.management.port}")                       protected int     localManagementPort;	// same as @LocalManagementPort
+	@Value(value="${server.address}")                              protected String  serverAddress;
+    @Value(value="${server.port}")                                 protected int     serverPort;
+//	@Value(value="${management.port}")                             protected int     managementPort;
+//	@Value(value="${management.server.address}")                   protected String  managementServerAddress;
+//	@Value(value="${management.server.port}")                      protected String  managementServerPort;
+    @Value(value="${server.ssl.enabled:false}")                    public    boolean serverSslEnabled;
+    @Value(value="${server.ssl.auto-generate-certificates:false}") public    boolean serverSslAutoGenerateCertificates;
 
     // TODO: Remove relaxedHTTPSValidation(), replace with trustStore()
     // TODO: Remove allowALlHostnames()
     protected final RestAssuredConfig x = RestAssuredConfig.newConfig().sslConfig(SSLConfig.sslConfig().relaxedHTTPSValidation().allowAllHostnames());
-	protected final RequestSpecification restAssuredNoCreds       = RestAssured.given().config(x);
-	protected final RequestSpecification restAssuredInvalidCreds  = RestAssured.given().config(x).auth().basic("invalid",  "invalid");
+	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(x);
+	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(x).auth().basic("invalid", "invalid");
+	protected final RequestSpecification restAssuredUptimeCreds  = RestAssured.given().config(x).auth().basic("uptime",  "uptime");
 
 	@BeforeAll public static void beforeClass() {
 		// do nothing

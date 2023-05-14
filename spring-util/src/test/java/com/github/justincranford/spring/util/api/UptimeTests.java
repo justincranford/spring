@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.authz.server.api;
+package com.github.justincranford.spring.util.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-import com.github.justincranford.spring.authz.server.SpringBootTestHelper;
+import com.github.justincranford.spring.util.SpringBootTestHelper;
 import com.github.justincranford.spring.util.model.Uptime;
 
 import io.restassured.response.Response;
@@ -18,7 +18,7 @@ public class UptimeTests extends SpringBootTestHelper {
 
 	@Test
 	public void testUptime() {
-		Response currentResponse = this.restAssuredOpsUserCreds.get(super.baseUrl + "/api/uptime");
+		Response currentResponse = this.restAssuredUptimeCreds.get(super.baseUrl + "/api/uptime");
 		this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
 		assertEquals(HttpStatus.OK.value(), currentResponse.getStatusCode());
 		assertTrue(currentResponse.jsonPath().getLong("nanos")   > 0L);
@@ -30,7 +30,7 @@ public class UptimeTests extends SpringBootTestHelper {
 		Uptime previousUptime;
 		for (int i=0; i<2; i++) {
 			previousUptime = currentUptime;
-			currentUptime = this.restAssuredOpsUserCreds.get(super.baseUrl + "/api/uptime").as(Uptime.class);
+			currentUptime = this.restAssuredUptimeCreds.get(super.baseUrl + "/api/uptime").as(Uptime.class);
 			assertTrue(currentUptime.nanos()  > previousUptime.nanos());
 			assertTrue(currentUptime.micros() > previousUptime.micros());
 			assertTrue(currentUptime.millis() > previousUptime.millis());

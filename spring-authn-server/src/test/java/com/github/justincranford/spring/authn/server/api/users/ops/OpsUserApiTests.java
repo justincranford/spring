@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
 import com.github.justincranford.spring.authn.server.SpringBootTestHelper;
-import com.github.justincranford.spring.authn.server.model.OpsUser;
+import com.github.justincranford.spring.util.model.OpsUser;
 
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;

@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.authz.server.controller;
+package com.github.justincranford.spring.authn.server.controller;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -8,18 +8,14 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.github.justincranford.spring.authz.server.model.BaseUser;
-
-import net.minidev.json.JSONObject;
+import com.github.justincranford.spring.util.model.BaseUser;
+import com.github.justincranford.spring.util.util.JsonUtil;
 
 @CrossOrigin(origins={"https://localhost:8443"})
 @RestController
@@ -35,7 +31,7 @@ public class SelfController {
 		// UsernamePasswordAuthenticationToken > AbstractAuthenticationToken > Authentication+CredentialsContainer > Principal
 		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		final String principalStr = (principal instanceof BaseUser bu) ? bu.toString() : authentication.getPrincipal().toString();
-		return JSONObject.toJSONString(
+		return JsonUtil.pojoToJsonString(
 			Map.of(
 				"name", authentication.getName(),
 				"authorities", authentication.getAuthorities().toString(),
@@ -44,13 +40,14 @@ public class SelfController {
 			)
 		);
 	}
-	@GetMapping(path = "/self2")
-	public String getOAuth2User(@AuthenticationPrincipal OAuth2User principal) {
-		if (principal == null) {
-			throw new UsernameNotFoundException("OAuth2User not found");
-		}
-		// OAuth2User > OAuth2AuthenticatedPrincipal > AuthenticatedPrincipal
-		// DefaultOidcUser extends DefaultOAuth2User(OAuth2User) implements OidcUser(OAuth2User, IdTokenClaimAccessor,OAuth2AuthenticatedPrincipal,AuthenticatedPrincipal)
-		return JSONObject.toJSONString(principal.getAttributes());
-	}
+	// TODO
+//	@GetMapping(path = "/self2")
+//	public String getOAuth2User(@AuthenticationPrincipal OAuth2User principal) {
+//		if (principal == null) {
+//			throw new UsernameNotFoundException("OAuth2User not found");
+//		}
+//		// OAuth2User > OAuth2AuthenticatedPrincipal > AuthenticatedPrincipal
+//		// DefaultOidcUser extends DefaultOAuth2User(OAuth2User) implements OidcUser(OAuth2User, IdTokenClaimAccessor,OAuth2AuthenticatedPrincipal,AuthenticatedPrincipal)
+//		return JSONObject.toJSONString(principal.getAttributes());
+//	}
 }

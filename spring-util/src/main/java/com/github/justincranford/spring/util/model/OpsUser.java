@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.authz.server.model;
+package com.github.justincranford.spring.util.model;
 
 import org.springframework.transaction.annotation.Transactional;
 

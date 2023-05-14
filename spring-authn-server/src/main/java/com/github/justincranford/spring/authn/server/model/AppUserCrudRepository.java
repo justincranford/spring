@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.data.repository.ListCrudRepository;
 
+import com.github.justincranford.spring.util.model.AppUser;
+
 public interface AppUserCrudRepository extends ListCrudRepository<AppUser, Long> {
     List<AppUser> findByUsername(String username);
     List<AppUser> findByEmailAddress(String emailAddress);

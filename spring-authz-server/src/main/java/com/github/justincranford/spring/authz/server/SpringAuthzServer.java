@@ -15,9 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.github.justincranford.spring.authz.server.model.AppUserCrudRepositoryInit;
-import com.github.justincranford.spring.authz.server.model.OpsUserCrudRepositoryInit;
-import com.github.justincranford.spring.authz.server.model.Uptime;
+import com.github.justincranford.spring.util.model.Uptime;
 
 //@EnableTransactionManagement // JTA
 //@EnableJpaRepositories("com.github.justincranford.spring.model")
@@ -29,8 +27,6 @@ public class SpringAuthzServer implements CommandLineRunner {
 	private Logger logger = LoggerFactory.getLogger(SpringAuthzServer.class);
 
 	@Autowired Environment               environment;
-	@Autowired OpsUserCrudRepositoryInit opsUserCrudRepositoryInit;
-	@Autowired AppUserCrudRepositoryInit appUserCrudRepositoryInit;
 
 	public static void main(final String[] args) {
 		SpringApplication.run(SpringAuthzServer.class, args);
@@ -44,9 +40,6 @@ public class SpringAuthzServer implements CommandLineRunner {
 	@Override
 	public void run(final String... args) throws Exception {
 		logger.info("Active profiles: {}", this.environment.getActiveProfiles().toString());
-		// populate default users in DB
-		this.opsUserCrudRepositoryInit.run();
-		this.appUserCrudRepositoryInit.run();
     }
 
     @Bean

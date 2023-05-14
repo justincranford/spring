@@ -9,6 +9,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.github.justincranford.spring.util.model.AppUser;
+
 @Component
 public class AppUserCrudRepositoryInit {
 	private Logger logger = LoggerFactory.getLogger(AppUserCrudRepositoryInit.class);

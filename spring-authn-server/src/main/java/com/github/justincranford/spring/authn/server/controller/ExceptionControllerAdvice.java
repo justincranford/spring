@@ -1,7 +1,5 @@
 package com.github.justincranford.spring.authn.server.controller;
 
-import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,8 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import com.github.justincranford.spring.authn.server.model.AppUserNotFoundException;
-import com.github.justincranford.spring.authn.server.model.OpsUserNotFoundException;
+import com.github.justincranford.spring.util.model.AppUserNotFoundException;
+import com.github.justincranford.spring.util.model.OpsUserNotFoundException;
 
 @ControllerAdvice
 public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {

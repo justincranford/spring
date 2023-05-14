@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.authz.server.model;
+package com.github.justincranford.spring.util.model;
 
 public class OpsUserNotFoundException extends RuntimeException {
 	private static final long serialVersionUID = 1L;

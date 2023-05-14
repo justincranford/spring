@@ -8,6 +8,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import com.github.justincranford.spring.util.model.BaseUser;
+
 //public class UserDetailsServiceImpl implements UserDetailsManager, UserDetailsPasswordService {
 public class UserDetailsServiceImpl implements UserDetailsService {
 

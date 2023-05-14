@@ -47,12 +47,6 @@ public class ContextLoaderTests extends SpringBootTestHelper {
 		assertThat(super.environment,                        is(notNullValue()));
 		assertThat(super.servletWebServerApplicationContext, is(notNullValue()));
 		assertThat(super.restTemplate,                       is(notNullValue()));
-		assertThat(super.uptimeFactory,                      is(notNullValue()));
-		assertThat(super.userDetailsService,                 is(notNullValue()));
-		assertThat(super.opsUserController,                  is(notNullValue()));
-//		assertThat(super.appUserController,                  is(notNullValue()));
-		assertThat(super.opsUserCrudRepository,              is(notNullValue()));
-		assertThat(super.appUserCrudRepository,              is(notNullValue()));
 		assertThat(super.clientRegistrationRepository,       is(notNullValue()));
 		assertThat(super.oauth2AuthorizedClientRepository,   is(notNullValue()));
 		assertThat(super.oauth2AuthorizedClientService,      is(notNullValue()));

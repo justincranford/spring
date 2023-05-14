@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.authz.server.model;
+package com.github.justincranford.spring.util.model;
 
 import java.util.Arrays;
 import java.util.Collection;

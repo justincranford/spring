@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.data.repository.ListCrudRepository;
 
+import com.github.justincranford.spring.util.model.OpsUser;
+
 public interface OpsUserCrudRepository extends ListCrudRepository<OpsUser, Long> {
     List<OpsUser> findByUsername(String username);
     List<OpsUser> findByEmailAddress(String emailAddress);

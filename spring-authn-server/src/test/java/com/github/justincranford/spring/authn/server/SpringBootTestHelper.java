@@ -23,7 +23,6 @@ import org.springframework.core.env.PropertySource;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.TestPropertySource;
 
-import com.github.justincranford.spring.authn.server.SpringAuthnServer;
 import com.github.justincranford.spring.authn.server.controller.OpsUserController;
 import com.github.justincranford.spring.authn.server.model.AppUserCrudRepository;
 import com.github.justincranford.spring.authn.server.model.OpsUserCrudRepository;

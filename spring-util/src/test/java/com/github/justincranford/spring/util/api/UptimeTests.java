@@ -8,12 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-import com.github.justincranford.spring.util.SpringBootTestHelper;
+import com.github.justincranford.spring.util.SpringBootTestHelperUtil;
 import com.github.justincranford.spring.util.model.Uptime;
 
 import io.restassured.response.Response;
 
-public class UptimeTests extends SpringBootTestHelper {
+public class UptimeTests extends SpringBootTestHelperUtil {
 	private Logger logger = LoggerFactory.getLogger(UptimeTests.class);
 
 	@Test

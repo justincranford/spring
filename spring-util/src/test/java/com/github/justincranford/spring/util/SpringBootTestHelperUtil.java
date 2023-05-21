@@ -12,30 +12,33 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-
-import com.github.justincranford.spring.util.security.PasswordEncoderTestConfiguration;
 
 import io.restassured.RestAssured;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.config.SSLConfig;
 import io.restassured.specification.RequestSpecification;
 
-@SpringBootTest(classes={PasswordEncoderTestConfiguration.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
+@SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
+@ComponentScan(basePackages={"com.github.justincranford"}) // TODO Causes tests to fail
+@ContextConfiguration
 //@ActiveProfiles(profiles = { "default","test" })
-public class SpringBootTestHelper {
+public class SpringBootTestHelperUtil {
 	@SuppressWarnings("unused")
-	private Logger logger = LoggerFactory.getLogger(SpringBootTestHelper.class);
+	private Logger logger = LoggerFactory.getLogger(SpringBootTestHelperUtil.class);
 
 	protected static final AtomicLong UNIQUE_LONG = new AtomicLong(System.nanoTime());
 
@@ -53,8 +56,8 @@ public class SpringBootTestHelper {
 //	@Value(value="${management.port}")                             protected int     managementPort;
 //	@Value(value="${management.server.address}")                   protected String  managementServerAddress;
 //	@Value(value="${management.server.port}")                      protected String  managementServerPort;
-    @Value(value="${server.ssl.enabled:false}")                    public    boolean serverSslEnabled;
-    @Value(value="${server.ssl.auto-generate-certificates:false}") public    boolean serverSslAutoGenerateCertificates;
+    @Value(value="${server.ssl.enabled:false}")                    protected boolean serverSslEnabled;
+    @Value(value="${server.ssl.auto-generate-certificates:false}") protected boolean serverSslAutoGenerateCertificates;
 
     // TODO: Remove relaxedHTTPSValidation(), replace with trustStore()
     // TODO: Remove allowALlHostnames()

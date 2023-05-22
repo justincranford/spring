@@ -22,7 +22,7 @@ import com.github.justincranford.spring.util.model.Uptime;
 
 @SpringBootApplication
 @SuppressWarnings("deprecation")
-public class SpringBootTestApplication {
+public class TestApplication {
 	@Bean
 	public Uptime.Factory uptimeFactory() {
 		return new Uptime.Factory(Instant.now());

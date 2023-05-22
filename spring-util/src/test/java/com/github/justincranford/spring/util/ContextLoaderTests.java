@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ContextLoaderTests extends SpringBootTestHelperUtil {
+public class ContextLoaderTests extends AbstractIT {
 	private Logger logger = LoggerFactory.getLogger(ContextLoaderTests.class);
 
     @Test public void testLoadProperties() throws Exception {

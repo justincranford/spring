@@ -7,36 +7,33 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-import com.github.justincranford.spring.util.SpringBootTestApplication;
-import com.github.justincranford.spring.util.SpringBootTestApplication.TestUser;
-import com.github.justincranford.spring.util.SpringBootTestHelperUtil;
+import com.github.justincranford.spring.util.AbstractIT;
+import com.github.justincranford.spring.util.TestApplication;
+import com.github.justincranford.spring.util.TestApplication.TestUser;
 import com.github.justincranford.spring.util.model.Uptime;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 
-public class UptimeTests extends SpringBootTestHelperUtil {
+public class UptimeTests extends AbstractIT {
     @Nested
-    static class SuccessPath extends SpringBootTestHelperUtil {
+    static class SuccessPath extends AbstractIT {
     	private Logger logger = LoggerFactory.getLogger(UptimeTests.class);
         public static Stream<TestUser> validTestUsers() {
-            return SpringBootTestApplication.TEST_USERS.stream();
+            return TestApplication.TEST_USERS.stream();
         }
 
         @ParameterizedTest
         @MethodSource("validTestUsers")
     	public void testUptimeValidUser(final TestUser testUser) {
-        	final RequestSpecification requestSpec = RestAssured.given().config(super.restAssuredConfig).auth().basic(SpringBootTestApplication.APP_USER.username(), SpringBootTestApplication.APP_USER.password());
+        	final RequestSpecification requestSpec = RestAssured.given().config(super.restAssuredConfig).auth().basic(TestApplication.APP_USER.username(), TestApplication.APP_USER.password());
     		final Response currentResponse = requestSpec.get(super.baseUrl + "/api/uptime");
     		this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
     		assertEquals(HttpStatus.OK.value(), currentResponse.getStatusCode());
@@ -59,7 +56,7 @@ public class UptimeTests extends SpringBootTestHelperUtil {
     }
 
     @Nested
-    static class FailurePath extends SpringBootTestHelperUtil {
+    static class FailurePath extends AbstractIT {
     	private Logger logger = LoggerFactory.getLogger(UptimeTests.class);
     	
         @Test

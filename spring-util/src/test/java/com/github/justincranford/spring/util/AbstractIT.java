@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -26,8 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
-import com.github.justincranford.spring.util.config.UserDetailsServiceTestConfig;
-
 import io.restassured.RestAssured;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.config.SSLConfig;
@@ -38,9 +35,9 @@ import io.restassured.specification.RequestSpecification;
 @ComponentScan(basePackages={"com.github.justincranford"}) // TODO Causes tests to fail
 @ContextConfiguration
 //@ActiveProfiles(profiles = { "default","test" })
-public class SpringBootTestHelperUtil {
+public class AbstractIT {
 	@SuppressWarnings("unused")
-	private Logger logger = LoggerFactory.getLogger(SpringBootTestHelperUtil.class);
+	private Logger logger = LoggerFactory.getLogger(AbstractIT.class);
 
 	protected static final AtomicLong UNIQUE_LONG = new AtomicLong(System.nanoTime());
 
@@ -66,10 +63,10 @@ public class SpringBootTestHelperUtil {
     protected final RestAssuredConfig    restAssuredConfig       = RestAssuredConfig.newConfig().sslConfig(SSLConfig.sslConfig().relaxedHTTPSValidation().allowAllHostnames());
 	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(restAssuredConfig);
 	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(restAssuredConfig).auth().basic("invalid", "invalid");
-	protected final RequestSpecification restAssureAppUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(SpringBootTestApplication.APP_USER.username(), SpringBootTestApplication.APP_USER.password());
-	protected final RequestSpecification restAssureAppAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(SpringBootTestApplication.APP_ADMIN.username(), SpringBootTestApplication.APP_ADMIN.password());
-	protected final RequestSpecification restAssureOpsUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(SpringBootTestApplication.OPS_USER.username(), SpringBootTestApplication.OPS_USER.password());
-	protected final RequestSpecification restAssureOpsAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(SpringBootTestApplication.OPS_ADMIN.username(), SpringBootTestApplication.OPS_ADMIN.password());
+	protected final RequestSpecification restAssureAppUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(TestApplication.APP_USER.username(), TestApplication.APP_USER.password());
+	protected final RequestSpecification restAssureAppAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(TestApplication.APP_ADMIN.username(), TestApplication.APP_ADMIN.password());
+	protected final RequestSpecification restAssureOpsUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(TestApplication.OPS_USER.username(), TestApplication.OPS_USER.password());
+	protected final RequestSpecification restAssureOpsAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(TestApplication.OPS_ADMIN.username(), TestApplication.OPS_ADMIN.password());
 
 	@BeforeAll public static void beforeClass() {
 		// do nothing

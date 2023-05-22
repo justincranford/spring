@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 import com.github.justincranford.spring.util.AbstractIT;
-import com.github.justincranford.spring.util.TestApplication;
-import com.github.justincranford.spring.util.TestApplication.TestUser;
+import com.github.justincranford.spring.util.config.UserDetailsTestConfig;
+import com.github.justincranford.spring.util.config.UserDetailsTestConfig.TestUser;
 import com.github.justincranford.spring.util.model.Uptime;
 
 import io.restassured.RestAssured;
@@ -27,13 +27,13 @@ public class UptimeTests extends AbstractIT {
     static class SuccessPath extends AbstractIT {
     	private Logger logger = LoggerFactory.getLogger(UptimeTests.class);
         public static Stream<TestUser> validTestUsers() {
-            return TestApplication.TEST_USERS.stream();
+            return UserDetailsTestConfig.TEST_USERS.stream();
         }
 
         @ParameterizedTest
         @MethodSource("validTestUsers")
     	public void testUptimeValidUser(final TestUser testUser) {
-        	final RequestSpecification requestSpec = RestAssured.given().config(super.restAssuredConfig).auth().basic(TestApplication.APP_USER.username(), TestApplication.APP_USER.password());
+        	final RequestSpecification requestSpec = RestAssured.given().config(super.restAssuredConfig).auth().basic(UserDetailsTestConfig.APP_USER.username(), UserDetailsTestConfig.APP_USER.password());
     		final Response currentResponse = requestSpec.get(super.baseUrl + "/api/uptime");
     		this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
     		assertEquals(HttpStatus.OK.value(), currentResponse.getStatusCode());

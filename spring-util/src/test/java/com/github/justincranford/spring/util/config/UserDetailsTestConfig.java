@@ -1,13 +1,13 @@
-package com.github.justincranford.spring.util;
+package com.github.justincranford.spring.util.config;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.User.UserBuilder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,32 +18,18 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
-import com.github.justincranford.spring.util.model.Uptime;
-
-@SpringBootApplication
+@TestConfiguration
+@Profile("!default")
 @SuppressWarnings("deprecation")
-public class TestApplication {
-	@Bean
-	public Uptime.Factory uptimeFactory() {
-		return new Uptime.Factory(Instant.now());
-	}
-
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		final String defaultEncoderId = "noop";
-		final PasswordEncoder passwordEncoder = new DelegatingPasswordEncoder(defaultEncoderId,
-			Map.of(
-				"noop",   NoOpPasswordEncoder.getInstance(),
-				"sha256", new MessageDigestPasswordEncoder("SHA-256")
-			));
-		return passwordEncoder;
-	}
+public class UserDetailsTestConfig {
 	public record TestUser(String username, String password, Collection<String> roles) { }
+
 	public static final TestUser APP_USER  = new TestUser("appuser",  "appuser",  Set.of("APPUSER"));
 	public static final TestUser APP_ADMIN = new TestUser("appadmin", "appadmin", Set.of("APPADMIN"));
 	public static final TestUser OPS_USER  = new TestUser("opsuser",  "opsuser",  Set.of("OPSUSER"));
 	public static final TestUser OPS_ADMIN = new TestUser("opsadmin", "opsadmin", Set.of("OPSADMIN"));
 	public static final Set<TestUser> TEST_USERS = Set.of(APP_USER, APP_ADMIN, OPS_USER, OPS_ADMIN);
+
 	@Bean
 	public UserDetailsService users(final PasswordEncoder passwordEncoder) {
 		final UserBuilder builder = User.builder().passwordEncoder(passwordEncoder::encode);

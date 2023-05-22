@@ -9,9 +9,7 @@
 		<relativePath>..</relativePath>
 	</parent>
 
-	<groupId>com.github.justincranford</groupId>
 	<artifactId>spring-authn-server</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>Spring Authn Server</name>

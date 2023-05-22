@@ -26,6 +26,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
+import com.github.justincranford.spring.util.config.UserDetailsServiceTestConfig;
+
 import io.restassured.RestAssured;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.config.SSLConfig;
@@ -61,10 +63,13 @@ public class SpringBootTestHelperUtil {
 
     // TODO: Remove relaxedHTTPSValidation(), replace with trustStore()
     // TODO: Remove allowALlHostnames()
-    protected final RestAssuredConfig x = RestAssuredConfig.newConfig().sslConfig(SSLConfig.sslConfig().relaxedHTTPSValidation().allowAllHostnames());
-	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(x);
-	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(x).auth().basic("invalid", "invalid");
-	protected final RequestSpecification restAssuredUptimeCreds  = RestAssured.given().config(x).auth().basic("uptime",  "uptime");
+    protected final RestAssuredConfig    restAssuredConfig       = RestAssuredConfig.newConfig().sslConfig(SSLConfig.sslConfig().relaxedHTTPSValidation().allowAllHostnames());
+	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(restAssuredConfig);
+	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(restAssuredConfig).auth().basic("invalid", "invalid");
+	protected final RequestSpecification restAssureAppUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(SpringBootTestApplication.APP_USER.username(), SpringBootTestApplication.APP_USER.password());
+	protected final RequestSpecification restAssureAppAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(SpringBootTestApplication.APP_ADMIN.username(), SpringBootTestApplication.APP_ADMIN.password());
+	protected final RequestSpecification restAssureOpsUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(SpringBootTestApplication.OPS_USER.username(), SpringBootTestApplication.OPS_USER.password());
+	protected final RequestSpecification restAssureOpsAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(SpringBootTestApplication.OPS_ADMIN.username(), SpringBootTestApplication.OPS_ADMIN.password());
 
 	@BeforeAll public static void beforeClass() {
 		// do nothing

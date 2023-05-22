@@ -4,10 +4,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
@@ -28,6 +25,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
 import com.github.justincranford.spring.util.config.PasswordEncoderTestConfig;
+import com.github.justincranford.spring.util.config.RestTestConfig;
 import com.github.justincranford.spring.util.config.UserDetailsTestConfig;
 
 import io.restassured.RestAssured;
@@ -35,7 +33,7 @@ import io.restassured.config.RestAssuredConfig;
 import io.restassured.config.SSLConfig;
 import io.restassured.specification.RequestSpecification;
 
-@SpringBootTest(classes={PasswordEncoderTestConfig.class, UserDetailsTestConfig.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
+@SpringBootTest(classes={RestTestConfig.class, PasswordEncoderTestConfig.class, UserDetailsTestConfig.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
 @ComponentScan(basePackages={"com.github.justincranford.spring.util"})
 @ContextConfiguration
@@ -53,7 +51,7 @@ public class AbstractIT {
 	@Autowired protected PasswordEncoder passwordEncoder;
 
     @Value(value="${spring.application.name}")                     protected String  springApplicationName;
-    @Value(value="${local.server.port}")                           protected int     localServerPort;		// same as @LocalServerPort
+//    @Value(value="${local.server.port}")                           protected int     localServerPort;		// same as @LocalServerPort
 //	@Value(value="${local.management.port}")                       protected int     localManagementPort;	// same as @LocalManagementPort
 	@Value(value="${server.address}")                              protected String  serverAddress;
     @Value(value="${server.port}")                                 protected int     serverPort;
@@ -73,25 +71,8 @@ public class AbstractIT {
 	protected final RequestSpecification restAssureOpsUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsTestConfig.OPS_USER.username(), UserDetailsTestConfig.OPS_USER.password());
 	protected final RequestSpecification restAssureOpsAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsTestConfig.OPS_ADMIN.username(), UserDetailsTestConfig.OPS_ADMIN.password());
 
-	@BeforeAll public static void beforeClass() {
-		// do nothing
-	}
-
-	@AfterAll public static void afterClass() {
-		// do nothing
-	}
-
-	protected String baseUrl;
-	@BeforeEach public void beforeEach() throws Exception {
-	    final boolean useHttps = (this.serverSslEnabled || this.serverSslAutoGenerateCertificates);
-		this.baseUrl = (useHttps ? "https" : "http") + "://localhost:" + this.localServerPort; // random port
-	}
-
-	@AfterEach public void afterEach() throws Exception {
-		// do nothing
-	}
-
-	protected static Map<String, Object> allProperties(final Environment environment) {
+	@Bean
+	public Map<String, Object> allProperties(final Environment environment) {
 	    final Map<String, Object> map = new TreeMap<>();
 	    if (environment instanceof ConfigurableEnvironment) {
 	        for (PropertySource<?> propertySource : ((ConfigurableEnvironment) environment).getPropertySources()) {
@@ -107,5 +88,6 @@ public class AbstractIT {
 
 	@SpringBootApplication
 	@EnableWebSecurity
-	public static class App { }
+	public static class App {
+	}
 }

@@ -15,7 +15,6 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 @TestConfiguration
 //@Profile("!default")
-@SuppressWarnings("deprecation")
 public class UserDetailsTestConfig {
 	public record TestUser(String username, String password, Collection<String> roles) { }
 

@@ -17,7 +17,7 @@ public class ContextLoaderIT extends AbstractIT {
     @Test public void testLoadProperties() throws Exception {
     	final Map<String, Object> map = super.allProperties(super.environment);
     	assertEquals(map.get("spring.application.name"),   super.springApplicationName);
-		assertEquals(map.get("local.server.port"),         super.localServerPort);
+//		assertEquals(map.get("local.server.port"),         super.localServerPort);
 //		assertEquals(map.get("local.management.port"),     super.localManagementPort);
 		assertEquals(map.get("server.address"),            super.serverAddress);
 //		assertEquals(map.get("server.port"),               super.serverPort);			// Overridden by @SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT)
@@ -26,7 +26,7 @@ public class ContextLoaderIT extends AbstractIT {
 //		assertEquals(map.get("management.server.address"), super.managementServerAddress);
 
 		this.logger.info("${spring.application.name}="   + super.springApplicationName);
-		this.logger.info("${local.server.port}="         + super.localServerPort);
+//		this.logger.info("${local.server.port}="         + super.localServerPort);
 //		this.logger.info("${local.management.port}="     + super.localManagementPort);
 		this.logger.info("${server.address}="            + super.serverAddress);
 		this.logger.info("${server.port}="               + super.serverPort);

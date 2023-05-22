@@ -11,6 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 import com.github.justincranford.spring.util.AbstractIT;
@@ -26,6 +27,10 @@ public class UptimeIT extends AbstractIT {
     @Nested
     static class SuccessPath extends AbstractIT {
     	private Logger logger = LoggerFactory.getLogger(UptimeIT.class);
+
+    	@Autowired
+    	String baseUrl;
+
         public static Stream<TestUser> validTestUsers() {
             return UserDetailsTestConfig.TEST_USERS.stream();
         }
@@ -34,7 +39,7 @@ public class UptimeIT extends AbstractIT {
         @MethodSource("validTestUsers")
     	public void testUptimeValidUser(final TestUser testUser) {
         	final RequestSpecification requestSpec = RestAssured.given().config(super.restAssuredConfig).auth().basic(UserDetailsTestConfig.APP_USER.username(), UserDetailsTestConfig.APP_USER.password());
-    		final Response currentResponse = requestSpec.get(super.baseUrl + "/api/uptime");
+    		final Response currentResponse = requestSpec.get(this.baseUrl + "/api/uptime");
     		this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
     		assertEquals(HttpStatus.OK.value(), currentResponse.getStatusCode());
     		assertTrue(currentResponse.jsonPath().getLong("nanos")   > 0L);
@@ -46,7 +51,7 @@ public class UptimeIT extends AbstractIT {
     		Uptime previousUptime;
     		for (int i=0; i<2; i++) {
     			previousUptime = currentUptime;
-    			currentUptime = requestSpec.get(super.baseUrl + "/api/uptime").as(Uptime.class);
+    			currentUptime = requestSpec.get(baseUrl + "/api/uptime").as(Uptime.class);
     			assertTrue(currentUptime.nanos()  > previousUptime.nanos());
     			assertTrue(currentUptime.micros() > previousUptime.micros());
     			assertTrue(currentUptime.millis() > previousUptime.millis());
@@ -59,16 +64,19 @@ public class UptimeIT extends AbstractIT {
     static class FailurePath extends AbstractIT {
     	private Logger logger = LoggerFactory.getLogger(UptimeIT.class);
     	
+    	@Autowired
+    	String baseUrl;
+
         @Test
     	public void testUptimeNoCredentials() {
-    		final Response currentResponse = super.restAssuredNoCreds.get(super.baseUrl + "/api/uptime");
+    		final Response currentResponse = super.restAssuredNoCreds.get(this.baseUrl + "/api/uptime");
     		this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
     		assertEquals(HttpStatus.UNAUTHORIZED.value(), currentResponse.getStatusCode());
     	}
 
         @Test
     	public void testUptimeInvalidCredentials() {
-    		final Response currentResponse = super.restAssuredInvalidCreds.get(super.baseUrl + "/api/uptime");
+    		final Response currentResponse = super.restAssuredInvalidCreds.get(this.baseUrl + "/api/uptime");
     		this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
     		assertEquals(HttpStatus.UNAUTHORIZED.value(), currentResponse.getStatusCode());
     	}

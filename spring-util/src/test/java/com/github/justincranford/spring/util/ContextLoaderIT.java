@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ContextLoaderTests extends AbstractIT {
-	private Logger logger = LoggerFactory.getLogger(ContextLoaderTests.class);
+public class ContextLoaderIT extends AbstractIT {
+	private Logger logger = LoggerFactory.getLogger(ContextLoaderIT.class);
 
     @Test public void testLoadProperties() throws Exception {
     	final Map<String, Object> map = super.allProperties(super.environment);

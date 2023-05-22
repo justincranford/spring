@@ -15,21 +15,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
 import com.github.justincranford.spring.util.config.PasswordEncoderTestConfig;
-import com.github.justincranford.spring.util.config.UptimeFactoryConfig;
 import com.github.justincranford.spring.util.config.UserDetailsTestConfig;
 
 import io.restassured.RestAssured;
@@ -37,10 +35,9 @@ import io.restassured.config.RestAssuredConfig;
 import io.restassured.config.SSLConfig;
 import io.restassured.specification.RequestSpecification;
 
-@SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
+@SpringBootTest(classes={PasswordEncoderTestConfig.class, UserDetailsTestConfig.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
 @ComponentScan(basePackages={"com.github.justincranford.spring.util"})
-@Import({PasswordEncoderTestConfig.class, UserDetailsTestConfig.class})
 @ContextConfiguration
 //@ActiveProfiles(profiles = { "default","test" })
 public class AbstractIT {
@@ -109,9 +106,6 @@ public class AbstractIT {
 	}
 
 	@SpringBootApplication
-	@ComponentScan(basePackages={"com.github.justincranford.spring.util"})
-	@Import({PasswordEncoderTestConfig.class, UserDetailsTestConfig.class})
-	public static class Config {
-		
-	}
+	@EnableWebSecurity
+	public static class App { }
 }

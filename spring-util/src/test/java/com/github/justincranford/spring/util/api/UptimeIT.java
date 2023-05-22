@@ -22,10 +22,10 @@ import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 
-public class UptimeTests extends AbstractIT {
+public class UptimeIT extends AbstractIT {
     @Nested
     static class SuccessPath extends AbstractIT {
-    	private Logger logger = LoggerFactory.getLogger(UptimeTests.class);
+    	private Logger logger = LoggerFactory.getLogger(UptimeIT.class);
         public static Stream<TestUser> validTestUsers() {
             return UserDetailsTestConfig.TEST_USERS.stream();
         }
@@ -57,7 +57,7 @@ public class UptimeTests extends AbstractIT {
 
     @Nested
     static class FailurePath extends AbstractIT {
-    	private Logger logger = LoggerFactory.getLogger(UptimeTests.class);
+    	private Logger logger = LoggerFactory.getLogger(UptimeIT.class);
     	
         @Test
     	public void testUptimeNoCredentials() {

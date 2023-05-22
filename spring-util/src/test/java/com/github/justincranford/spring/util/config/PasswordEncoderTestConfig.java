@@ -2,17 +2,14 @@ package com.github.justincranford.spring.util.config;
 
 import java.util.Map;
 
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@Configuration
-@Profile("!default")
-@EnableWebSecurity
+@TestConfiguration
+//@Profile("!default")
 @SuppressWarnings("deprecation")
 public class PasswordEncoderTestConfig {
 	@Bean

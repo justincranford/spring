@@ -15,7 +15,7 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 @TestConfiguration
 //@Profile("!default")
-public class UserDetailsTestConfig {
+public class UserDetailsITConfig {
 	public record TestUser(String username, String password, Collection<String> roles) { }
 
 	public static final TestUser APP_USER  = new TestUser("appuser",  "appuser",  Set.of("APPUSER"));

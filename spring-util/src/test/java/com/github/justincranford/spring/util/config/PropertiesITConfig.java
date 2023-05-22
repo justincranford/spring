@@ -12,7 +12,7 @@ import org.springframework.core.env.PropertySource;
 
 @TestConfiguration
 //@Profile("!default")
-public class PropertiesTestConfig {
+public class PropertiesITConfig {
 	@Bean
 	public Map<String, Object> allProperties(final Environment environment) {
 	    final Map<String, Object> map = new TreeMap<>();

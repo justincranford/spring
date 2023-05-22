@@ -11,7 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @TestConfiguration
 //@Profile("!default")
 @SuppressWarnings("deprecation")
-public class PasswordEncoderTestConfig {
+public class PasswordEncoderITConfig {
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		final String defaultEncoderId = "sha256";

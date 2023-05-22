@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Lazy;
 @Lazy
 @TestConfiguration
 //@Profile("!default")
-public class RestTestConfig {
+public class RestITConfig {
 	@Bean
 	public String baseUrl(
 		@Value(value="${server.ssl.enabled:false}")                    final boolean serverSslEnabled,

@@ -15,8 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 import com.github.justincranford.spring.util.AbstractIT;
-import com.github.justincranford.spring.util.config.UserDetailsTestConfig;
-import com.github.justincranford.spring.util.config.UserDetailsTestConfig.TestUser;
+import com.github.justincranford.spring.util.config.UserDetailsITConfig;
+import com.github.justincranford.spring.util.config.UserDetailsITConfig.TestUser;
 import com.github.justincranford.spring.util.model.Uptime;
 
 import io.restassured.RestAssured;
@@ -32,13 +32,13 @@ public class UptimeIT extends AbstractIT {
     	String baseUrl;
 
         public static Stream<TestUser> validTestUsers() {
-            return UserDetailsTestConfig.TEST_USERS.stream();
+            return UserDetailsITConfig.TEST_USERS.stream();
         }
 
         @ParameterizedTest
         @MethodSource("validTestUsers")
     	public void testUptimeValidUser(final TestUser testUser) {
-        	final RequestSpecification requestSpec = RestAssured.given().config(super.restAssuredConfig).auth().basic(UserDetailsTestConfig.APP_USER.username(), UserDetailsTestConfig.APP_USER.password());
+        	final RequestSpecification requestSpec = RestAssured.given().config(super.restAssuredConfig).auth().basic(UserDetailsITConfig.APP_USER.username(), UserDetailsITConfig.APP_USER.password());
     		final Response currentResponse = requestSpec.get(this.baseUrl + "/api/uptime");
     		this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
     		assertEquals(HttpStatus.OK.value(), currentResponse.getStatusCode());

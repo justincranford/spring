@@ -18,17 +18,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
-import com.github.justincranford.spring.util.config.PasswordEncoderTestConfig;
-import com.github.justincranford.spring.util.config.PropertiesTestConfig;
-import com.github.justincranford.spring.util.config.RestTestConfig;
-import com.github.justincranford.spring.util.config.UserDetailsTestConfig;
+import com.github.justincranford.spring.util.config.PasswordEncoderITConfig;
+import com.github.justincranford.spring.util.config.PropertiesITConfig;
+import com.github.justincranford.spring.util.config.RestITConfig;
+import com.github.justincranford.spring.util.config.UserDetailsITConfig;
 
 import io.restassured.RestAssured;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.config.SSLConfig;
 import io.restassured.specification.RequestSpecification;
 
-@SpringBootTest(classes={RestTestConfig.class, PropertiesTestConfig.class, PasswordEncoderTestConfig.class, UserDetailsTestConfig.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
+@SpringBootTest(classes={RestITConfig.class, PropertiesITConfig.class, PasswordEncoderITConfig.class, UserDetailsITConfig.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
 @ComponentScan(basePackages={"com.github.justincranford.spring.util"})
 @ContextConfiguration
@@ -61,10 +61,10 @@ public class AbstractIT {
     protected final RestAssuredConfig    restAssuredConfig       = RestAssuredConfig.newConfig().sslConfig(SSLConfig.sslConfig().relaxedHTTPSValidation().allowAllHostnames());
 	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(restAssuredConfig);
 	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(restAssuredConfig).auth().basic("invalid", "invalid");
-	protected final RequestSpecification restAssureAppUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsTestConfig.APP_USER.username(), UserDetailsTestConfig.APP_USER.password());
-	protected final RequestSpecification restAssureAppAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsTestConfig.APP_ADMIN.username(), UserDetailsTestConfig.APP_ADMIN.password());
-	protected final RequestSpecification restAssureOpsUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsTestConfig.OPS_USER.username(), UserDetailsTestConfig.OPS_USER.password());
-	protected final RequestSpecification restAssureOpsAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsTestConfig.OPS_ADMIN.username(), UserDetailsTestConfig.OPS_ADMIN.password());
+	protected final RequestSpecification restAssureAppUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsITConfig.APP_USER.username(), UserDetailsITConfig.APP_USER.password());
+	protected final RequestSpecification restAssureAppAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsITConfig.APP_ADMIN.username(), UserDetailsITConfig.APP_ADMIN.password());
+	protected final RequestSpecification restAssureOpsUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsITConfig.OPS_USER.username(), UserDetailsITConfig.OPS_USER.password());
+	protected final RequestSpecification restAssureOpsAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsITConfig.OPS_ADMIN.username(), UserDetailsITConfig.OPS_ADMIN.password());
 
 	@SpringBootApplication
 	@EnableWebSecurity

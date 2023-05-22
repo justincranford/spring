@@ -10,20 +10,30 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class ContextLoaderIT extends AbstractIT {
 	private Logger logger = LoggerFactory.getLogger(ContextLoaderIT.class);
 
-    @Test public void testLoadProperties() throws Exception {
-    	final Map<String, Object> map = super.allProperties(super.environment);
-    	assertEquals(map.get("spring.application.name"),   super.springApplicationName);
-//		assertEquals(map.get("local.server.port"),         super.localServerPort);
-//		assertEquals(map.get("local.management.port"),     super.localManagementPort);
-		assertEquals(map.get("server.address"),            super.serverAddress);
-//		assertEquals(map.get("server.port"),               super.serverPort);			// Overridden by @SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT)
-//		assertEquals(map.get("management.server.port"),    super.managementServerPort);	// Overridden by @SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT)
-//		assertEquals(map.get("management.port"),           Integer.toString(super.managementPort));
-//		assertEquals(map.get("management.server.address"), super.managementServerAddress);
+	@Autowired
+	private Map<String,Object> metaProperties;
+
+	@Test
+	public void testLoadProperties() throws Exception {
+    	final Map<String,Object> allProperties = (Map<String, Object>) metaProperties.get("allProperties");
+    	final StringBuilder sb = new StringBuilder("Properties[" + allProperties.size() + "]:");
+		for (final Map.Entry<String,Object> entry : allProperties.entrySet()) {
+    		sb.append("\n - ").append(entry.getKey()).append(": ").append(entry.getValue());
+    	}
+    	this.logger.info(sb.toString());
+    	assertEquals(allProperties.get("spring.application.name"),   super.springApplicationName);
+//		assertEquals(allProperties.get("local.server.port"),         super.localServerPort);
+//		assertEquals(allProperties.get("local.management.port"),     super.localManagementPort);
+		assertEquals(allProperties.get("server.address"),            super.serverAddress);
+//		assertEquals(allProperties.get("server.port"),               super.serverPort);			// Overridden by @SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT)
+//		assertEquals(allProperties.get("management.server.port"),    super.managementServerPort);	// Overridden by @SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT)
+//		assertEquals(allProperties.get("management.port"),           Integer.toString(super.managementPort));
+//		assertEquals(allProperties.get("management.server.address"), super.managementServerAddress);
 
 		this.logger.info("${spring.application.name}="   + super.springApplicationName);
 //		this.logger.info("${local.server.port}="         + super.localServerPort);
@@ -35,12 +45,6 @@ public class ContextLoaderIT extends AbstractIT {
 //		this.logger.info("${management.server.port="     + super.managementServerPort);
 
 		this.logger.info("servletWebServerApplicationContext.getWebServer().getPort()=" + super.servletWebServerApplicationContext.getWebServer().getPort());
-
-    	final StringBuilder sb = new StringBuilder("Properties[" + map.size() + "]:");
-    	for (final Map.Entry<String,Object> entry : map.entrySet()) {
-    		sb.append("\n - ").append(entry.getKey()).append(": ").append(entry.getValue());
-    	}
-    	this.logger.info(sb.toString());
     }
 
     @Test public void testLoadBeans() throws Exception {

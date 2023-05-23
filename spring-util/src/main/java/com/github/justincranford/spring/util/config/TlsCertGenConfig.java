@@ -20,6 +20,7 @@ import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.apache.catalina.Context;
@@ -96,12 +97,13 @@ public class TlsCertGenConfig {
     }
 
     // create "http://${server.address}:80" listener to redirect to "https://${server.address}:${server.port}"
+    private static final AtomicInteger HTTP_PORT = new AtomicInteger(80);
     private Connector createRedirectConnector() {
         final Connector connector = new Connector(TomcatServletWebServerFactory.DEFAULT_PROTOCOL);    // Http11NioProtocol
         connector.setRejectSuspiciousURIs(true);
         connector.setSecure(false);
         connector.setScheme("http");
-        connector.setPort(80);
+		connector.setPort(HTTP_PORT.getAndIncrement());
         connector.setRedirectPort(this.serverPort);
         connector.setProperty("bindOnInit", "false");
         return connector;

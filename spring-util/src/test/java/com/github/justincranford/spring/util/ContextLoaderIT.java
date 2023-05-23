@@ -20,7 +20,8 @@ public class ContextLoaderIT extends AbstractIT {
 
 	@Test
 	public void testLoadProperties() throws Exception {
-    	final Map<String,Object> allProperties = (Map<String, Object>) metaProperties.get("allProperties");
+    	@SuppressWarnings("unchecked")
+		final Map<String,Object> allProperties = (Map<String, Object>) this.metaProperties.get("allProperties");
     	final StringBuilder sb = new StringBuilder("Properties[" + allProperties.size() + "]:");
 		for (final Map.Entry<String,Object> entry : allProperties.entrySet()) {
     		sb.append("\n - ").append(entry.getKey()).append(": ").append(entry.getValue());

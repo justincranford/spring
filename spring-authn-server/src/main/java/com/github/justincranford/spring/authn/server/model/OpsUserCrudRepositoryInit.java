@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.github.justincranford.spring.authn.server.controller.UsersProperties.OpsUsersProperties;
 import com.github.justincranford.spring.util.model.OpsUser;
 
 @Component
@@ -17,6 +18,7 @@ public class OpsUserCrudRepositoryInit {
 
 	@Autowired protected OpsUserCrudRepository opsUserCrudRepository;
 	@Autowired protected PasswordEncoder       passwordEncoder;
+	@Autowired protected OpsUsersProperties    opsUsersProperties;
 
 	@Transactional
 	public void run() {

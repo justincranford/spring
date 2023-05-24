@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.github.justincranford.spring.authn.server.controller.UsersProperties.AppUsersProperties;
 import com.github.justincranford.spring.util.model.AppUser;
 
 @Component
@@ -17,6 +18,7 @@ public class AppUserCrudRepositoryInit {
 
 	@Autowired protected AppUserCrudRepository appUserCrudRepository;
 	@Autowired protected PasswordEncoder       passwordEncoder;
+	@Autowired protected AppUsersProperties    appUsersProperties;
 
 	@Transactional
 	public void run() {
@@ -56,7 +58,7 @@ public class AppUserCrudRepositoryInit {
 		final String emailAddress = "appadmin@example.com";
 		final String firstName = "Administrator";
 		final String middleName = "Built-in";
-		final String lastName = "Operations";
+		final String lastName = "Application";
 		final String rolesAndPrivileges = "ROLE_APP_ADMIN,ROLE_APP_USER";
 		final boolean isEnabled = true;
 		final boolean isAccountNonExpired = true;
@@ -71,7 +73,7 @@ public class AppUserCrudRepositoryInit {
 		final String emailAddress = "appuser@example.com";
 		final String firstName = "User";
 		final String middleName = "Built-in";
-		final String lastName = "Operations";
+		final String lastName = "Application";
 		final String rolesAndPrivileges = "ROLE_APP_USER";
 		final boolean isEnabled = true;
 		final boolean isAccountNonExpired = true;

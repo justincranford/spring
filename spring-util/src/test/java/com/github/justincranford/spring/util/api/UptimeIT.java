@@ -24,13 +24,13 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 
 public class UptimeIT extends AbstractIT {
+	private Logger logger = LoggerFactory.getLogger(UptimeIT.class);
+
+	@Autowired
+	String baseUrl;
+
     @Nested
-    static class SuccessPath extends AbstractIT {
-    	private Logger logger = LoggerFactory.getLogger(UptimeIT.class);
-
-    	@Autowired
-    	String baseUrl;
-
+    class SuccessPath extends AbstractIT {
         public static Stream<TestUser> validTestUsers() {
             return UserDetailsITConfig.TEST_USERS.stream();
         }
@@ -39,8 +39,8 @@ public class UptimeIT extends AbstractIT {
         @MethodSource("validTestUsers")
     	public void testUptimeValidUser(final TestUser testUser) {
         	final RequestSpecification requestSpec = RestAssured.given().config(super.restAssuredConfig).auth().basic(UserDetailsITConfig.APP_USER.username(), UserDetailsITConfig.APP_USER.password());
-    		final Response currentResponse = requestSpec.get(this.baseUrl + "/api/uptime");
-    		this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
+    		final Response currentResponse = requestSpec.get(UptimeIT.this.baseUrl + "/api/uptime");
+    		UptimeIT.this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
     		assertEquals(HttpStatus.OK.value(), currentResponse.getStatusCode());
     		assertTrue(currentResponse.jsonPath().getLong("nanos")   > 0L);
     		assertTrue(currentResponse.jsonPath().getFloat("micros") > 0F);
@@ -61,23 +61,18 @@ public class UptimeIT extends AbstractIT {
     }
 
     @Nested
-    static class FailurePath extends AbstractIT {
-    	private Logger logger = LoggerFactory.getLogger(UptimeIT.class);
-    	
-    	@Autowired
-    	String baseUrl;
-
+    class FailurePath extends AbstractIT {
         @Test
     	public void testUptimeNoCredentials() {
-    		final Response currentResponse = super.restAssuredNoCreds.get(this.baseUrl + "/api/uptime");
-    		this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
+    		final Response currentResponse = super.restAssuredNoCreds.get(UptimeIT.this.baseUrl + "/api/uptime");
+    		UptimeIT.this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
     		assertEquals(HttpStatus.UNAUTHORIZED.value(), currentResponse.getStatusCode());
     	}
 
         @Test
     	public void testUptimeInvalidCredentials() {
-    		final Response currentResponse = super.restAssuredInvalidCreds.get(this.baseUrl + "/api/uptime");
-    		this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
+    		final Response currentResponse = super.restAssuredInvalidCreds.get(UptimeIT.this.baseUrl + "/api/uptime");
+    		UptimeIT.this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
     		assertEquals(HttpStatus.UNAUTHORIZED.value(), currentResponse.getStatusCode());
     	}
     }

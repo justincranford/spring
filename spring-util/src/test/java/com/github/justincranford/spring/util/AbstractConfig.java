@@ -11,7 +11,6 @@ import com.github.justincranford.spring.util.config.UserDetailsITConfig;
 
 @TestConfiguration
 //@Profile("!default")
-//@AnnotationDrivenConfig
 @Import({RestITConfig.class, PropertiesITConfig.class, PasswordEncoderITConfig.class, UserDetailsITConfig.class})
 public class AbstractConfig {
 }

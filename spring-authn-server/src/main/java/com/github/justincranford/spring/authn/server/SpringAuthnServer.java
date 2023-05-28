@@ -1,7 +1,5 @@
 package com.github.justincranford.spring.authn.server;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -17,8 +15,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EntityScan("com.github.justincranford.spring.*")
 @ConfigurationPropertiesScan({"com.github.justincranford.spring.*"})
 public class SpringAuthnServer {
-	private Logger logger = LoggerFactory.getLogger(SpringAuthnServer.class);
-
 	public static void main(final String[] args) {
 		SpringApplication.run(SpringAuthnServer.class, args);
     }

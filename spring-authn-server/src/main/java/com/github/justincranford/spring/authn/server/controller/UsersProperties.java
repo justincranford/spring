@@ -15,28 +15,28 @@ public class UsersProperties {
 	@Configuration
 	@ConfigurationProperties(prefix="app")
 	public static class AppUsersProperties {
-		public List<User> users;
-		public List<User> getUsers() {
-			return this.users;
+		public List<ConfiguredUser> configuredUsers;
+		public List<ConfiguredUser> getUsers() {
+			return this.configuredUsers;
 		}
-		public void setUsers(List<User> users) {
-			this.users = users;
+		public void setUsers(List<ConfiguredUser> configuredUsers) {
+			this.configuredUsers = configuredUsers;
 		}
 	}
 
 	@Configuration
 	@ConfigurationProperties(prefix="ops")
 	public static class OpsUsersProperties {
-		public List<User> users;
-		public List<User> getUsers() {
-			return this.users;
+		public List<ConfiguredUser> configuredUsers;
+		public List<ConfiguredUser> getConfiguredUsers() {
+			return this.configuredUsers;
 		}
-		public void setUsers(List<User> users) {
-			this.users = users;
+		public void setUsers(List<ConfiguredUser> configuredUsers) {
+			this.configuredUsers = configuredUsers;
 		}
 	}
 
-	public static class User {
+	public static class ConfiguredUser {
 		@Min(8) @Max(255) public String username;
 		@Min(8) @Max(255) String password;
 		@Min(3) @Max(64+1+255) String emailAddress;
@@ -85,28 +85,28 @@ public class UsersProperties {
 		public void setAuthorities(Set<String> authorities) {
 			this.authorities = authorities;
 		}
-		public Boolean getIsEnabled() {
+		public Boolean isEnabled() {
 			return isEnabled;
 		}
-		public void setIsEnabled(Boolean isEnabled) {
+		public void setEnabled(Boolean isEnabled) {
 			this.isEnabled = isEnabled;
 		}
-		public Boolean getIsAccountNonExpired() {
+		public Boolean isAccountNonExpired() {
 			return isAccountNonExpired;
 		}
-		public void setIsAccountNonExpired(Boolean isAccountNonExpired) {
+		public void setAccountNonExpired(Boolean isAccountNonExpired) {
 			this.isAccountNonExpired = isAccountNonExpired;
 		}
-		public Boolean getIsAccountNonLocked() {
+		public Boolean isAccountNonLocked() {
 			return isAccountNonLocked;
 		}
-		public void setIsAccountNonLocked(Boolean isAccountNonLocked) {
+		public void setAccountNonLocked(Boolean isAccountNonLocked) {
 			this.isAccountNonLocked = isAccountNonLocked;
 		}
-		public Boolean getIsCredentialsNonExpired() {
+		public Boolean isCredentialsNonExpired() {
 			return isCredentialsNonExpired;
 		}
-		public void setIsCredentialsNonExpired(Boolean isCredentialsNonExpired) {
+		public void setCredentialsNonExpired(Boolean isCredentialsNonExpired) {
 			this.isCredentialsNonExpired = isCredentialsNonExpired;
 		}
 		public String getUsername() {

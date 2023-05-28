@@ -42,6 +42,7 @@ public class AbstractIT {
     @Autowired protected ServletWebServerApplicationContext servletWebServerApplicationContext;
 	@Autowired protected TestRestTemplate restTemplate;
 	@Autowired protected PasswordEncoder passwordEncoder;
+	@Autowired protected String baseUrl;
 
     @Value(value="${spring.application.name}")                     protected String  springApplicationName;
     @Value(value="${local.server.port}")                           protected int     localServerPort;		// same as @LocalServerPort
@@ -57,6 +58,7 @@ public class AbstractIT {
     // TODO: Remove relaxedHTTPSValidation(), replace with trustStore()
     // TODO: Remove allowALlHostnames()
     protected final RestAssuredConfig    restAssuredConfig       = RestAssuredConfig.newConfig().sslConfig(SSLConfig.sslConfig().relaxedHTTPSValidation().allowAllHostnames());
-	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(restAssuredConfig);
-	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(restAssuredConfig).auth().basic("invalid", "invalid");
+	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(this.restAssuredConfig);
+	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(this.restAssuredConfig).auth().basic("invalid", "invalid");
+	protected final RequestSpecification restAssuredUptimeCreds  = RestAssured.given().config(this.restAssuredConfig).auth().basic("uptime",  "uptime");
 }

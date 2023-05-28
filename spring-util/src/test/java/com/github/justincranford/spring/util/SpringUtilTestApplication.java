@@ -5,5 +5,5 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 
 @SpringBootApplication
 @EnableWebSecurity
-public class SpringBootTestApplication {
+public class SpringUtilTestApplication {
 }

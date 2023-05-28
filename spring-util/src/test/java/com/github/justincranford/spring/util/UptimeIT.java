@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.util.api;
+package com.github.justincranford.spring.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,9 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-import com.github.justincranford.spring.util.AbstractIT;
-import com.github.justincranford.spring.util.config.UserDetailsITConfig;
-import com.github.justincranford.spring.util.config.UserDetailsITConfig.TestUser;
+import com.github.justincranford.spring.util.AbstractConfig.TestUser;
 import com.github.justincranford.spring.util.model.Uptime;
 
 import io.restassured.response.Response;
@@ -26,7 +24,7 @@ public class UptimeIT extends AbstractIT {
     @Nested
     class SuccessPath extends AbstractIT {
         public static Stream<TestUser> validTestUsers() {
-            return UserDetailsITConfig.TEST_USERS.stream();
+            return AbstractConfig.TEST_USERS.stream();
         }
 
         @ParameterizedTest

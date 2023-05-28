@@ -2,6 +2,7 @@ package com.github.justincranford.spring.util.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 import org.springframework.boot.test.context.TestConfiguration;
@@ -18,11 +19,8 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 public class UserDetailsITConfig {
 	public record TestUser(String username, String password, Collection<String> roles) { }
 
-	public static final TestUser APP_USER  = new TestUser("appuser",  "appuser",  Set.of("APPUSER"));
-	public static final TestUser APP_ADMIN = new TestUser("appadmin", "appadmin", Set.of("APPADMIN"));
-	public static final TestUser OPS_USER  = new TestUser("opsuser",  "opsuser",  Set.of("OPSUSER"));
-	public static final TestUser OPS_ADMIN = new TestUser("opsadmin", "opsadmin", Set.of("OPSADMIN"));
-	public static final Set<TestUser> TEST_USERS = Set.of(APP_USER, APP_ADMIN, OPS_USER, OPS_ADMIN);
+	public static final TestUser UPTIME_USER  = new TestUser("uptime", "uptime",  Collections.emptySet());
+	public static final Set<TestUser> TEST_USERS = Set.of(UPTIME_USER);
 
 	@Bean
 	public UserDetailsService users(final PasswordEncoder passwordEncoder) {

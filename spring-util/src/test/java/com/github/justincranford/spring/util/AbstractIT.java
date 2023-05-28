@@ -6,14 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -61,8 +59,4 @@ public class AbstractIT {
     protected final RestAssuredConfig    restAssuredConfig       = RestAssuredConfig.newConfig().sslConfig(SSLConfig.sslConfig().relaxedHTTPSValidation().allowAllHostnames());
 	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(restAssuredConfig);
 	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(restAssuredConfig).auth().basic("invalid", "invalid");
-	protected final RequestSpecification restAssureAppUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsITConfig.APP_USER.username(), UserDetailsITConfig.APP_USER.password());
-	protected final RequestSpecification restAssureAppAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsITConfig.APP_ADMIN.username(), UserDetailsITConfig.APP_ADMIN.password());
-	protected final RequestSpecification restAssureOpsUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsITConfig.OPS_USER.username(), UserDetailsITConfig.OPS_USER.password());
-	protected final RequestSpecification restAssureOpsAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsITConfig.OPS_ADMIN.username(), UserDetailsITConfig.OPS_ADMIN.password());
 }

@@ -38,8 +38,8 @@ public class UptimeIT extends AbstractIT {
         @ParameterizedTest
         @MethodSource("validTestUsers")
     	public void testUptimeValidUser(final TestUser testUser) {
-        	final RequestSpecification requestSpec = RestAssured.given().config(super.restAssuredConfig).auth().basic(UserDetailsITConfig.APP_USER.username(), UserDetailsITConfig.APP_USER.password());
-    		final Response currentResponse = requestSpec.get(UptimeIT.this.baseUrl + "/api/uptime");
+        	final RequestSpecification restAssuredUptimeUserCreds = RestAssured.given().config(super.restAssuredConfig).auth().basic(UserDetailsITConfig.UPTIME_USER.username(), UserDetailsITConfig.UPTIME_USER.password());
+    		final Response currentResponse = restAssuredUptimeUserCreds.get(UptimeIT.this.baseUrl + "/api/uptime");
     		UptimeIT.this.logger.info("Uptime Response:\n{}", currentResponse.asPrettyString());
     		assertEquals(HttpStatus.OK.value(), currentResponse.getStatusCode());
     		assertTrue(currentResponse.jsonPath().getLong("nanos")   > 0L);
@@ -51,7 +51,7 @@ public class UptimeIT extends AbstractIT {
     		Uptime previousUptime;
     		for (int i=0; i<2; i++) {
     			previousUptime = currentUptime;
-    			currentUptime = requestSpec.get(baseUrl + "/api/uptime").as(Uptime.class);
+    			currentUptime = restAssuredUptimeUserCreds.get(baseUrl + "/api/uptime").as(Uptime.class);
     			assertTrue(currentUptime.nanos()  > previousUptime.nanos());
     			assertTrue(currentUptime.micros() > previousUptime.micros());
     			assertTrue(currentUptime.millis() > previousUptime.millis());

@@ -65,9 +65,4 @@ public class AbstractIT {
 	protected final RequestSpecification restAssureAppAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsITConfig.APP_ADMIN.username(), UserDetailsITConfig.APP_ADMIN.password());
 	protected final RequestSpecification restAssureOpsUserCreds  = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsITConfig.OPS_USER.username(), UserDetailsITConfig.OPS_USER.password());
 	protected final RequestSpecification restAssureOpsAdminCreds = RestAssured.given().config(restAssuredConfig).auth().basic(UserDetailsITConfig.OPS_ADMIN.username(), UserDetailsITConfig.OPS_ADMIN.password());
-
-	@SpringBootApplication
-	@EnableWebSecurity
-	public static class App {
-	}
 }

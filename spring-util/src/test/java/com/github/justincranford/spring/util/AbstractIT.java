@@ -2,8 +2,6 @@ package com.github.justincranford.spring.util;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,25 +14,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
-import com.github.justincranford.spring.util.config.PasswordEncoderITConfig;
-import com.github.justincranford.spring.util.config.PropertiesITConfig;
-import com.github.justincranford.spring.util.config.RestITConfig;
-import com.github.justincranford.spring.util.config.UserDetailsITConfig;
-
 import io.restassured.RestAssured;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.config.SSLConfig;
 import io.restassured.specification.RequestSpecification;
 
-@SpringBootTest(classes={RestITConfig.class, PropertiesITConfig.class, PasswordEncoderITConfig.class, UserDetailsITConfig.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
+@SpringBootTest(classes={AbstractConfig.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
 @ComponentScan(basePackages={"com.github.justincranford.spring.util"})
 @ContextConfiguration
 //@ActiveProfiles(profiles = { "default","test" })
 public class AbstractIT {
-	@SuppressWarnings("unused")
-	private Logger logger = LoggerFactory.getLogger(AbstractIT.class);
-
 	protected static final AtomicLong UNIQUE_LONG = new AtomicLong(System.nanoTime());
 
 	@Value("${spring.profiles.active:}") protected String profilesActive;

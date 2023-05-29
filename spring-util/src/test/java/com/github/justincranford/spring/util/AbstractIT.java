@@ -1,18 +1,35 @@
 package com.github.justincranford.spring.util;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.User.UserBuilder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
+import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+
+import com.github.justincranford.spring.util.AbstractIT.AbstractConfig;
 
 import io.restassured.RestAssured;
 import io.restassured.config.RestAssuredConfig;
@@ -51,4 +68,34 @@ public class AbstractIT {
 	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(this.restAssuredConfig);
 	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(this.restAssuredConfig).auth().basic("invalid", "invalid");
 	protected final RequestSpecification restAssuredUptimeCreds  = RestAssured.given().config(this.restAssuredConfig).auth().basic("uptime",  "uptime");
+
+	@SpringBootApplication
+	@EnableWebSecurity
+	public static class SpringUtilTestApplication {
+	}
+
+	@TestConfiguration
+	//@Profile("!default")
+	@SuppressWarnings("deprecation")
+	public static class AbstractConfig {
+		public record TestUser(String username, String password, Collection<String> roles) { }
+
+		public static final TestUser UPTIME_USER  = new TestUser("uptime", "uptime",  Collections.emptySet());
+		public static final Set<TestUser> TEST_USERS = Set.of(UPTIME_USER);
+
+		@Bean
+		public UserDetailsService users(final PasswordEncoder passwordEncoder) {
+			final UserBuilder builder = User.builder().passwordEncoder(passwordEncoder::encode);
+			final Collection<UserDetails> users = new ArrayList<>(TEST_USERS.size());
+			for (final TestUser u : TEST_USERS) {
+				users.add(builder.username(u.username()).password(u.password()).roles(u.roles().toArray(new String[0])).build());
+			}
+			return new InMemoryUserDetailsManager(users);
+		}
+
+		@Bean
+		public PasswordEncoder passwordEncoder() {
+			return new DelegatingPasswordEncoder("sha256", Collections.singletonMap("sha256", new MessageDigestPasswordEncoder("SHA-256")));
+		}
+	}
 }

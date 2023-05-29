@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-import com.github.justincranford.spring.util.AbstractConfig.TestUser;
+import com.github.justincranford.spring.util.AbstractIT.AbstractConfig.TestUser;
 import com.github.justincranford.spring.util.model.Uptime;
 
 import io.restassured.response.Response;

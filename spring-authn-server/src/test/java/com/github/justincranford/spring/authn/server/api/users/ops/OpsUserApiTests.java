@@ -8,37 +8,21 @@ import java.util.List;
 import java.util.stream.LongStream;
 
 import org.apache.logging.log4j.util.Strings;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
-import com.github.justincranford.spring.authn.server.SpringBootTestHelper;
+import com.github.justincranford.spring.authn.server.AbstractIT;
 import com.github.justincranford.spring.util.model.OpsUser;
 
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 
-public class OpsUserApiTests extends SpringBootTestHelper {
+public class OpsUserApiTests extends AbstractIT {
 	private Logger logger = LoggerFactory.getLogger(OpsUserApiTests.class);
-
-	@BeforeEach
-	public void beforeEach() throws Exception {
-		super.beforeEach();
-//		this.deleteAll();
-//		this.printAll();
-	}
-
-	@AfterEach
-	public void afterEach() throws Exception {
-		super.afterEach();
-//		this.deleteAll();
-//		this.printAll();
-	}
 
 	@SuppressWarnings("unused")
 	private void deleteAll() {

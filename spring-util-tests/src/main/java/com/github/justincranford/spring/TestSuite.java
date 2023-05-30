@@ -10,5 +10,5 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 
 @Suite
 @SuiteDisplayName("All tests")
-public class SpringTestSuite {
+public class TestSuite {
 }

@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -84,6 +85,7 @@ public class AbstractIT {
 		public static final Set<TestUser> TEST_USERS = Set.of(UPTIME_USER);
 
 		@Bean
+		@ConditionalOnMissingBean
 		public UserDetailsService users(final PasswordEncoder passwordEncoder) {
 			final UserBuilder builder = User.builder().passwordEncoder(passwordEncoder::encode);
 			final Collection<UserDetails> users = new ArrayList<>(TEST_USERS.size());
@@ -94,8 +96,15 @@ public class AbstractIT {
 		}
 
 		@Bean
+		@ConditionalOnMissingBean
 		public PasswordEncoder passwordEncoder() {
 			return new DelegatingPasswordEncoder("sha256", Collections.singletonMap("sha256", new MessageDigestPasswordEncoder("SHA-256")));
+		}
+
+		@Bean
+		@ConditionalOnMissingBean
+		public String baseUrl() {
+			return "";
 		}
 	}
 }

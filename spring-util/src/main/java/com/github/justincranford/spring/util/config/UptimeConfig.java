@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import com.github.justincranford.spring.util.model.Uptime;
 
 @Configuration
-public class UptimeFactoryConfig {
+public class UptimeConfig {
 	@Bean
 	public Uptime.Factory uptimeFactory() {
 		return new Uptime.Factory(Instant.now());

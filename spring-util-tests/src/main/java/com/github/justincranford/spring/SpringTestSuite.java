@@ -1,14 +1,14 @@
-package com.github.justincranford.spring.util;
+package com.github.justincranford.spring;
 
 import org.junit.platform.suite.api.IncludeClassNamePatterns;
 import org.junit.platform.suite.api.SelectPackages;
 import org.junit.platform.suite.api.Suite;
 import org.junit.platform.suite.api.SuiteDisplayName;
 
-@SelectPackages({"com.github.justincranford.spring.util"})
+@SelectPackages({"com.github.justincranford.spring"})
 @IncludeClassNamePatterns({"./*Test", ".*IT"})
 
 @Suite
-@SuiteDisplayName("spring-util all tests")
-public class SpringUtilTestSuite {
+@SuiteDisplayName("All tests")
+public class SpringTestSuite {
 }

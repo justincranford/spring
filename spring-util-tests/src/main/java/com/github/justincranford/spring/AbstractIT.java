@@ -1,4 +1,4 @@
-package com.github.justincranford.spring.util;
+package com.github.justincranford.spring;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,7 +29,7 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
-import com.github.justincranford.spring.util.AbstractIT.AbstractConfig;
+import com.github.justincranford.spring.AbstractIT.AbstractConfig;
 
 import io.restassured.RestAssured;
 import io.restassured.config.RestAssuredConfig;
@@ -38,9 +38,10 @@ import io.restassured.specification.RequestSpecification;
 
 @SpringBootTest(classes={AbstractConfig.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
-@ComponentScan(basePackages={"com.github.justincranford.spring.util"})
+@ComponentScan(basePackages={"com.github.justincranford.spring"})
 @ContextConfiguration
 //@ActiveProfiles(profiles = { "default","test" })
+@SuppressWarnings("deprecation")
 public class AbstractIT {
 	protected static final AtomicLong UNIQUE_LONG = new AtomicLong(System.nanoTime());
 
@@ -76,7 +77,6 @@ public class AbstractIT {
 
 	@TestConfiguration
 	//@Profile("!default")
-	@SuppressWarnings("deprecation")
 	public static class AbstractConfig {
 		public record TestUser(String username, String password, Collection<String> roles) { }
 

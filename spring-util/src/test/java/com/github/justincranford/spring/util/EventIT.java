@@ -11,6 +11,7 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationListener;
 
+import com.github.justincranford.spring.AbstractIT;
 import com.github.justincranford.spring.util.config.EventsConfig;
 
 public class EventIT extends AbstractIT {

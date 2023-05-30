@@ -1,5 +1,12 @@
 package com.github.justincranford.spring.authn.server.config;
 
+import static com.github.justincranford.spring.authn.server.model.SimpleGrantedAuthorityNames.OAUTH2_USER;
+import static com.github.justincranford.spring.authn.server.model.SimpleGrantedAuthorityNames.OIDC_USER;
+import static com.github.justincranford.spring.authn.server.model.SimpleGrantedAuthorityNames.ROLE_APP_ADMIN;
+import static com.github.justincranford.spring.authn.server.model.SimpleGrantedAuthorityNames.ROLE_APP_USER;
+import static com.github.justincranford.spring.authn.server.model.SimpleGrantedAuthorityNames.ROLE_OPS_ADMIN;
+import static com.github.justincranford.spring.authn.server.model.SimpleGrantedAuthorityNames.ROLE_OPS_USER;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -21,13 +28,6 @@ import com.github.justincranford.spring.util.config.EventsConfig;
 public class SecurityFilterChainConfig {
     @SuppressWarnings("unused")
 	private Logger logger = LoggerFactory.getLogger(SecurityFilterChainConfig.class);
-
-    public static final String ROLE_OPS_ADMIN      = "ROLE_OPS_ADMIN";
-    public static final String ROLE_OPS_USER       = "ROLE_OPS_USER";
-    public static final String ROLE_APP_ADMIN      = "ROLE_APP_ADMIN";
-    public static final String ROLE_APP_USER       = "ROLE_APP_USER";
-    public static final String OAUTH2_USER         = "OAUTH2_USER";
-    public static final String OIDC_USER           = "OIDC_USER";
 
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(

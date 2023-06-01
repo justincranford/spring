@@ -13,7 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class DatabaseExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 	@ExceptionHandler({ ConstraintViolationException.class, DataIntegrityViolationException.class })
-	public ResponseEntity<Object> handleBadRequest(final Exception ex, final WebRequest request) {
+	public ResponseEntity<Object> handleDbException(final Exception ex, final WebRequest request) {
 		return handleExceptionInternal(ex, ex.getLocalizedMessage(), new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
 	}
 }

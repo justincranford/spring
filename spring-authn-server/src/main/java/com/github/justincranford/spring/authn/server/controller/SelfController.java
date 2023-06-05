@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.github.justincranford.spring.util.model.BaseUser;
+import com.github.justincranford.spring.util.model.User;
 import com.github.justincranford.spring.util.util.JsonUtil;
 
 @CrossOrigin(origins={"https://localhost:8443"})
@@ -30,7 +30,7 @@ public class SelfController {
 	public String getBuildInUser(final Principal principal) {
 		// UsernamePasswordAuthenticationToken > AbstractAuthenticationToken > Authentication+CredentialsContainer > Principal
 		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		final String principalStr = (principal instanceof BaseUser bu) ? bu.toString() : authentication.getPrincipal().toString();
+		final String principalStr = (principal instanceof User bu) ? bu.toString() : authentication.getPrincipal().toString();
 		return JsonUtil.pojoToJsonString(
 			Map.of(
 				"name", authentication.getName(),

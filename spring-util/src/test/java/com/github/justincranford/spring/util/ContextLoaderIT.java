@@ -1,10 +1,12 @@
 package com.github.justincranford.spring.util;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -13,12 +15,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.github.justincranford.spring.AbstractIT;
+import com.github.justincranford.spring.util.model.UserConfig.ConfiguredUser;
+import com.github.justincranford.spring.util.model.UserConfig.ConfiguredUsers;
 
 public class ContextLoaderIT extends AbstractIT {
 	private Logger logger = LoggerFactory.getLogger(ContextLoaderIT.class);
 
 	@Autowired
-	private Map<String,Object> metaProperties;
+	protected Map<String,Object> metaProperties;
 
 	@Test
 	public void testLoadProperties() throws Exception {
@@ -50,10 +54,25 @@ public class ContextLoaderIT extends AbstractIT {
 		this.logger.info("servletWebServerApplicationContext.getWebServer().getPort()=" + super.servletWebServerApplicationContext.getWebServer().getPort());
     }
 
-    @Test public void testLoadBeans() throws Exception {
+    @Test
+    public void testLoadBeans() throws Exception {
 		assertThat(super.environment,                        is(notNullValue()));
 		assertThat(super.servletWebServerApplicationContext, is(notNullValue()));
 		assertThat(super.restTemplate,                       is(notNullValue()));
 		assertThat(super.passwordEncoder,                    is(notNullValue()));
+    }
+
+	@Autowired
+	protected ConfiguredUsers configuredUsers;
+
+    @Test
+    public void testConfiguredUsersProperties() throws Exception {
+		assertThat(this.configuredUsers, is(notNullValue()));
+		final Map<String, List<ConfiguredUser>> realms = this.configuredUsers.getUsers();
+		System.out.println("Realms: " + realms);
+		assertThat(realms, is(notNullValue()));
+		assertThat(realms, hasKey("uptime_realm"));
+		final List<ConfiguredUser> configuredUsers = realms.get("uptime_realm");
+		assertThat(configuredUsers, is(notNullValue()));
     }
 }

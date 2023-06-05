@@ -14,14 +14,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.justincranford.spring.util.util.JsonUtil;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Table;
 
 @Transactional
-@MappedSuperclass
-public class BaseUser implements UserDetails {
+@Entity()
+@Table(name = "users")
+public class User implements UserDetails {
 
 	private static final long serialVersionUID = 1L;
 
@@ -29,6 +31,9 @@ public class BaseUser implements UserDetails {
 
 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
+
+	@Column(name = "realm", nullable = false)
+	private String realm;
 
 	@Column(name = "username", nullable = false)
 	private String username;
@@ -63,11 +68,12 @@ public class BaseUser implements UserDetails {
 	@Column(name = "isCredentialsNonExpired", nullable = false)
 	private boolean isCredentialsNonExpired;
 
-	public BaseUser() {
+	public User() {
 		// do nothing
 	}
 
-	public BaseUser(
+	public User(
+		final String realm,
 		final String username, 
 		final String password, 
 		final String emailAddress,
@@ -81,6 +87,7 @@ public class BaseUser implements UserDetails {
 		final boolean isCredentialsNonExpired
 	) {
 		this.id = 0;//Long.MIN_VALUE;
+		this.realm = realm;
 		this.username = username;
 		this.password = password;
 		this.emailAddress = emailAddress;
@@ -94,8 +101,9 @@ public class BaseUser implements UserDetails {
 		this.isCredentialsNonExpired = isCredentialsNonExpired;
 	}
 
-	public BaseUser(final BaseUser that) {
+	public User(final User that) {
 		this.id = that.id;
+		this.realm = that.realm;
 		this.username = that.username;
 		this.password = that.password;
 		this.emailAddress = that.emailAddress;
@@ -114,6 +122,13 @@ public class BaseUser implements UserDetails {
 	}
 	public void setId(final long id) {
 		this.id = id;
+	}
+
+	public String getRealm() {
+		return this.realm;
+	}
+	public void setRealm(final String realm) {
+		this.realm = realm;
 	}
 
 	@Override
@@ -201,8 +216,9 @@ public class BaseUser implements UserDetails {
 
 	@Override public boolean equals(final Object o) {
 		return
-			(o instanceof BaseUser that)
+			(o instanceof User that)
 			&& Objects.equals(this.id, that.id)
+			&& Objects.equals(this.realm, that.realm)
 			&& Objects.equals(this.username, that.username)
 			&& Objects.equals(this.password, that.password)
 			&& Objects.equals(this.emailAddress, that.emailAddress)
@@ -218,23 +234,25 @@ public class BaseUser implements UserDetails {
 	}
 
 	@Override public int hashCode() {
-		return Long.hashCode(this.id)
-			+ this.username.hashCode()
-			+ this.password.hashCode()
-			+ this.emailAddress.hashCode()
-			+ this.firstName.hashCode()
-			+ this.middleName.hashCode()
-			+ this.lastName.hashCode()
-			+ this.rolesAndPrivileges.hashCode()
-			+ Boolean.hashCode(this.isEnabled)
-			+ Boolean.hashCode(this.isAccountNonExpired)
-			+ Boolean.hashCode(this.isAccountNonLocked)
-			+ Boolean.hashCode(this.isCredentialsNonExpired)
-		;
+		return Objects.hash(
+			this.id,
+			this.realm,
+			this.username,
+			this.password,
+			this.emailAddress,
+			this.firstName,
+			this.middleName,
+			this.lastName,
+			this.rolesAndPrivileges,
+			this.isEnabled,
+			this.isAccountNonExpired,
+			this.isAccountNonLocked,
+			this.isCredentialsNonExpired
+		);
 	}
 
 	@Override public String toString() {
-		final BaseUser baseUserWithoutPassword = new BaseUser(this);
+		final User baseUserWithoutPassword = new User(this);
 		baseUserWithoutPassword.setPassword("*** REDACTED ***");
 		return JsonUtil.pojoToJsonString(baseUserWithoutPassword);
 	}

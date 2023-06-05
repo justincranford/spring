@@ -8,41 +8,30 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import com.github.justincranford.spring.util.model.BaseUser;
+import com.github.justincranford.spring.util.model.User;
 
 //public class UserDetailsServiceImpl implements UserDetailsManager, UserDetailsPasswordService {
 public class UserDetailsServiceImpl implements UserDetailsService {
 
 	private Logger logger = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
 
-	private OpsUserCrudRepository opsUserCrudRepository;
-	private AppUserCrudRepository appUserCrudRepository;
+	private UserCrudRepository userCrudRepository;
 
-	public UserDetailsServiceImpl(final OpsUserCrudRepository opsUserCrudRepository, final AppUserCrudRepository appUserCrudRepository) {
-		this.opsUserCrudRepository = opsUserCrudRepository;
-		this.appUserCrudRepository = appUserCrudRepository;
+	public UserDetailsServiceImpl(final UserCrudRepository userCrudRepository) {
+		this.userCrudRepository = userCrudRepository;
 	}
 
     // UserDetailsService
 
 	@Override
 	public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
-		final List<? extends BaseUser> opsUsers = this.opsUserCrudRepository.findByUsername(username);
-		this.printUsers("Found Operations users for username [" + username + "]", opsUsers);
-		assert opsUsers != null;
-		assert (opsUsers.size() == 0) || (opsUsers.size() == 1);
-		if (opsUsers.isEmpty() == false) {
-			logger.debug("Found Operations user for username [{}]", username);
-			return opsUsers.get(0);
-		}
-
-		final List<? extends BaseUser> appUsers = this.appUserCrudRepository.findByUsername(username);
-		this.printUsers("Found Application users for username [" + username + "]", appUsers);
-		assert appUsers != null;
-		assert (appUsers.size() == 0) || (appUsers.size() == 1);
-		if (appUsers.isEmpty() == false) {
-			logger.debug("Found Application user for username [{}]", username);
-			return appUsers.get(0);
+		final List<? extends User> users = this.userCrudRepository.findByUsername(username);
+		this.printUsers("Found users for username [" + username + "]", users);
+		assert users != null;
+		assert (users.size() == 0) || (users.size() == 1);
+		if (users.isEmpty() == false) {
+			logger.debug("Found user for username [{}]", username);
+			return users.get(0);
 		}
 
 		throw new UsernameNotFoundException("Username " + username + " not found");
@@ -84,10 +73,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     // Helper
 
-	private void printUsers(final String message, final List<? extends BaseUser> baseUsers) {
+	private void printUsers(final String message, final List<? extends User> baseUsers) {
 		assert baseUsers != null;
 		final StringBuilder sb = new StringBuilder(message).append("[").append(baseUsers.size()).append("]:\n");
-		for (final BaseUser baseUser : baseUsers) {
+		for (final User baseUser : baseUsers) {
 			sb.append(baseUser).append('\n');
 		}
 		logger.trace(sb.toString());

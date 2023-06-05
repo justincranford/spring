@@ -1,7 +1,8 @@
-package com.github.justincranford.spring.authn.server.controller;
+package com.github.justincranford.spring.util.model;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -11,28 +12,16 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
 @Configuration
-public class UsersProperties {
+public class UserConfig {
 	@Configuration
-	@ConfigurationProperties(prefix="app")
-	public static class AppUsersProperties {
-		public List<ConfiguredUser> configuredUsers;
-		public List<ConfiguredUser> getUsers() {
-			return this.configuredUsers;
+	@ConfigurationProperties
+	public static class ConfiguredUsers {
+		public Map<String, List<ConfiguredUser>> users;
+		public Map<String, List<ConfiguredUser>> getUsers() {
+			return this.users;
 		}
-		public void setUsers(List<ConfiguredUser> configuredUsers) {
-			this.configuredUsers = configuredUsers;
-		}
-	}
-
-	@Configuration
-	@ConfigurationProperties(prefix="ops")
-	public static class OpsUsersProperties {
-		public List<ConfiguredUser> configuredUsers;
-		public List<ConfiguredUser> getConfiguredUsers() {
-			return this.configuredUsers;
-		}
-		public void setUsers(List<ConfiguredUser> configuredUsers) {
-			this.configuredUsers = configuredUsers;
+		public void setUsers(final Map<String, List<ConfiguredUser>> realms) {
+			this.users = realms;
 		}
 	}
 

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -17,6 +18,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -72,6 +74,9 @@ public class AbstractIT {
 	protected final RequestSpecification restAssuredUptimeCreds  = RestAssured.given().config(this.restAssuredConfig).auth().basic("uptime",  "uptime");
 
 	@SpringBootApplication
+	@Profile({"default"})
+	@ComponentScan({"com.github.justincranford.spring.*"})
+	@ConfigurationPropertiesScan({"com.github.justincranford.spring.*"})
 	@EnableWebSecurity
 	public static class SpringUtilTestApplication {
 	}

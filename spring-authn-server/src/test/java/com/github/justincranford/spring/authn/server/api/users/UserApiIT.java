@@ -1,9 +1,13 @@
 package com.github.justincranford.spring.authn.server.api.users;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.LongStream;
@@ -25,22 +29,21 @@ import com.github.justincranford.spring.util.model.User;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 
-public class UserApiIT {
+public class UserApiIT extends AbstractIT {
 	private Logger logger = LoggerFactory.getLogger(UserApiIT.class);
+	private static final String TEST_REALM = "Test";
 
 	@Nested
 	public class WellKnownRealmsAndUsers extends AbstractIT {
 		private record Args(String realm, String username) { }
-		public static Stream<Args> args() {
+		static Stream<Args> args() {
 			return Stream.of(new Args("ops", "opsadmin"), new Args("ops", "opsuser"), new Args("app", "appadmin"), new Args("app", "appuser"));
 		}
 
 		@ParameterizedTest
 		@MethodSource("args")
-		public void testUsernameWithRealm(final Args args) {
-			final String realm = args.realm();
-			final String username = args.username();
-			final String url = super.baseUrl + "/api/users/filtered?realm=" + realm + "&username=" + username;
+		void testUsernameWithRealm(final Args args) {
+			final String url = super.baseUrl + "/api/users/filtered?realm=" + args.realm() + "&username=" + args.username();
 			logger.info("Search URL: {}", url);
 			final Response searchResponse = super.restAssuredOpsAdminCreds().get(url);
 			final User[] foundUsers = searchResponse.getBody().as(User[].class);
@@ -48,15 +51,14 @@ public class UserApiIT {
 			assertThat(searchResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
 			assertThat(foundUsers).isNotEmpty();
 			assertThat(foundUsers.length).isEqualTo(1);
-			assertThat(foundUsers[0].getRealm()).isEqualTo(realm);
-			assertThat(foundUsers[0].getUsername()).isEqualTo(username);
+			assertThat(foundUsers[0].getRealm()).isEqualTo(args.realm());
+			assertThat(foundUsers[0].getUsername()).isEqualTo(args.username());
 		}
 
 		@ParameterizedTest
 		@MethodSource("args")
-		public void testUsernameWithoutRealm(final Args args) {
-			final String username = args.username();
-			final String url = super.baseUrl + "/api/users/filtered?username=" + username;
+		void testUsernameWithoutRealm(final Args args) {
+			final String url = super.baseUrl + "/api/users/filtered?username=" + args.username();
 			logger.info("Search URL: {}", url);
 			final Response searchResponse = super.restAssuredOpsAdminCreds().get(url);
 			final User[] foundUsers = searchResponse.getBody().as(User[].class);
@@ -64,20 +66,16 @@ public class UserApiIT {
 			assertThat(searchResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
 			assertThat(foundUsers).isNotEmpty();
 			assertThat(foundUsers.length).isEqualTo(1);
-			assertThat(foundUsers[0].getUsername()).isEqualTo(username);
+			assertThat(foundUsers[0].getUsername()).isEqualTo(args.username());
 		}
 	}
 
 	@Nested
-	public class UseTestRealm extends AbstractIT {
-		private static final String REALM = "Test";
-
+	public class BulkUsersTestRealm extends AbstractIT {
 		@Test
 		public void testDeleteAllTestRealmUsers() {
-			final User user = postUser(constructUser());
-			final String deleteUrl = super.baseUrl + "/api/users/filtered?realm=" + REALM;
-			logger.info("Delete URL: {}", deleteUrl);
-			final Response deleteResponse = super.restAssuredOpsAdminCreds().delete(deleteUrl);
+			final User user = createUser(constructUser(TEST_REALM));
+			final Response deleteResponse = super.restAssuredOpsAdminCreds().delete(usersFilteredUrl(TEST_REALM));
 			final User[] deletedUsers = deleteResponse.getBody().as(User[].class);
 			logger.info("Delete Response:\n{}", (Object[]) deletedUsers);
 			assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
@@ -86,19 +84,15 @@ public class UserApiIT {
 			assertThat(deletedIds).contains(user.getId());
 //			assertThat(deletedIds).isEqualTo(deleteResponse.jsonPath().getList("id"));
 			for (final Long deletedId : deletedIds) {
-				final String getUrl = super.baseUrl + "/api/user/" + deletedId;
-				logger.info("Get URL: {}", getUrl);
-				final Response getResponse = super.restAssuredOpsAdminCreds().get(getUrl);
+				final Response getResponse = super.restAssuredOpsAdminCreds().get(userUrl(TEST_REALM, deletedId));
 				assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
 			}
 		}
 
 		@Test
 		public void testFindAllTestRealmUsers() {
-			final User user = postUser(constructUser());
-			final String searchUrl = super.baseUrl + "/api/users/filtered?realm=" + REALM;
-			logger.info("Search URL: {}", searchUrl);
-			final Response searchResponse = super.restAssuredOpsAdminCreds().get(searchUrl);
+			final User user = createUser(constructUser(TEST_REALM));
+			final Response searchResponse = super.restAssuredOpsAdminCreds().get(usersFilteredUrl(TEST_REALM));
 			final User[] foundUsers = searchResponse.getBody().as(User[].class);
 			logger.info("Search Response:\n{}", (Object[]) foundUsers);
 			assertThat(searchResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
@@ -107,18 +101,19 @@ public class UserApiIT {
 			assertThat(foundIds).contains(user.getId());
 //			assertThat(foundIds).isEqualTo(searchResponse.jsonPath().getList("id"));
 			for (final Long foundId : foundIds) {
-				final String getUrl = super.baseUrl + "/api/user/" + foundId;
-				logger.info("Get URL: {}", getUrl);
-				final Response getResponse = super.restAssuredOpsAdminCreds().get(getUrl);
+				final Response getResponse = super.restAssuredOpsAdminCreds().get(userUrl(TEST_REALM, foundId));
 				assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
 				final User foundUser = getResponse.getBody().as(User.class);
 				assertThat(foundUsers).contains(foundUser);
 			}
 		}
+	}
 
+	@Nested
+	public class FailurePath extends AbstractIT {
 		@Test
 		public void testAuthenticationRequiredButNoCreds() {
-			final User user = postUser(constructUser());
+			final User user = createUser(constructUser(TEST_REALM));
 			final String url = super.baseUrl + "/api/user/" + user.getId();
 			logger.info("URL: {}", url);
 			final Response response = this.restAssuredNoCreds.get(super.baseUrl + "/api/user" + user.getId());
@@ -128,7 +123,7 @@ public class UserApiIT {
 
 		@Test
 		public void testAuthenticationRequiredButInvalidCreds() {
-			final User user = postUser(constructUser());
+			final User user = createUser(constructUser(TEST_REALM));
 			final String url = super.baseUrl + "/api/user/" + user.getId();
 			logger.info("URL: {}", url);
 			final Response response = this.restAssuredInvalidCreds.get(super.baseUrl + "/api/user" + user.getId());
@@ -138,18 +133,26 @@ public class UserApiIT {
 
 		@Test
 		public void testAuthenticatedButMissingRole() {
-			final User user = postUser(constructUser());
+			final User user = createUser(constructUser(TEST_REALM));
 			final String url = super.baseUrl + "/api/user/" + user.getId();
 			logger.info("URL: {}", url);
 			final Response response = super.restAssuredAppUserCreds().get(url);
 			logger.info("Response:\n{}", response.asPrettyString());
 			assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
 		}
+	}
+
+	@Nested
+	public class SingleUsersTestRealm extends AbstractIT {
+		@Test
+		public void whenCreateNewUser_thenCreated() {
+			assertDoesNotThrow(() -> createUser(constructUser(TEST_REALM)));
+		}
 
 		@Test
 		public void whenGetAllUsers_thenOK() {
-			final User user = postUser(constructUser());
-			final String url = super.baseUrl + "/api/users/filtered?realm=" + REALM;
+			final User user = createUser(constructUser(TEST_REALM));
+			final String url = super.baseUrl + "/api/users/filtered?realm=" + TEST_REALM;
 			logger.info("URL: {}", url);
 			final Response response = super.restAssuredOpsAdminCreds().get(url);
 			logger.info("Response:\n{}", response.asPrettyString());
@@ -158,8 +161,8 @@ public class UserApiIT {
 
 		@Test
 		public void whenGetUsersByFirstName_thenOK() {
-			final User user = postUser(constructUser());
-			final String url = super.baseUrl + "/api/users/filtered?realm=" + REALM + "&firstName=" + user.getFirstName();
+			final User user = createUser(constructUser(TEST_REALM));
+			final String url = super.baseUrl + "/api/users/filtered?realm=" + TEST_REALM + "&firstName=" + user.getFirstName();
 			logger.info("URL: {}", url);
 			final Response searchResponse = super.restAssuredOpsAdminCreds().get(url);
 			logger.info("Response:\n{}", searchResponse.asPrettyString());
@@ -172,8 +175,8 @@ public class UserApiIT {
 
 		@Test
 		public void whenGetUsersByLastName_thenOK() {
-			final User user = postUser(constructUser());
-			final String url = super.baseUrl + "/api/users/filtered?realm=" + REALM + "&lastName=" + user.getLastName();
+			final User user = createUser(constructUser(TEST_REALM));
+			final String url = super.baseUrl + "/api/users/filtered?realm=" + TEST_REALM + "&lastName=" + user.getLastName();
 			logger.info("URL: {}", url);
 			final Response searchResponse = super.restAssuredOpsAdminCreds().get(url);
 			logger.info("Response:\n{}", searchResponse.asPrettyString());
@@ -186,9 +189,8 @@ public class UserApiIT {
 
 		@Test
 		public void whenGetCreatedUsersById_thenOK() {
-			final List<User> users = postUsers(constructUsers(1)); // TODO 3 users
-			logger.info("Users: {}", users);
-			final String url = urlGetUsersByIds(users);
+			final List<User> users = createUsers(constructUsers(TEST_REALM, 2));
+			final String url = usersUrl(TEST_REALM, users.stream().map(user -> user.getId()).toList());
 			logger.info("URL: {}", url);
 			final Response getResponse = super.restAssuredOpsAdminCreds().get(url);
 			logger.info("Response:\n{}", getResponse.asPrettyString());
@@ -211,18 +213,8 @@ public class UserApiIT {
 		}
 
 		@Test
-		public void whenCreateNewUser_thenCreated() {
-			final User user = constructUser();
-			final String userUrl = super.baseUrl + "/api/user";
-			logger.info("URL: {}", userUrl);
-			final Response postResponse = super.restAssuredOpsAdminCreds().given().contentType(MediaType.APPLICATION_JSON_VALUE).body(user).post(userUrl);
-			logger.info("Response:\n{}", postResponse.asPrettyString());
-			assertThat(postResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED.value());
-		}
-
-		@Test
 		public void whenInvalidUser_thenError() {
-			final User user = constructUser();
+			final User user = constructUser(TEST_REALM);
 			user.setLastName(null);
 			final String userUrl = super.baseUrl + "/api/user";
 			logger.info("URL: {}", userUrl);
@@ -233,14 +225,16 @@ public class UserApiIT {
 
 		@Test
 		public void whenUpdateCreatedUser_thenUpdated() {
-			final User user = postUser(constructUser());
+			final User user = createUser(constructUser(TEST_REALM));
 			user.setLastName("newLastName");
-			final String url = super.baseUrl + "/api/user";
-			logger.info("URL: {}", url);
-			final Response putResponse = super.restAssuredOpsAdminCreds().given().contentType(MediaType.APPLICATION_JSON_VALUE).body(user).put(url);
+			final String updateUrl = super.baseUrl + "/api/user";
+			logger.info("Update URL: {}", updateUrl);
+			final Response putResponse = super.restAssuredOpsAdminCreds().given().contentType(MediaType.APPLICATION_JSON_VALUE).body(user).put(updateUrl);
 			logger.info("Response:\n{}", putResponse.asPrettyString());
 			assertThat(putResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
-			final Response getResponse = super.restAssuredOpsAdminCreds().get(urlGetUserById(user));
+			final String getUrl = userUrl(null, user.getId());
+			logger.info("Get URL: {}", updateUrl);
+			final Response getResponse = super.restAssuredOpsAdminCreds().get(getUrl);
 			logger.info("Response:\n{}", getResponse.asPrettyString());
 			assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
 			assertThat(getResponse.jsonPath().getString("lastName")).isEqualTo("newLastName");
@@ -248,74 +242,109 @@ public class UserApiIT {
 
 		@Test
 		public void whenDeleteCreatedUser_thenOk() {
-			final User user = postUser(constructUser());
+			final User user = createUser(constructUser(TEST_REALM));
 			logger.info("User: {}", user);
-			final String url = urlGetUserById(user);
-			logger.info("URL: {}", url);
-			final Response deleteResponse = super.restAssuredOpsAdminCreds().delete(url);
+			final String getUrl = userUrl(null, user.getId());
+			logger.info("URL: {}", getUrl);
+			final Response deleteResponse = super.restAssuredOpsAdminCreds().delete(getUrl);
 			logger.info("Response:\n{}", deleteResponse.asPrettyString());
 			assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
-			final Response getResponse = super.restAssuredOpsAdminCreds().get(url);
+			final Response getResponse = super.restAssuredOpsAdminCreds().get(getUrl);
 			logger.info("Response:\n{}", getResponse.asPrettyString());
 			assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
 		}
+	}
 
-		private User postUser(final User user) {
-			assertNotNull(user);
-			assertTrue(user.getId() <= 0);
-			final String url = super.baseUrl + "/api/user";
-			logger.info("URL: {}", url);
-			final Response response = super.restAssuredOpsAdminCreds().contentType(MediaType.APPLICATION_JSON_VALUE).body(user).post(url);
-			logger.info("Response:\n{}", response.asPrettyString());
-			final User createdUser = response.as(User.class);
-			logger.info("User: {}", createdUser);
-			return createdUser;
-//			logger.info("Response:\n{}", response.asPrettyString());
-//			return super.baseUrl + "/api/user" + "/" + response.jsonPath().getLong("id");
-		}
+	/////////////////////
+	// URL helper methods
+	/////////////////////
 
-		private List<User> constructUsers(final int count) {
-			return LongStream.range(0, count).mapToObj(this::contructUser).toList();
-		}
+	private String userUrl(final String realm, final Long id) {
+		final String userUrl = super.baseUrl + "/api/user" + pathSuffix(id) + queryString(realm, null);
+		logger.info("User URL: {}", userUrl);
+		return userUrl;
+	}
 
-		private List<User> postUsers(final List<User> users) {
-			final Response response = super.restAssuredOpsAdminCreds().given().when().contentType(MediaType.APPLICATION_JSON_VALUE).body(users).post(super.baseUrl + "/api/users");
-			logger.info("Response:\n{}", response.asPrettyString());
-			return response.jsonPath().getList(".", User.class);
-//			return Arrays.asList(response.as(User[].class));
-//			final List<Integer> ids = response.jsonPath().getList("id");
-		}
+	private String usersUrl(final String realm, final List<Long> ids) {
+		final String usersUrl = super.baseUrl + "/api/users" + queryString(realm, ids);
+		logger.info("Users URL: {}", usersUrl);
+		return usersUrl;
+	}
 
-		private String urlGetUsersByIds(final List<User> users) {
-			final List<String> queryParams = users.stream().map(user -> "id=" + user.getId()).toList();
-			return super.baseUrl + "/api/users?" + Strings.join(queryParams, '&');
-		}
+	private String usersFilteredUrl(final String realm) {
+		final String usersFilteredUrl = super.baseUrl + "/api/users/filtered" + queryString(realm, null);
+		logger.info("Users filtered URL: {}", usersFilteredUrl);
+		return usersFilteredUrl;
+	}
 
-		private String urlGetUserById(final User user) {
-			assertNotNull(user);
-			assertTrue(user.getId() > 0L);
-			return super.baseUrl + "/api/user/" + user.getId();
-		}
+	private String pathSuffix(final Long id) {
+		return (id == null) ? "" : "/" + id;
+	}
 
-		private User contructUser(final long offset) {
-			final long uniqueSuffix = UNIQUE_LONG.getAndIncrement() + offset;
-			final String username = "Username " + uniqueSuffix;
-			final String password = "Password " + uniqueSuffix;
-			final String emailAddress = "Email" + uniqueSuffix + "@example.com";
-			final String firstName = "FirstName " + uniqueSuffix;
-			final String middleName = "MiddleName " + uniqueSuffix;
-			final String lastName = "LastName " + uniqueSuffix;
-			final String rolesAndPrivileges = "ROLE_" + uniqueSuffix + ",PRIVILEGE_" + uniqueSuffix;
-			final boolean isEnabled = true;
-			final boolean isAccountNonExpired = true;
-			final boolean isAccountNonLocked = true;
-			final boolean isCredentialsNonExpired = true;
-			return new User(REALM, username, password, emailAddress, firstName, middleName, lastName, rolesAndPrivileges, isEnabled, isAccountNonExpired, isAccountNonLocked, isCredentialsNonExpired);
+	private String queryString(final String realm, final List<Long> ids) {
+		final List<String> queryParams = new ArrayList<>();
+		if (realm != null) {
+			queryParams.add("realm=" + URLEncoder.encode(realm, StandardCharsets.UTF_8));
 		}
+		if (ids != null) {
+			ids.stream().forEach((id) -> {
+				assertThat(id).isNotNull();
+				queryParams.add("id=" + id); // ASSUME: Long.toString() is URL safe
+			});
+		}
+		return queryParams.isEmpty() ? "" : "?" + Strings.join(queryParams, '&');
+	}
 
-		private User constructUser() {
-			final long uniqueSuffix = UNIQUE_LONG.getAndIncrement();
-			return contructUser(uniqueSuffix);
+	//////////////////////
+	// POST helper methods
+	//////////////////////
+
+	private User createUser(final User user) {
+		return createUsers(List.of(user)).get(0);
+	}
+
+	private List<User> createUsers(final List<User> users) {
+		assertNotNull(users);
+		users.forEach(user -> { assertThat(user).isNotNull(); assertThat(user.getId()).isLessThanOrEqualTo(0L); });
+		if (users.size() == 1) {
+			final Response postResponse = super.restAssuredOpsAdminCreds().contentType(MediaType.APPLICATION_JSON_VALUE).body(users.get(0)).post(userUrl(null, null));
+			assertThat(postResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED.value());
+			final User createdUser = postResponse.as(User.class);
+			logger.info("Created User: {}", createdUser);
+			return List.of(createdUser);
 		}
+		final Response postResponse = super.restAssuredOpsAdminCreds().given().when().contentType(MediaType.APPLICATION_JSON_VALUE).body(users).post(usersUrl(null, null));
+		assertThat(postResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED.value());
+		List<User> createdUsers = postResponse.jsonPath().getList(".", User.class);
+		logger.info("Created Users: {}", createdUsers);
+		return createdUsers;
+	}
+
+	/////////////////////////////
+	// Constructor helper methods
+	/////////////////////////////
+
+	private User constructUser(final String realm) {
+		return constructUsers(realm, 1).get(0);
+	}
+
+	private List<User> constructUsers(final String realm, final int count) {
+		return LongStream.range(0, count).mapToObj((index) -> constructUser(realm, index)).toList();
+	}
+
+	private User constructUser(final String realm, final long index) {
+		final long uniqueSuffix = UNIQUE_LONG.getAndIncrement() + index;
+		final String username = "Username " + uniqueSuffix;
+		final String password = "Password " + uniqueSuffix;
+		final String emailAddress = "Email" + uniqueSuffix + "@example.com";
+		final String firstName = "FirstName " + uniqueSuffix;
+		final String middleName = "MiddleName " + uniqueSuffix;
+		final String lastName = "LastName " + uniqueSuffix;
+		final String rolesAndPrivileges = "ROLE_" + uniqueSuffix + ",PRIVILEGE_" + uniqueSuffix;
+		final boolean isEnabled = true;
+		final boolean isAccountNonExpired = true;
+		final boolean isAccountNonLocked = true;
+		final boolean isCredentialsNonExpired = true;
+		return new User(realm, username, password, emailAddress, firstName, middleName, lastName, rolesAndPrivileges, isEnabled, isAccountNonExpired, isAccountNonLocked, isCredentialsNonExpired);
 	}
 }

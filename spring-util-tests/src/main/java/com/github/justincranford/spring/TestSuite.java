@@ -6,7 +6,7 @@ import org.junit.platform.suite.api.Suite;
 import org.junit.platform.suite.api.SuiteDisplayName;
 
 @SelectPackages({"com.github.justincranford.spring"})
-@IncludeClassNamePatterns({"./*Test", ".*IT"})
+@IncludeClassNamePatterns({"./*Test", "./*Tests", ".*IT", ".*ITs"})
 
 @Suite
 @SuiteDisplayName("All tests")

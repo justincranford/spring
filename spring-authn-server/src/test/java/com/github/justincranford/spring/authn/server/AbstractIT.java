@@ -18,7 +18,7 @@ import io.restassured.specification.RequestSpecification;
 
 @SpringBootTest(classes={RestConfig.class, SpringAuthnServer.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
-@ComponentScan(basePackages={"com.github.justincranford.spring.*"})
+@ComponentScan(basePackages={"com.github.justincranford.spring"})
 @ContextConfiguration
 //@ActiveProfiles(profiles = { "default","test" })
 public class AbstractIT extends com.github.justincranford.spring.AbstractIT {

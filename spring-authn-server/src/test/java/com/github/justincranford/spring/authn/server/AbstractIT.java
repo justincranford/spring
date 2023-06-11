@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -17,7 +18,7 @@ import io.restassured.specification.RequestSpecification;
 
 @SpringBootTest(classes={RestConfig.class, SpringAuthnServer.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
-@ComponentScan(basePackages={"com.github.justincranford.spring"})
+@ComponentScan(basePackages={"com.github.justincranford.spring.*"})
 @ContextConfiguration
 //@ActiveProfiles(profiles = { "default","test" })
 public class AbstractIT extends com.github.justincranford.spring.AbstractIT {
@@ -25,8 +26,16 @@ public class AbstractIT extends com.github.justincranford.spring.AbstractIT {
 	@Autowired protected UserDetailsService userDetailsService;
 	@Autowired protected UserCrudRepository userCrudRepository;
 
-	protected final RequestSpecification restAssuredOpsAdminCreds = RestAssured.given().config(this.restAssuredConfig).auth().basic("opsadmin", "opsadmin");
-	protected final RequestSpecification restAssuredOpsUserCreds  = RestAssured.given().config(this.restAssuredConfig).auth().basic("opsuser",  "opsuser");
-	protected final RequestSpecification restAssuredAppAdminCreds = RestAssured.given().config(this.restAssuredConfig).auth().basic("appadmin", "appadmin");
-	protected final RequestSpecification restAssuredAppUserCreds  = RestAssured.given().config(this.restAssuredConfig).auth().basic("appuser",  "appuser");
+	protected RequestSpecification restAssuredOpsAdminCreds() {
+		return RestAssured.given().config(restAssuredConfig()).auth().basic("opsadmin", "opsadmin");
+	}
+	protected RequestSpecification restAssuredOpsUserCreds() {
+		return RestAssured.given().config(restAssuredConfig()).auth().basic("opsuser",  "opsuser");
+	}
+	protected RequestSpecification restAssuredAppAdminCreds() {
+		return RestAssured.given().config(restAssuredConfig()).auth().basic("appadmin", "appadmin");
+	}
+	protected RequestSpecification restAssuredAppUserCreds() {
+		return RestAssured.given().config(restAssuredConfig()).auth().basic("appuser",  "appuser");
+	}
 }

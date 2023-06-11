@@ -41,7 +41,7 @@ import io.restassured.specification.RequestSpecification;
 
 @SpringBootTest(classes={AbstractConfig.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
-@ComponentScan(basePackages={"com.github.justincranford.spring"})
+@ComponentScan(basePackages={"com.github.justincranford.spring.*"})
 @ContextConfiguration
 //@ActiveProfiles(profiles = { "default","test" })
 @SuppressWarnings("deprecation")
@@ -66,12 +66,15 @@ public class AbstractIT {
     @Value(value="${server.ssl.enabled:false}")                    protected boolean serverSslEnabled;
     @Value(value="${server.ssl.auto-generate-certificates:false}") protected boolean serverSslAutoGenerateCertificates;
 
-    // TODO: Remove relaxedHTTPSValidation(), replace with trustStore()
-    // TODO: Remove allowALlHostnames()
-    protected final RestAssuredConfig    restAssuredConfig       = RestAssuredConfig.newConfig().sslConfig(SSLConfig.sslConfig().relaxedHTTPSValidation().allowAllHostnames());
-	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(this.restAssuredConfig);
-	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(this.restAssuredConfig).auth().basic("invalid", "invalid");
-	protected final RequestSpecification restAssuredUptimeCreds  = RestAssured.given().config(this.restAssuredConfig).auth().basic("uptime",  "uptime");
+	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(restAssuredConfig());
+	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(restAssuredConfig()).auth().basic("invalid", "invalid");
+	protected final RequestSpecification restAssuredUptimeCreds  = RestAssured.given().config(restAssuredConfig()).auth().basic("uptime",  "uptime");
+
+	protected RestAssuredConfig restAssuredConfig() {
+	    // TODO: Remove relaxedHTTPSValidation(), replace with trustStore()
+	    // TODO: Remove allowALlHostnames()
+		return RestAssuredConfig.newConfig().sslConfig(SSLConfig.sslConfig().relaxedHTTPSValidation().allowAllHostnames());
+	}
 
 	@SpringBootApplication
 	@Profile({"default"})

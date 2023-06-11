@@ -1,7 +1,6 @@
 package com.github.justincranford.spring.util.model;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,17 +15,16 @@ public class UserConfig {
 	@Configuration
 	@ConfigurationProperties
 	public static class ConfiguredUsers {
-		public Map<String, List<ConfiguredUser>> users;
-		public Map<String, List<ConfiguredUser>> getUsers() {
+		public Map<String, Map<String, ConfiguredUser>> users;
+		public Map<String, Map<String, ConfiguredUser>> getUsers() {
 			return this.users;
 		}
-		public void setUsers(final Map<String, List<ConfiguredUser>> realms) {
+		public void setUsers(final Map<String, Map<String, ConfiguredUser>> realms) {
 			this.users = realms;
 		}
 	}
 
 	public static class ConfiguredUser {
-		@Min(8) @Max(255) public String username;
 		@Min(8) @Max(255) String password;
 		@Min(3) @Max(64+1+255) String emailAddress;
 		@Min(1) @Max(255) String firstName;
@@ -98,12 +96,5 @@ public class UserConfig {
 		public void setCredentialsNonExpired(Boolean isCredentialsNonExpired) {
 			this.isCredentialsNonExpired = isCredentialsNonExpired;
 		}
-		public String getUsername() {
-			return username;
-		}
-		public void setUsername(String username) {
-			this.username = username;
-		}
-
 	}
 }

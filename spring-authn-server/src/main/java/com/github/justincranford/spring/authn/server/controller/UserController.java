@@ -3,12 +3,12 @@ package com.github.justincranford.spring.authn.server.controller;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.github.justincranford.spring.authn.server.model.SimpleGrantedAuthorityNames;
 import com.github.justincranford.spring.authn.server.model.UserCrudRepository;
 import com.github.justincranford.spring.authn.server.model.UserNotFoundException;
 import com.github.justincranford.spring.util.model.User;
@@ -77,7 +76,7 @@ public class UserController {
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN','OPS_USER'})")
 	@GetMapping(path = "/users")
-	public List<User> reads(final Principal principal, @RequestParam(name = "id", required = false) final List<Long> ids) {
+	public List<User> reads(final Principal principal, @RequestParam(name = "id", required=false) final List<Long> ids) {
 		if (ids == null) {
 			return this.userCrudRepository.findAll();
 		}
@@ -92,7 +91,7 @@ public class UserController {
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@DeleteMapping(path = "/users")
-	public List<User> deletes(final Principal principal, @RequestParam(name = "id", required = false) final List<Long> ids) {
+	public List<User> deletes(final Principal principal, @RequestParam(name = "id", required=false) final List<Long> ids) {
 		final List<User> users = this.userCrudRepository.findAllById(ids);
 		if (ids == null) {
 			this.userCrudRepository.deleteAllById(ids);
@@ -103,30 +102,57 @@ public class UserController {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN','OPS_USER'})")
-	@GetMapping(path = "/filtered/users")
-	public List<User> filteredReads(final Principal principal, @RequestParam(required = true) final String realm, @RequestParam(required = false) final String emailAddress, @RequestParam(required = false) final String firstName, @RequestParam(required = false) final String lastName) {
-		if ((emailAddress != null) && (firstName != null) && (lastName != null)) {
-			return this.userCrudRepository.findByRealmAndEmailAddressAndFirstNameAndLastName(realm, emailAddress, firstName, lastName);
-		} else if ((emailAddress != null) && (firstName != null)) {
-			return this.userCrudRepository.findByRealmAndEmailAddressAndFirstName(realm, emailAddress, firstName);
-		} else if ((emailAddress != null) && (lastName != null)) {
-			return this.userCrudRepository.findByRealmAndEmailAddressAndLastName(realm, emailAddress, lastName);
-		} else if ((firstName != null) && (lastName != null)) {
-			return this.userCrudRepository.findByRealmAndFirstNameAndLastName(realm, firstName, lastName);
+	@GetMapping(path = "/users/filtered")
+	public List<User> filteredReads(
+		final Principal principal,
+		@RequestParam(required=false) final String realm,
+		@RequestParam(required=false) final String username,
+		@RequestParam(required=false) final String emailAddress,
+		@RequestParam(required=false) final String firstName,
+		@RequestParam(required=false) final String lastName
+	) {
+		final String[] nonRealmParameters = { username, emailAddress, firstName, lastName };
+		if (Arrays.stream(nonRealmParameters).filter(p -> p != null).count() > 1) {
+			throw new IllegalArgumentException("Multiple search parameters not supported.");
+		}
+		if (realm == null) {
+			if (username != null) {
+				return this.userCrudRepository.findByUsername(username);
+			} else if (emailAddress != null) {
+				return this.userCrudRepository.findByEmailAddress(emailAddress);
+			} else if (lastName != null) {
+				return this.userCrudRepository.findByLastName(lastName);
+			} else if (firstName != null) {
+				return this.userCrudRepository.findByFirstName(firstName);
+			}
+			return this.userCrudRepository.findAll();
+		}
+		if (username != null) {
+			return this.userCrudRepository.findByRealmAndUsername(realm, username);
 		} else if (emailAddress != null) {
 			return this.userCrudRepository.findByRealmAndEmailAddress(realm, emailAddress);
-		} else if (firstName != null) {
-			return this.userCrudRepository.findByRealmAndFirstName(realm, firstName);
 		} else if (lastName != null) {
 			return this.userCrudRepository.findByRealmAndLastName(realm, lastName);
+		} else if (firstName != null) {
+			return this.userCrudRepository.findByRealmAndFirstName(realm, firstName);
 		}
-		return Collections.emptyList();
+		return this.userCrudRepository.findByRealm(realm);
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
-	@DeleteMapping(path = "/filtered/users")
-	public List<User> filteredDeletes(final Principal principal, @RequestParam(required = false) final String realm, @RequestParam(required = false) final String emailAddress, @RequestParam(required = false) final String firstName, @RequestParam(required = false) final String lastName) {
-		final List<User> users = this.filteredReads(principal, realm, emailAddress, firstName, lastName);
+	@DeleteMapping(path = "/users/filtered")
+	public List<User> filteredDeletes(
+		final Principal principal,
+		@RequestParam(required=true)  final String realm,
+		@RequestParam(required=false) final String username,
+		@RequestParam(required=false) final String emailAddress,
+		@RequestParam(required=false) final String firstName,
+		@RequestParam(required=false) final String lastName
+	) {
+		if (List.of("ops", "app").contains(realm)) {
+			throw new IllegalArgumentException("Delete by realm ['" + realm + "'] not allowed.");
+		}
+		final List<User> users = this.filteredReads(principal, realm, username, emailAddress, firstName, lastName);
 		this.userCrudRepository.deleteAll(users);
 		return users;
 	}

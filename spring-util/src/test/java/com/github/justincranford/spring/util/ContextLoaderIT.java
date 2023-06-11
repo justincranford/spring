@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -68,11 +67,14 @@ public class ContextLoaderIT extends AbstractIT {
     @Test
     public void testConfiguredUsersProperties() throws Exception {
 		assertThat(this.configuredUsers, is(notNullValue()));
-		final Map<String, List<ConfiguredUser>> realms = this.configuredUsers.getUsers();
+		final Map<String, Map<String, ConfiguredUser>> realms = this.configuredUsers.getUsers();
 		System.out.println("Realms: " + realms);
 		assertThat(realms, is(notNullValue()));
-		assertThat(realms, hasKey("uptime_realm"));
-		final List<ConfiguredUser> configuredUsers = realms.get("uptime_realm");
-		assertThat(configuredUsers, is(notNullValue()));
+		assertThat(realms, hasKey("test_realm"));
+		final Map<String, ConfiguredUser> realmUsers = realms.get("test_realm");
+		assertThat(realmUsers, is(notNullValue()));
+		assertThat(realmUsers, hasKey("uptime"));
+		final ConfiguredUser uptimeUser = realmUsers.get("uptime");
+		assertThat(uptimeUser, is(notNullValue()));
     }
 }

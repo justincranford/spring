@@ -27,15 +27,18 @@ public class UserRepositoriesInit {
 	@Transactional
 	@PostConstruct
 	public void configureUsers() throws Exception {
-		final Map<String, List<ConfiguredUser>> realms = this.configuredUsers.getUsers();
-		for (final Map.Entry<String, List<ConfiguredUser>> entry : realms.entrySet()) {
+		final Map<String, Map<String, ConfiguredUser>> realms = this.configuredUsers.getUsers();
+		for (final Map.Entry<String, Map<String, ConfiguredUser>> entry : realms.entrySet()) {
 			final String realm = entry.getKey();
-			for (final ConfiguredUser configuredUser : entry.getValue()) {
-				final List<User> foundUsers = this.userCrudRepository.findByUsername(configuredUser.getUsername());
+			final Map<String, ConfiguredUser> configuredUsers = entry.getValue();
+			for (Map.Entry<String, ConfiguredUser> usernameAndConfiguredUser : configuredUsers.entrySet()) {
+				final String username = usernameAndConfiguredUser.getKey();
+				final ConfiguredUser configuredUser = usernameAndConfiguredUser.getValue();
+				final List<User> foundUsers = this.userCrudRepository.findByUsername(username);
 				if (foundUsers.isEmpty()) {
 					final User user = this.userCrudRepository.save(new User(
 						realm,
-						configuredUser.getUsername(),
+						username,
 						this.passwordEncoder.encode(configuredUser.getPassword()),
 						configuredUser.getEmailAddress(),
 						configuredUser.getFirstName(),
@@ -47,10 +50,10 @@ public class UserRepositoriesInit {
 						configuredUser.isAccountNonLocked(),
 						configuredUser.isCredentialsNonExpired()
 					));
-					this.logger.info("User '{}' added:\n{}", configuredUser.getUsername(), user);
+					this.logger.info("User '{}' added:\n{}", username, user);
 				} else {
 					final User foundUser = foundUsers.get(0);
-					this.logger.info("User '{}' already exists:\n{}", configuredUser.getUsername(), foundUser);
+					this.logger.info("User '{}' already exists:\n{}", username, foundUser);
 				}
 			}
 		}

@@ -69,7 +69,7 @@ public class UserController {
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@PostMapping(path = "/users", consumes = { APPLICATION_JSON_VALUE })
-//	@ResponseStatus(HttpStatus.CREATED)
+	@ResponseStatus(HttpStatus.CREATED)
 	public List<User> creates(final Principal principal, @RequestBody final Iterable<User> users) {
 		return this.userCrudRepository.saveAll(users);
 	}

@@ -4,10 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonUtil {
+	public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 	public static String pojoToJsonString(final Object o) {
 		try {
-			final ObjectMapper objectMapper = new ObjectMapper();
-			return objectMapper.writeValueAsString(o);
+			return OBJECT_MAPPER.writeValueAsString(o);
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 			return o.toString();

@@ -179,7 +179,7 @@ public class UserApiIT extends AbstractIT {
 	}
 
 	@Nested
-	public class BulkUsersTestRealm extends AbstractIT {
+	public class FilteredTestRealm extends AbstractIT {
 		@Test
 		public void testDeleteAllTestRealmUsers() throws Exception {
 			final User user = createOrUpdateUser(Method.POST, constructUser(TEST_REALM));

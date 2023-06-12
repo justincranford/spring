@@ -1,6 +1,5 @@
 package com.github.justincranford.spring.authn.server.api.users;
 
-import static org.assertj.core.api.Assertions.anyOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -9,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -102,18 +100,37 @@ public class UserApiIT extends AbstractIT {
 		}
 
 		@ParameterizedTest @MethodSource("args")
-		public void whenGetByNonExistingUserId_thenNotFound(final Args args) throws Exception {
+		public void whenInvalidGet_thenNotFound(final Args args) throws Exception {
 			final List<Long> invalidIds = LongStream.rangeClosed(1, args.count()).map((offset) -> UNIQUE_LONG.getAndIncrement()).boxed().toList();
 			final List<User> get = getOrDeleteUser(Method.GET, invalidIds);
 			assertThat(get).isEmpty();
 		}
 
 		@ParameterizedTest @MethodSource("args")
-		public void whenCreateUserInvalidLastName_thenError(final Args args) throws Exception {
+		public void whenInvalidCreate_thenError(final Args args) throws Exception {
 			final List<User> invalid = LongStream.rangeClosed(1, args.count()).mapToObj((offset) -> constructUser(TEST_REALM)).toList();
 			invalid.forEach(user -> user.setLastName(null));
 			final List<User> created = createOrUpdateUsers(Method.POST, invalid);
 			assertThat(created).isEmpty();
+		}
+
+		@ParameterizedTest @MethodSource("args")
+		public void whenInvalidUpdate_thenError(final Args args) throws Exception {
+			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
+			final List<User> modified = created.stream().map((user) -> {
+				final User copy = new User(user);
+				copy.setLastName(null);
+				return copy;
+			}).toList();
+			final List<User> updated = createOrUpdateUsers(Method.PUT, modified);
+			assertThat(updated).isEmpty();
+		}
+
+		@ParameterizedTest @MethodSource("args")
+		public void whenInvalidDelete_thenError(final Args args) throws Exception {
+			final List<Long> invalidIds = LongStream.rangeClosed(1, args.count()).map((offset) -> UNIQUE_LONG.getAndIncrement()).boxed().toList();
+			final List<User> delete = getOrDeleteUser(Method.DELETE, invalidIds);
+			assertThat(delete).isEmpty();
 		}
 	}
 

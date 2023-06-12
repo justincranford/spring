@@ -93,9 +93,10 @@ public class UserController {
 	@DeleteMapping(path = "/users")
 	public List<User> deletes(final Principal principal, @RequestParam(name = "id", required=false) final List<Long> ids) {
 		final List<User> users = this.userCrudRepository.findAllById(ids);
-		if (ids == null) {
-			this.userCrudRepository.deleteAllById(ids);
+		if (users == null) {
+			throw new UserNotFoundException();
 		}
+		this.userCrudRepository.deleteAllById(ids);
 		return users;
 	}
 

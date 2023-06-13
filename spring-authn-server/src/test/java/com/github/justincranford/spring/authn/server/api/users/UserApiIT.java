@@ -40,25 +40,20 @@ public class UserApiIT extends AbstractIT {
 
 		@ParameterizedTest @MethodSource("args")
 		void testWellKnownUsernameWithRealm(final Args args) throws Exception {
-			final Response searchResponse = super.restAssuredOpsAdminCreds().get(usersFilteredUrl(args.realm(), List.of(args.username()), null, null, null));
-			final User[] foundUsers = searchResponse.getBody().as(User[].class);
-			logger.info("Search Response:\n{}", (Object[]) foundUsers);
-			assertThat(searchResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
-			assertThat(foundUsers).isNotEmpty();
-			assertThat(foundUsers.length).isEqualTo(1);
-			assertThat(foundUsers[0].getUsername()).isEqualTo(args.username());
-			assertThat(foundUsers[0].getRealm()).isEqualTo(args.realm());
+			final User[] users = filter(args.realm(), List.of(args.username()), null, null, null);
+			assertThat(users).isNotNull();
+			assertThat(users.length).isEqualTo(1);
+			assertThat(users[0].getUsername()).isEqualTo(args.username());
+			assertThat(users[0].getRealm()).isEqualTo(args.realm());
 		}
 
 		@ParameterizedTest @MethodSource("args")
 		void testWellKnownUsernameWithoutRealm(final Args args) throws Exception {
-			final Response searchResponse = super.restAssuredOpsAdminCreds().get(usersFilteredUrl(null, List.of(args.username()), null, null, null));
-			final User[] foundUsers = searchResponse.getBody().as(User[].class);
-			logger.info("Search Response:\n{}", (Object[]) foundUsers);
-			assertThat(searchResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
-			assertThat(foundUsers).isNotEmpty();
-			assertThat(foundUsers.length).isEqualTo(1);
-			assertThat(foundUsers[0].getUsername()).isEqualTo(args.username());
+			final User[] users = filter(null, List.of(args.username()), null, null, null);
+			assertThat(users).isNotNull();
+			assertThat(users.length).isEqualTo(1);
+			assertThat(users[0].getUsername()).isEqualTo(args.username());
+			assertThat(users[0].getRealm()).isEqualTo(args.realm());
 		}
 	}
 
@@ -178,6 +173,7 @@ public class UserApiIT extends AbstractIT {
 		}
 	}
 
+	// TODO Clean up these tests
 	@Nested
 	public class FilteredTestRealm extends AbstractIT {
 		@Test
@@ -385,9 +381,24 @@ public class UserApiIT extends AbstractIT {
 			logger.info("{} Users: Not found", gotOrDeleted);
 			return Collections.emptyList();
 		}
+		// TODO Return User[]
 		List<User> getOrDeletedUsers = response.jsonPath().getList(".", User.class);
 		logger.info("{} Users: {}", gotOrDeleted, getOrDeletedUsers);
 		return getOrDeletedUsers;
+	}
+
+	private User[] filter(
+		final String realm,
+		final List<String> usernames,
+		final List<String> emailAddresses,
+		final List<String> firstNames,
+		final List<String> lastNames
+	) throws Exception {
+		final Response response = super.restAssuredOpsAdminCreds().request(Method.GET, usersFilteredUrl(realm, usernames, emailAddresses, firstNames, lastNames));
+		final User[] users = response.as(User[].class);
+		logger.info("Filter Response:\n{}", (Object[]) users);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK.value());
+		return users;
 	}
 
 	/////////////////////////////

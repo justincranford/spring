@@ -32,11 +32,11 @@ public class UserApiIT extends AbstractIT {
 			return Stream.of(new Args("ops", "opsadmin"), new Args("ops", "opsuser"), new Args("app", "appadmin"), new Args("app", "appuser"));
 		}
 		@ParameterizedTest @MethodSource("args")
-		void testWellKnownUsernameWithRealm(final Args args) {
+		void whenGetWellKnownUserByUserNameAndRealm_thenOK(final Args args) {
 			verify(args, UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, UserClient.parameters("realm", args.realm(), "username", args.username())));
 		}
 		@ParameterizedTest @MethodSource("args")
-		void testWellKnownUsernameWithoutRealm(final Args args) {
+		void whenGetWellKnownUserByUserName_thenOK(final Args args) {
 			verify(args, UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, UserClient.parameters("username", args.username())));
 		}
 		private void verify(final Args args, final User[] users) {
@@ -50,13 +50,13 @@ public class UserApiIT extends AbstractIT {
 	@Nested
 	public class AuthenticationErrors extends AbstractIT {
 		@Test
-		public void testAuthenticationRequiredButNoCreds() {
+		public void whenGetUserNoCredentials_thenUnauthorized() {
 			final User user = UserClient.createOrUpdateUser(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUser(TEST_REALM));
 			final Response response = this.restAssuredNoCreds.get(UserClient.userUrl(super.baseUrl, TEST_REALM, user.getId()));
 			printResponseAndVerifyStatusCode(response, HttpStatus.UNAUTHORIZED);
 		}
 		@Test
-		public void testAuthenticationRequiredButInvalidCreds() {
+		public void whenGetUserInvalidCredentials_thenUnauthorized() {
 			final User user = UserClient.createOrUpdateUser(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUser(TEST_REALM));
 			final Response response = this.restAssuredInvalidCreds.get(UserClient.userUrl(super.baseUrl, TEST_REALM, user.getId()));
 			printResponseAndVerifyStatusCode(response, HttpStatus.UNAUTHORIZED);
@@ -66,7 +66,7 @@ public class UserApiIT extends AbstractIT {
 	@Nested
 	public class AuthorizationErrors extends AbstractIT {
 		@Test
-		public void testAuthenticatedButMissingRole() {
+		public void whenGetUserValidCredentialsInvalidAuthorities_thenForbidden() {
 			final User user = UserClient.createOrUpdateUser(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUser(TEST_REALM));
 			final Response response = super.restAssuredAppUserCreds().get(UserClient.userUrl(super.baseUrl, TEST_REALM, user.getId()));
 			printResponseAndVerifyStatusCode(response, HttpStatus.FORBIDDEN);

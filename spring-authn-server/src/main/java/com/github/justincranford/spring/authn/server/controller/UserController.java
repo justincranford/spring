@@ -4,7 +4,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.security.Principal;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,35 +106,35 @@ public class UserController {
 	public List<User> filteredReads(
 		final Principal principal,
 		@RequestParam(required=false) final String realm,
-		@RequestParam(required=false) final String username,
-		@RequestParam(required=false) final String emailAddress,
-		@RequestParam(required=false) final String firstName,
-		@RequestParam(required=false) final String lastName
+		@RequestParam(required=false) final String[] username,
+		@RequestParam(required=false) final String[] emailAddress,
+		@RequestParam(required=false) final String[] firstName,
+		@RequestParam(required=false) final String[] lastName
 	) {
-		final String[] nonRealmParameters = { username, emailAddress, firstName, lastName };
+		final String[][] nonRealmParameters = { username, emailAddress, firstName, lastName };
 		if (Arrays.stream(nonRealmParameters).filter(p -> p != null).count() > 1) {
 			throw new IllegalArgumentException("Multiple search parameters not supported.");
 		}
 		if (realm == null) {
 			if (username != null) {
-				return this.userCrudRepository.findByUsername(username);
+				return this.userCrudRepository.findByUsernameIn(username);
 			} else if (emailAddress != null) {
-				return this.userCrudRepository.findByEmailAddress(emailAddress);
+				return this.userCrudRepository.findByEmailAddressIn(emailAddress);
 			} else if (lastName != null) {
-				return this.userCrudRepository.findByLastName(lastName);
+				return this.userCrudRepository.findByLastNameIn(lastName);
 			} else if (firstName != null) {
-				return this.userCrudRepository.findByFirstName(firstName);
+				return this.userCrudRepository.findByFirstNameIn(firstName);
 			}
 			return this.userCrudRepository.findAll();
 		}
 		if (username != null) {
-			return this.userCrudRepository.findByRealmAndUsername(realm, username);
+			return this.userCrudRepository.findByRealmAndUsernameIn(realm, username);
 		} else if (emailAddress != null) {
-			return this.userCrudRepository.findByRealmAndEmailAddress(realm, emailAddress);
+			return this.userCrudRepository.findByRealmAndEmailAddressIn(realm, emailAddress);
 		} else if (lastName != null) {
-			return this.userCrudRepository.findByRealmAndLastName(realm, lastName);
+			return this.userCrudRepository.findByRealmAndLastNameIn(realm, lastName);
 		} else if (firstName != null) {
-			return this.userCrudRepository.findByRealmAndFirstName(realm, firstName);
+			return this.userCrudRepository.findByRealmAndFirstNameIn(realm, firstName);
 		}
 		return this.userCrudRepository.findByRealm(realm);
 	}
@@ -145,15 +144,15 @@ public class UserController {
 	public List<User> filteredDeletes(
 		final Principal principal,
 		@RequestParam(required=true)  final String realm,
-		@RequestParam(required=false) final String username,
-		@RequestParam(required=false) final String emailAddress,
-		@RequestParam(required=false) final String firstName,
-		@RequestParam(required=false) final String lastName
+		@RequestParam(required=false) final String[] usernames,
+		@RequestParam(required=false) final String[] emailAddresses,
+		@RequestParam(required=false) final String[] firstNames,
+		@RequestParam(required=false) final String[] lastNames
 	) {
 		if (List.of("ops", "app").contains(realm)) {
 			throw new IllegalArgumentException("Delete by realm ['" + realm + "'] not allowed.");
 		}
-		final List<User> users = this.filteredReads(principal, realm, username, emailAddress, firstName, lastName);
+		final List<User> users = this.filteredReads(principal, realm, usernames, emailAddresses, firstNames, lastNames);
 		this.userCrudRepository.deleteAll(users);
 		return users;
 	}

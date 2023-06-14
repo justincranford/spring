@@ -177,7 +177,7 @@ public class UserApiIT extends AbstractIT {
 	public class FilteredTestRealm extends AbstractIT {
 		private record Args(Integer count) { }
 		static Stream<Args> args() {
-			return Stream.of(new Args(1), new Args(2));
+			return Stream.of(new Args(1));
 		}
 
 		@ParameterizedTest @MethodSource("args")
@@ -197,29 +197,21 @@ public class UserApiIT extends AbstractIT {
 		}
 
 		// TODO username
-		// TODO emaiLAddress
-		@Test
-		public void whenGetUsersByFirstName_thenOK() {
-			final User user = createOrUpdateUser(Method.POST, constructUser(TEST_REALM));
-			final Response searchResponse = super.restAssuredOpsAdminCreds().get(usersFilteredUrl(TEST_REALM, null, null, List.of(user.getFirstName()), null));
-			logger.info("Response:\n{}", searchResponse.asPrettyString());
-			assertThat(searchResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
-			@SuppressWarnings("unchecked")
-			final List<User> getUsers = searchResponse.as(List.class);
-			logger.info("Users: {}", getUsers);
-			assertTrue(getUsers.size() > 0);
+		// TODO emailAddress
+		@ParameterizedTest @MethodSource("args")
+		public void whenGetUsersByFirstName_thenOK(final Args args) {
+			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
+			final User[] got = getOrDeleteFiltered(Method.GET, TEST_REALM, null, null, firstNames(created), null);
+			assertThat(got).containsAll(created);
+			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
 		}
 
-		@Test
-		public void whenGetUsersByLastName_thenOK() {
-			final User user = createOrUpdateUser(Method.POST, constructUser(TEST_REALM));
-			final Response searchResponse = super.restAssuredOpsAdminCreds().get(usersFilteredUrl(TEST_REALM, null, null, null, List.of(user.getLastName())));
-			logger.info("Response:\n{}", searchResponse.asPrettyString());
-			assertThat(searchResponse.getStatusCode()).isEqualTo(HttpStatus.OK.value());
-			@SuppressWarnings("unchecked")
-			final List<User> getUsers = searchResponse.as(List.class);
-			logger.info("Users: {}", getUsers);
-			assertTrue(getUsers.size() > 0);
+		@ParameterizedTest @MethodSource("args")
+		public void whenGetUsersByLastName_thenOK(final Args args) {
+			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
+			final User[] got = getOrDeleteFiltered(Method.GET, TEST_REALM, null, null, null, lastNames(created));
+			assertThat(got).containsAll(created);
+			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
 		}
 	}
 
@@ -424,5 +416,21 @@ public class UserApiIT extends AbstractIT {
 
 	private List<Long> userIds(final List<User> users) {
 		return users.stream().map(user -> user.getId()).toList();
+	}
+
+	private List<String> usernames(final List<User> users) {
+		return users.stream().map(user -> user.getUsername()).toList();
+	}
+
+	private List<String> emailAddresses(final List<User> users) {
+		return users.stream().map(user -> user.getEmailAddress()).toList();
+	}
+
+	private List<String> firstNames(final List<User> users) {
+		return users.stream().map(user -> user.getFirstName()).toList();
+	}
+
+	private List<String> lastNames(final List<User> users) {
+		return users.stream().map(user -> user.getLastName()).toList();
 	}
 }

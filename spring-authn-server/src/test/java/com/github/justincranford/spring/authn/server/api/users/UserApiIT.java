@@ -3,14 +3,15 @@ package com.github.justincranford.spring.authn.server.api.users;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.util.Strings;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.github.justincranford.spring.authn.server.AbstractIT;
@@ -39,11 +42,11 @@ public class UserApiIT extends AbstractIT {
 		}
 		@ParameterizedTest @MethodSource("args")
 		void testWellKnownUsernameWithRealm(final Args args) {
-			verify(args, getOrDeleteFiltered(Method.GET, args.realm(), List.of(args.username()), null, null, null));
+			verify(args, getOrDeleteFiltered(Method.GET, parameters("realm", args.realm(), "username", args.username())));
 		}
 		@ParameterizedTest @MethodSource("args")
 		void testWellKnownUsernameWithoutRealm(final Args args) {
-			verify(args, getOrDeleteFiltered(Method.GET, null, List.of(args.username()), null, null, null));
+			verify(args, getOrDeleteFiltered(Method.GET, parameters("username", args.username())));
 		}
 		private void verify(final Args args, final User[] users) {
 			assertThat(users).isNotNull();
@@ -169,35 +172,35 @@ public class UserApiIT extends AbstractIT {
 		@ParameterizedTest @MethodSource("args")
 		public void testGetAllUsers_thenOK(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
-			final User[] got = getOrDeleteFiltered(Method.GET, TEST_REALM, null, null, null, null);
+			final User[] got = getOrDeleteFiltered(Method.GET, parameters("realm", TEST_REALM));
 			assertThat(got).containsAll(created);
 			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
 		}
 		@ParameterizedTest @MethodSource("args")
 		public void whenGetUsersByEmailAddresses_thenOK(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
-			final User[] got = getOrDeleteFiltered(Method.GET, TEST_REALM, usernames(created), null, null, null);
+			final User[] got = getOrDeleteFiltered(Method.GET, parameters("realm", TEST_REALM, "username", usernames(created)));
 			assertThat(got).containsAll(created);
 			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
 		}
 		@ParameterizedTest @MethodSource("args")
 		public void whenGetUsersByUserName_thenOK(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
-			final User[] got = getOrDeleteFiltered(Method.GET, TEST_REALM, null, emailAddresses(created), null, null);
+			final User[] got = getOrDeleteFiltered(Method.GET, parameters("realm", TEST_REALM, "emailAddress", emailAddresses(created)));
 			assertThat(got).containsAll(created);
 			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
 		}
 		@ParameterizedTest @MethodSource("args")
 		public void whenGetUsersByFirstName_thenOK(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
-			final User[] got = getOrDeleteFiltered(Method.GET, TEST_REALM, null, null, firstNames(created), null);
+			final User[] got = getOrDeleteFiltered(Method.GET, parameters("realm", TEST_REALM, "firstName", firstNames(created)));
 			assertThat(got).containsAll(created);
 			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
 		}
 		@ParameterizedTest @MethodSource("args")
 		public void whenGetUsersByLastName_thenOK(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
-			final User[] got = getOrDeleteFiltered(Method.GET, TEST_REALM, null, null, null, lastNames(created));
+			final User[] got = getOrDeleteFiltered(Method.GET, parameters("realm", TEST_REALM, "lastName", lastNames(created)));
 			assertThat(got).containsAll(created);
 			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
 		}
@@ -212,7 +215,7 @@ public class UserApiIT extends AbstractIT {
 		@ParameterizedTest @MethodSource("args")
 		public void testDeleteAllTestRealmUsers(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
-			final User[] deleted = getOrDeleteFiltered(Method.DELETE, TEST_REALM, null, null, null, null);
+			final User[] deleted = getOrDeleteFiltered(Method.DELETE, parameters("realm", TEST_REALM));
 			assertThat(deleted).containsAll(created);
 			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNull());
 		}
@@ -223,27 +226,26 @@ public class UserApiIT extends AbstractIT {
 	//////////////////////////
 
 	private String userUrl(final String realm, final Long id) {
-		final String userUrl = super.baseUrl + "/api/user" + pathSuffix(id) + queryString(realm, (id == null? null : List.of(id)), null, null, null, null);
+		final String userUrl = super.baseUrl + "/api/user" + pathSuffix(id) + queryString(parameters("realm", realm));
 		logger.info("User URL: {}", userUrl);
 		return userUrl;
 	}
 
 	private String usersUrl(final String realm, final List<Long> ids) {
-		final String usersUrl = super.baseUrl + "/api/users" + queryString(realm, ids, null, null, null, null);
+		final String usersUrl = super.baseUrl + "/api/users" + queryString(parameters("realm", realm, "id", ids));
 		logger.info("Users URL: {}", usersUrl);
 		return usersUrl;
 	}
 
-	private String usersFilteredUrl(
-		final String realm,
-		final List<String> usernames,
-		final List<String> emailAddresses,
-		final List<String> firstNames,
-		final List<String> lastNames
-	) {
-		final String usersFilteredUrl = super.baseUrl + "/api/users/filtered" + queryString(realm, null, usernames, emailAddresses, firstNames, lastNames);
+	private String usersFilteredUrl(final MultiValueMap<String, String> parameters) {
+		final String usersFilteredUrl = super.baseUrl + "/api/users/filtered" + queryString(parameters);
 		logger.info("Users filtered URL: {}", usersFilteredUrl);
 		return usersFilteredUrl;
+	}
+
+	private String queryString(final MultiValueMap<String, String> parameters) {
+		final String queryString = UriComponentsBuilder.newInstance().queryParams(parameters).build().getQuery();
+		return (Strings.isEmpty(queryString) ? "" : "?" + queryString);
 	}
 
 	private String pathSuffix(final Long id) {
@@ -366,20 +368,28 @@ public class UserApiIT extends AbstractIT {
 		return getOrDeletedUsers;
 	}
 
-	private User[] getOrDeleteFiltered(
-		final Method method,
-		final String realm,
-		final List<String> usernames,
-		final List<String> emailAddresses,
-		final List<String> firstNames,
-		final List<String> lastNames
-	) {
-		final Response response = super.restAssuredOpsAdminCreds().request(method, usersFilteredUrl(realm, usernames, emailAddresses, firstNames, lastNames));
+	private User[] getOrDeleteFiltered(final Method method, final MultiValueMap<String, String> parameters) {
+		final Response response = super.restAssuredOpsAdminCreds().request(method, usersFilteredUrl(parameters));
 		final User[] users = response.as(User[].class);
 		logger.info("Filter Response:\n{}", (Object[]) users);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK.value());
 		return users;
 	}
+
+//	private User[] getOrDeleteFiltered(
+//		final Method method,
+//		final String realm,
+//		final List<String> usernames,
+//		final List<String> emailAddresses,
+//		final List<String> firstNames,
+//		final List<String> lastNames
+//	) {
+//		final Response response = super.restAssuredOpsAdminCreds().request(method, usersFilteredUrl(realm, usernames, emailAddresses, firstNames, lastNames));
+//		final User[] users = response.as(User[].class);
+//		logger.info("Filter Response:\n{}", (Object[]) users);
+//		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK.value());
+//		return users;
+//	}
 
 	/////////////////////////////
 	// Constructor helper methods
@@ -435,5 +445,23 @@ public class UserApiIT extends AbstractIT {
 
 	private List<String> lastNames(final List<User> users) {
 		return users.stream().map(user -> user.getLastName()).toList();
+	}
+
+	private LinkedMultiValueMap<String, String> parameters(final Object... objects) {
+		assertThat(objects).isNotEmpty();
+		assertThat(objects.length % 2).isEqualTo(0);
+		final LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+		for (int i=0; i<objects.length; i+=2) {
+			if (objects[i+1] != null) {
+				if (objects[i+1] instanceof Collection<?> collection) {
+					for (final Object value : collection) {
+						parameters.add(objects[i].toString(), value.toString());
+					}
+				} else {
+					parameters.add(objects[i].toString(), objects[i+1].toString());
+				}
+			}
+		}
+		return parameters;
 	}
 }

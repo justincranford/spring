@@ -53,15 +53,13 @@ public class UserApiIT extends AbstractIT {
 		public void testAuthenticationRequiredButNoCreds() {
 			final User user = UserClient.createOrUpdateUser(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUser(TEST_REALM));
 			final Response response = this.restAssuredNoCreds.get(UserClient.userUrl(super.baseUrl, TEST_REALM, user.getId()));
-			logger.info("Response:\n{}", response.asPrettyString());
-			assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+			printResponseAndVerifyStatusCode(response, HttpStatus.UNAUTHORIZED);
 		}
 		@Test
 		public void testAuthenticationRequiredButInvalidCreds() {
 			final User user = UserClient.createOrUpdateUser(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUser(TEST_REALM));
 			final Response response = this.restAssuredInvalidCreds.get(UserClient.userUrl(super.baseUrl, TEST_REALM, user.getId()));
-			logger.info("Response:\n{}", response.asPrettyString());
-			assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+			printResponseAndVerifyStatusCode(response, HttpStatus.UNAUTHORIZED);
 		}
 	}
 
@@ -71,8 +69,7 @@ public class UserApiIT extends AbstractIT {
 		public void testAuthenticatedButMissingRole() {
 			final User user = UserClient.createOrUpdateUser(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUser(TEST_REALM));
 			final Response response = super.restAssuredAppUserCreds().get(UserClient.userUrl(super.baseUrl, TEST_REALM, user.getId()));
-			logger.info("Response:\n{}", response.asPrettyString());
-			assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
+			printResponseAndVerifyStatusCode(response, HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -237,5 +234,14 @@ public class UserApiIT extends AbstractIT {
 		final boolean isAccountNonLocked = true;
 		final boolean isCredentialsNonExpired = true;
 		return new User(realm, username, password, emailAddress, firstName, middleName, lastName, rolesAndPrivileges, isEnabled, isAccountNonExpired, isAccountNonLocked, isCredentialsNonExpired);
+	}
+
+	/////////////////////
+	// Other util methods
+	/////////////////////
+
+	private void printResponseAndVerifyStatusCode(final Response response, final HttpStatus httpStatus) {
+		logger.info("Response:\n{}", response.asPrettyString());
+		assertThat(response.getStatusCode()).isEqualTo(httpStatus.value());
 	}
 }

@@ -37,17 +37,14 @@ public class UserApiIT extends AbstractIT {
 		static Stream<Args> args() {
 			return Stream.of(new Args("ops", "opsadmin"), new Args("ops", "opsuser"), new Args("app", "appadmin"), new Args("app", "appuser"));
 		}
-
 		@ParameterizedTest @MethodSource("args")
 		void testWellKnownUsernameWithRealm(final Args args) {
 			verify(args, getOrDeleteFiltered(Method.GET, args.realm(), List.of(args.username()), null, null, null));
 		}
-
 		@ParameterizedTest @MethodSource("args")
 		void testWellKnownUsernameWithoutRealm(final Args args) {
 			verify(args, getOrDeleteFiltered(Method.GET, null, List.of(args.username()), null, null, null));
 		}
-
 		private void verify(final Args args, final User[] users) {
 			assertThat(users).isNotNull();
 			assertThat(users.length).isEqualTo(1);
@@ -57,7 +54,7 @@ public class UserApiIT extends AbstractIT {
 	}
 
 	@Nested
-	public class AuthenticationFailures extends AbstractIT {
+	public class AuthenticationErrors extends AbstractIT {
 		@Test
 		public void testAuthenticationRequiredButNoCreds() {
 			final User user = createOrUpdateUser(Method.POST, constructUser(TEST_REALM));
@@ -65,7 +62,6 @@ public class UserApiIT extends AbstractIT {
 			logger.info("Response:\n{}", response.asPrettyString());
 			assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
 		}
-
 		@Test
 		public void testAuthenticationRequiredButInvalidCreds() {
 			final User user = createOrUpdateUser(Method.POST, constructUser(TEST_REALM));
@@ -76,7 +72,7 @@ public class UserApiIT extends AbstractIT {
 	}
 
 	@Nested
-	public class AuthorizationFailures extends AbstractIT {
+	public class AuthorizationErrors extends AbstractIT {
 		@Test
 		public void testAuthenticatedButMissingRole() {
 			final User user = createOrUpdateUser(Method.POST, constructUser(TEST_REALM));
@@ -87,19 +83,11 @@ public class UserApiIT extends AbstractIT {
 	}
 
 	@Nested
-	public class OtherFailures extends AbstractIT {
+	public class CrudErrors extends AbstractIT {
 		private record Args(Integer count) { }
 		static Stream<Args> args() {
 			return Stream.of(new Args(1), new Args(3));
 		}
-
-		@ParameterizedTest @MethodSource("args")
-		public void whenInvalidGet_thenNotFound(final Args args) {
-			final List<Long> invalidIds = LongStream.rangeClosed(1, args.count()).map((offset) -> UNIQUE_LONG.getAndIncrement()).boxed().toList();
-			final List<User> get = getOrDeleteUsers(Method.GET, invalidIds);
-			assertThat(get).isEmpty();
-		}
-
 		@ParameterizedTest @MethodSource("args")
 		public void whenInvalidCreate_thenError(final Args args) {
 			final List<User> invalid = LongStream.rangeClosed(1, args.count()).mapToObj((offset) -> constructUser(TEST_REALM)).toList();
@@ -107,7 +95,12 @@ public class UserApiIT extends AbstractIT {
 			final List<User> created = createOrUpdateUsers(Method.POST, invalid);
 			assertThat(created).isEmpty();
 		}
-
+		@ParameterizedTest @MethodSource("args")
+		public void whenInvalidRead_thenNotFound(final Args args) {
+			final List<Long> invalidIds = LongStream.rangeClosed(1, args.count()).map((offset) -> UNIQUE_LONG.getAndIncrement()).boxed().toList();
+			final List<User> get = getOrDeleteUsers(Method.GET, invalidIds);
+			assertThat(get).isEmpty();
+		}
 		@ParameterizedTest @MethodSource("args")
 		public void whenInvalidUpdate_thenError(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
@@ -119,7 +112,6 @@ public class UserApiIT extends AbstractIT {
 			final List<User> updated = createOrUpdateUsers(Method.PUT, modified);
 			assertThat(updated).isEmpty();
 		}
-
 		@ParameterizedTest @MethodSource("args")
 		public void whenInvalidDelete_thenError(final Args args) {
 			final List<Long> invalidIds = LongStream.rangeClosed(1, args.count()).map((offset) -> UNIQUE_LONG.getAndIncrement()).boxed().toList();
@@ -129,24 +121,21 @@ public class UserApiIT extends AbstractIT {
 	}
 
 	@Nested
-	public class SuccessfulSingleAndBulkTestRealm extends AbstractIT {
+	public class CrudSuccess extends AbstractIT {
 		private record Args(Integer count) { }
 		static Stream<Args> args() {
 			return Stream.of(new Args(1), new Args(2));
 		}
-
 		@ParameterizedTest @MethodSource("args")
 		public void whenCreate_thenCreated(final Args args) {
 			assertDoesNotThrow(() -> createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count())));
 		}
-
 		@ParameterizedTest @MethodSource("args")
 		public void whenReadByIds_thenOK(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
 			final List<User> get = getOrDeleteUsers(Method.GET, userIds(created));
 			assertThat(get).containsAll(created);
 		}
-
 		@ParameterizedTest @MethodSource("args")
 		public void whenUpdate_thenOK(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
@@ -161,7 +150,6 @@ public class UserApiIT extends AbstractIT {
 			assertThat(get).isEqualTo(updated);
 			assertThat(get).isNotEqualTo(created);
 		}
-
 		@ParameterizedTest @MethodSource("args")
 		public void whenDeleteByIds_thenOk(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
@@ -172,32 +160,33 @@ public class UserApiIT extends AbstractIT {
 		}
 	}
 
-	// TODO Clean up these tests
 	@Nested
-	public class FilteredTestRealm extends AbstractIT {
+	public class FilteredReads extends AbstractIT {
 		private record Args(Integer count) { }
 		static Stream<Args> args() {
-			return Stream.of(new Args(1));
+			return Stream.of(new Args(1), new Args(2));
 		}
-
 		@ParameterizedTest @MethodSource("args")
-		public void testDeleteAllTestRealmUsers(final Args args) {
-			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
-			final User[] deleted = getOrDeleteFiltered(Method.DELETE, TEST_REALM, null, null, null, null);
-			assertThat(deleted).containsAll(created);
-			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNull());
-		}
-
-		@ParameterizedTest @MethodSource("args")
-		public void testFindAllTestRealmUsers(final Args args) {
+		public void testGetAllUsers_thenOK(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
 			final User[] got = getOrDeleteFiltered(Method.GET, TEST_REALM, null, null, null, null);
 			assertThat(got).containsAll(created);
 			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
 		}
-
-		// TODO username
-		// TODO emailAddress
+		@ParameterizedTest @MethodSource("args")
+		public void whenGetUsersByEmailAddresses_thenOK(final Args args) {
+			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
+			final User[] got = getOrDeleteFiltered(Method.GET, TEST_REALM, usernames(created), null, null, null);
+			assertThat(got).containsAll(created);
+			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
+		}
+		@ParameterizedTest @MethodSource("args")
+		public void whenGetUsersByUserName_thenOK(final Args args) {
+			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
+			final User[] got = getOrDeleteFiltered(Method.GET, TEST_REALM, null, emailAddresses(created), null, null);
+			assertThat(got).containsAll(created);
+			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
+		}
 		@ParameterizedTest @MethodSource("args")
 		public void whenGetUsersByFirstName_thenOK(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
@@ -205,13 +194,27 @@ public class UserApiIT extends AbstractIT {
 			assertThat(got).containsAll(created);
 			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
 		}
-
 		@ParameterizedTest @MethodSource("args")
 		public void whenGetUsersByLastName_thenOK(final Args args) {
 			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
 			final User[] got = getOrDeleteFiltered(Method.GET, TEST_REALM, null, null, null, lastNames(created));
 			assertThat(got).containsAll(created);
 			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNotNull());
+		}
+	}
+
+	@Nested
+	public class FilteredDeletes extends AbstractIT {
+		private record Args(Integer count) { }
+		static Stream<Args> args() {
+			return Stream.of(new Args(1), new Args(2));
+		}
+		@ParameterizedTest @MethodSource("args")
+		public void testDeleteAllTestRealmUsers(final Args args) {
+			final List<User> created = createOrUpdateUsers(Method.POST, constructUsers(TEST_REALM, args.count()));
+			final User[] deleted = getOrDeleteFiltered(Method.DELETE, TEST_REALM, null, null, null, null);
+			assertThat(deleted).containsAll(created);
+			userIds(created).forEach(id -> assertThat(getOrDeleteUser(Method.GET, id)).isNull());
 		}
 	}
 

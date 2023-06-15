@@ -1,5 +1,7 @@
 package com.github.justincranford.spring.authn.server.controller;
 
+import static com.github.justincranford.spring.authn.server.model.Realms.APP;
+import static com.github.justincranford.spring.authn.server.model.Realms.OPS;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.security.Principal;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.github.justincranford.spring.authn.server.model.UserCrudRepository;
 import com.github.justincranford.spring.authn.server.model.UserNotFoundException;
@@ -144,15 +147,15 @@ public class UserController {
 	public List<User> filteredDeletes(
 		final Principal principal,
 		@RequestParam(required=true)  final String realm,
-		@RequestParam(required=false) final String[] usernames,
-		@RequestParam(required=false) final String[] emailAddresses,
-		@RequestParam(required=false) final String[] firstNames,
-		@RequestParam(required=false) final String[] lastNames
+		@RequestParam(required=false) final String[] username,
+		@RequestParam(required=false) final String[] emailAddress,
+		@RequestParam(required=false) final String[] firstName,
+		@RequestParam(required=false) final String[] lastName
 	) {
-		if (List.of("ops", "app").contains(realm)) {
-			throw new IllegalArgumentException("Delete by realm ['" + realm + "'] not allowed.");
+		if (List.of(OPS, APP).contains(realm)) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Delete by realm ['" + realm + "'] not allowed.");
 		}
-		final List<User> users = this.filteredReads(principal, realm, usernames, emailAddresses, firstNames, lastNames);
+		final List<User> users = this.filteredReads(principal, realm, username, emailAddress, firstName, lastName);
 		this.userCrudRepository.deleteAll(users);
 		return users;
 	}

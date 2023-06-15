@@ -2,6 +2,13 @@ package com.github.justincranford.spring.authn.server.api.users;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static com.github.justincranford.spring.authn.server.model.Realms.OPS;
+import static com.github.justincranford.spring.authn.server.model.Realms.APP;
+import static com.github.justincranford.spring.authn.server.model.Usernames.OPSADMIN;
+import static com.github.justincranford.spring.authn.server.model.Usernames.OPSUSER;
+import static com.github.justincranford.spring.authn.server.model.Usernames.APPADMIN;
+import static com.github.justincranford.spring.authn.server.model.Usernames.APPUSER;
 
 import java.util.List;
 import java.util.stream.LongStream;
@@ -29,14 +36,14 @@ public class UserApiIT extends AbstractIT {
 	public class WellKnownRealmsAndUsers extends AbstractIT {
 		private record Args(String realm, String username) { }
 		static Stream<Args> args() {
-			return Stream.of(new Args("ops", "opsadmin"), new Args("ops", "opsuser"), new Args("app", "appadmin"), new Args("app", "appuser"));
+			return Stream.of(new Args(OPS, OPSADMIN), new Args(OPS, OPSUSER), new Args(APP, APPADMIN), new Args(APP, APPUSER));
 		}
 		@ParameterizedTest @MethodSource("args")
-		void whenGetWellKnownUserByUserNameAndRealm_thenOK(final Args args) {
+		void whenGetWellKnownUserByUserNameAndRealm_thenOK(final Args args) throws Exception {
 			verify(args, UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, UserClient.parameters("realm", args.realm(), "username", args.username())));
 		}
 		@ParameterizedTest @MethodSource("args")
-		void whenGetWellKnownUserByUserName_thenOK(final Args args) {
+		void whenGetWellKnownUserByUserName_thenOK(final Args args) throws Exception {
 			verify(args, UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, UserClient.parameters("username", args.username())));
 		}
 		private void verify(final Args args, final User[] users) {
@@ -152,41 +159,41 @@ public class UserApiIT extends AbstractIT {
 	}
 
 	@Nested
-	public class FilteredReads extends AbstractIT {
+	public class FilteredReadsSuccess extends AbstractIT {
 		private record Args(Integer count) { }
 		static Stream<Args> args() {
 			return Stream.of(new Args(1), new Args(2));
 		}
 		@ParameterizedTest @MethodSource("args")
-		public void testGetAllUsers_thenOK(final Args args) {
+		public void testGetAllUsers_thenOK(final Args args) throws Exception {
 			final List<User> created = UserClient.createOrUpdateUsers(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUsers(TEST_REALM, args.count()));
 			final User[] got = UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, UserClient.parameters("realm", TEST_REALM));
 			assertThat(got).containsAll(created);
 			UserClient.userIds(created).forEach(id -> assertThat(UserClient.getOrDeleteUser(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, id)).isNotNull());
 		}
 		@ParameterizedTest @MethodSource("args")
-		public void whenGetUsersByEmailAddresses_thenOK(final Args args) {
+		public void whenGetUsersByEmailAddresses_thenOK(final Args args) throws Exception {
 			final List<User> created = UserClient.createOrUpdateUsers(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUsers(TEST_REALM, args.count()));
 			final User[] got = UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, UserClient.parameters("realm", TEST_REALM, "username", UserClient.usernames(created)));
 			assertThat(got).containsAll(created);
 			UserClient.userIds(created).forEach(id -> assertThat(UserClient.getOrDeleteUser(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, id)).isNotNull());
 		}
 		@ParameterizedTest @MethodSource("args")
-		public void whenGetUsersByUserName_thenOK(final Args args) {
+		public void whenGetUsersByUserName_thenOK(final Args args) throws Exception {
 			final List<User> created = UserClient.createOrUpdateUsers(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUsers(TEST_REALM, args.count()));
 			final User[] got = UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, UserClient.parameters("realm", TEST_REALM, "emailAddress", UserClient.emailAddresses(created)));
 			assertThat(got).containsAll(created);
 			UserClient.userIds(created).forEach(id -> assertThat(UserClient.getOrDeleteUser(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, id)).isNotNull());
 		}
 		@ParameterizedTest @MethodSource("args")
-		public void whenGetUsersByFirstName_thenOK(final Args args) {
+		public void whenGetUsersByFirstName_thenOK(final Args args) throws Exception {
 			final List<User> created = UserClient.createOrUpdateUsers(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUsers(TEST_REALM, args.count()));
 			final User[] got = UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, UserClient.parameters("realm", TEST_REALM, "firstName", UserClient.firstNames(created)));
 			assertThat(got).containsAll(created);
 			UserClient.userIds(created).forEach(id -> assertThat(UserClient.getOrDeleteUser(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, id)).isNotNull());
 		}
 		@ParameterizedTest @MethodSource("args")
-		public void whenGetUsersByLastName_thenOK(final Args args) {
+		public void whenGetUsersByLastName_thenOK(final Args args) throws Exception {
 			final List<User> created = UserClient.createOrUpdateUsers(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUsers(TEST_REALM, args.count()));
 			final User[] got = UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, UserClient.parameters("realm", TEST_REALM, "lastName", UserClient.lastNames(created)));
 			assertThat(got).containsAll(created);
@@ -195,19 +202,35 @@ public class UserApiIT extends AbstractIT {
 	}
 
 	@Nested
-	public class FilteredDeletes extends AbstractIT {
+	public class FilteredDeletesSuccess extends AbstractIT {
 		private record Args(Integer count) { }
 		static Stream<Args> args() {
 			return Stream.of(new Args(1), new Args(2));
 		}
 		@ParameterizedTest @MethodSource("args")
-		public void testDeleteAllTestRealmUsers(final Args args) {
+		public void testDeleteAllTestRealmUsers(final Args args) throws Exception {
 			final List<User> created = UserClient.createOrUpdateUsers(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.POST, constructUsers(TEST_REALM, args.count()));
 			final User[] deleted = UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.DELETE, UserClient.parameters("realm", TEST_REALM));
 			assertThat(deleted).containsAll(created);
 			UserClient.userIds(created).forEach(id -> assertThat(UserClient.getOrDeleteUser(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.GET, id)).isNull());
 		}
 	}
+
+	@Nested
+	public class FilteredDeletesErrors extends AbstractIT {
+		@Test
+		public void whenDeleteUsersByProtectedRealm_thenError() {
+			final Exception e = assertThrows(Exception.class, () -> UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.DELETE, UserClient.parameters("realm", OPS)));
+			logger.info("Exception: ", e);
+			assertThat(e.getMessage()).contains("Delete by realm ['" + OPS + "'] not allowed.");
+		}
+		@Test
+		public void whenDeleteUsersByUnknownUsername_thenEmpty() throws Exception {
+			final User[] deleted = UserClient.getOrDeleteFiltered(super.baseUrl, super.restAssuredOpsAdminCreds(), Method.DELETE, UserClient.parameters("realm", TEST_REALM, "username", "doesNotExist"));
+			assertThat(deleted).isEmpty();
+		}
+	}
+
 	/////////////////////////////
 	// Constructor helper methods
 	/////////////////////////////

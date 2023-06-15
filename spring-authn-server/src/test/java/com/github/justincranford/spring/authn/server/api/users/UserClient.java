@@ -26,6 +26,14 @@ import io.restassured.specification.RequestSpecification;
 public class UserClient {
 	private static Logger logger = LoggerFactory.getLogger(UserApiIT.class);
 
+	// TODO Use this in all methods. Make methods non static.
+	private final String baseUrl;
+	private final RequestSpecification restAssuredRequestSpecification;
+	public UserClient(final String baseUrl, final RequestSpecification restAssuredRequestSpecification) {
+		this.baseUrl = baseUrl;
+		this.restAssuredRequestSpecification = restAssuredRequestSpecification;
+	}
+
 	public static User createOrUpdateUser(final String baseUrl, final RequestSpecification restAssuredRequestSpecification, final Method postOrPut, final User user) {
 		return createOrUpdateUsers(baseUrl, restAssuredRequestSpecification, postOrPut, List.of(user)).get(0);
 	}
@@ -101,12 +109,15 @@ public class UserClient {
 		return getOrDeletedUsers;
 	}
 
-	public static User[] getOrDeleteFiltered(final String baseUrl, final RequestSpecification restAssuredRequestSpecification, final Method method, final MultiValueMap<String, String> parameters) {
+	public static User[] getOrDeleteFiltered(final String baseUrl, final RequestSpecification restAssuredRequestSpecification, final Method method, final MultiValueMap<String, String> parameters) throws Exception {
 		final Response response = restAssuredRequestSpecification.request(method, usersFilteredUrl(baseUrl, parameters));
-		final User[] users = response.as(User[].class);
-		logger.info("Filter Response:\n{}", (Object[]) users);
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK.value());
-		return users;
+		assertThat(response.getStatusCode()).isIn(HttpStatus.OK.value(), HttpStatus.BAD_REQUEST.value());
+		if (response.getStatusCode() == HttpStatus.OK.value()) {
+			final User[] users = response.as(User[].class);
+			logger.info("Filter Response:\n{}", (Object[]) users);
+			return users;
+		}
+		throw new Exception(response.print());
 	}
 
 	///////////////////////

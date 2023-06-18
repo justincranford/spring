@@ -1,5 +1,8 @@
 package com.github.justincranford.spring.authn.server.model;
 
+import static com.github.justincranford.spring.util.rest.RestClient.ApiType.BULK;
+import static com.github.justincranford.spring.util.rest.RestClient.ApiType.FILTERED;
+import static com.github.justincranford.spring.util.rest.RestClient.ApiType.SINGLE;
 import static com.github.justincranford.spring.util.util.ArrayUtil.array;
 import static com.github.justincranford.spring.util.util.ArrayUtil.firstOrNull;
 import static com.github.justincranford.spring.util.util.JsonUtil.fromJson;
@@ -30,50 +33,46 @@ public class UserApi extends RestClient {
 		super(restClient);
 	}
 
-	public User createOrUpdateUser(final String method, final User user, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
-		return firstOrNull(createOrUpdateUsers(method, array(user), additionalParameters));
+	public User createOrUpdate(final String method, final User user, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
+		return firstOrNull(createOrUpdate(method, array(user), additionalParameters));
 	}
-	public User getOrDeleteUser(final String method, final Long id, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
-		return firstOrNull(getOrDeleteUsers(method, array(id), additionalParameters));
-	}
-	public User[] createOrUpdateUsers(final String method, final User[] users, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
-		final String url = (users.length == 1) ? crudUrl(additionalParameters) : crudsUrl(additionalParameters);
+	public User[] createOrUpdate(final String method, final User[] users, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
+		final String url = url((users.length == 1) ? SINGLE : BULK, additionalParameters);
 		final BodyPublisher body = (users.length == 1) ? BodyPublishers.ofString(toJson(users[0])) : BodyPublishers.ofString(toJson(users));
-		final HttpResponse<String> response = super.doRequest(url, method, POST_OR_PUT_HEADERS, body, BodyHandlers.ofString());
+		final HttpResponse<String> response = super.doRequest(url, method, HEADERS, body, BodyHandlers.ofString());
 		return parse(method, response, users.length == 1);
 	}
-	public User[] getOrDeleteUsers(final String method, final Long[] ids, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException  {
-		final String url = (ids.length == 1) ? crudUrl(merge(additionalParameters, "id", ids[0])) : crudsUrl(merge(additionalParameters, "id", ids));
-		final HttpResponse<String> response = super.doRequest(url, method, POST_OR_PUT_HEADERS, BodyPublishers.noBody(), BodyHandlers.ofString());
+	public User getOrDelete(final String method, final Long id, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
+		return firstOrNull(getOrDelete(method, array(id), additionalParameters));
+	}
+	public User[] getOrDelete(final String method, final Long[] ids, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException  {
+		final String url = url((ids.length == 1) ? SINGLE : BULK, merge(additionalParameters, "id", ids));
+		final HttpResponse<String> response = super.doRequest(url, method, HEADERS, BodyPublishers.noBody(), BodyHandlers.ofString());
 		return parse(method, response, ids.length == 1);
 	}
-	public User[] getOrDeleteFiltered(final String method, final MultiValueMap<String, String> parameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
-		final HttpResponse<String> response = super.doRequest(filteredUrl(parameters), method, POST_OR_PUT_HEADERS, BodyPublishers.noBody(), BodyHandlers.ofString());
+	public User[] getOrDelete(final String method, final MultiValueMap<String, String> parameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
+		final HttpResponse<String> response = super.doRequest(url(FILTERED, parameters), method, HEADERS, BodyPublishers.noBody(), BodyHandlers.ofString());
 		return parse(method, response, false);
 	}
 
-	private User[] parse(final String method, final HttpResponse<String> response, final boolean isSingle) throws JsonProcessingException, JsonMappingException, HttpResponseException {
-		if ((response.statusCode() == HttpStatus.CREATED.value()) || (response.statusCode() == HttpStatus.OK.value())) {
-			final User[] returned = isSingle ? array(fromJson(response.body(), User.class)) : fromJson(response.body(), User[].class);
-			logger.info("{} User{}: {}", method, isSingle ? "" : "s", (Object[]) returned);
+	private User[] parse(final String method, final HttpResponse<String> response, final boolean isOne) throws JsonProcessingException, JsonMappingException, HttpResponseException {
+		if ((response.statusCode() == HttpStatus.OK.value()) || (response.statusCode() == HttpStatus.CREATED.value())) {
+			final User[] returned = isOne ? array(fromJson(response.body(), User.class)) : fromJson(response.body(), User[].class);
+			logger.info("{} User{}: {}", method, isOne ? "" : "s", (Object[]) returned);
 			return returned;
 		}
 		throw new HttpResponseException(response);
 	}
 
-	public String crudUrl(final MultiValueMap<String, String> parameters) {
-		final String crudUrl = "/api/user" +  RestClient.queryString(parameters);
-		logger.info("User relative URL: {}", crudUrl);
-		return crudUrl;
-	}
-	public  String crudsUrl(final MultiValueMap<String, String> parameters) {
-		final String crudsUrl = "/api/users" + RestClient.queryString(parameters);
-		logger.info("Users relative URL: {}", crudsUrl);
-		return crudsUrl;
-	}
-	public  String filteredUrl(final MultiValueMap<String, String> parameters) {
-		final String filteredUrl = "/api/users/filtered" + RestClient.queryString(parameters);
-		logger.info("Users filtered relative URL: {}", filteredUrl);
-		return filteredUrl;
-	}
+	public String url(final ApiType apiType, final MultiValueMap<String, String> parameters) {
+		final String url;
+		switch(apiType) {
+			case SINGLE:   url = "/api/user"           + RestClient.queryString(parameters); break;
+			case BULK:     url = "/api/users"          + RestClient.queryString(parameters); break;
+			case FILTERED: url = "/api/users/filtered" + RestClient.queryString(parameters); break;
+			default: throw new IllegalArgumentException("Invalid API_TYPE " + apiType);
+		}
+		logger.info("User{} relative URL: {}", (SINGLE.equals(apiType) ? "" : "s"), url);
+		return url;
+ 	}
 }

@@ -39,7 +39,9 @@ public class RestClient {
 
 	public static final String CONTENT_TYPE = "Content-Type";
 	public static final String APPLICATION_JSON_UTF8 = "application/json; charset=UTF-8";
-	public static final MultiValueMap<String, String> POST_OR_PUT_HEADERS = RestClient.parameters(CONTENT_TYPE, APPLICATION_JSON_UTF8);
+	public static final MultiValueMap<String, String> HEADERS = RestClient.parameters(CONTENT_TYPE, APPLICATION_JSON_UTF8);
+
+	public static enum ApiType { SINGLE, BULK, FILTERED }
 
 	protected final String baseUrl;
 	protected final UsernamePasswordAuthenticationToken credentials;

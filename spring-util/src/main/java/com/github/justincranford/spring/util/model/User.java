@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.justincranford.spring.util.util.JsonUtil;
 
 import jakarta.persistence.Column;
@@ -24,8 +25,9 @@ import jakarta.persistence.Table;
 @Entity()
 @Table(name = "users")
 public class User implements UserDetails {
-
 	private static final long serialVersionUID = 1L;
+
+	public static final User[] EMPTY_LIST = new User[0];
 
 	// TODO Address, Phone Number
 
@@ -252,9 +254,13 @@ public class User implements UserDetails {
 	}
 
 	@Override public String toString() {
-		final User baseUserWithoutPassword = new User(this);
-		baseUserWithoutPassword.setPassword("*** REDACTED ***");
-		return JsonUtil.pojoToJsonString(baseUserWithoutPassword);
+		try {
+			final User baseUserWithRedactedPassword = new User(this);
+			baseUserWithRedactedPassword.setPassword("*** REDACTED ***");
+			return JsonUtil.toJson(baseUserWithRedactedPassword);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private static List<SimpleGrantedAuthority> csvToAuthorities(final String privileges) {

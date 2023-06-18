@@ -1,9 +1,12 @@
 package com.github.justincranford.spring.authn.server;
 
+import javax.net.ssl.SSLContext;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -11,9 +14,7 @@ import org.springframework.test.context.TestPropertySource;
 import com.github.justincranford.spring.authn.server.controller.UserController;
 import com.github.justincranford.spring.authn.server.model.UserCrudRepository;
 import com.github.justincranford.spring.util.config.RestConfig;
-
-import io.restassured.RestAssured;
-import io.restassured.specification.RequestSpecification;
+import com.github.justincranford.spring.util.rest.RestClient;
 
 @SpringBootTest(classes={RestConfig.class, SpringAuthnServer.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
@@ -25,16 +26,27 @@ public class AbstractIT extends com.github.justincranford.spring.AbstractIT {
 	@Autowired protected UserDetailsService userDetailsService;
 	@Autowired protected UserCrudRepository userCrudRepository;
 
-	protected RequestSpecification restAssuredOpsAdminCreds() {
-		return RestAssured.given().config(restAssuredConfig()).auth().basic("opsadmin", "opsadmin");
+	protected SSLContext sslContext = RestClient.createClientSslContext();
+	static {
+		System.getProperties().setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
 	}
-	protected RequestSpecification restAssuredOpsUserCreds() {
-		return RestAssured.given().config(restAssuredConfig()).auth().basic("opsuser",  "opsuser");
+
+	protected RestClient restClientOpsAdmin() {
+		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("opsadmin", "opsadmin".toCharArray()), sslContext);
 	}
-	protected RequestSpecification restAssuredAppAdminCreds() {
-		return RestAssured.given().config(restAssuredConfig()).auth().basic("appadmin", "appadmin");
+	protected RestClient restClientOpsUser() {
+		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("opsuser", "opsuser".toCharArray()), sslContext);
 	}
-	protected RequestSpecification restAssuredAppUserCreds() {
-		return RestAssured.given().config(restAssuredConfig()).auth().basic("appuser",  "appuser");
+	protected RestClient restClientAppAdmin() {
+		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("appadmin", "appadmin".toCharArray()), sslContext);
+	}
+	protected RestClient restClientAppUser() {
+		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("appuser", "appuser".toCharArray()), sslContext);
+	}
+	protected RestClient restClientInvalidCreds() {
+		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("invalid" , "invalid".toCharArray()), sslContext);
+	}
+	protected RestClient restClientNoCreds() {
+		return new RestClient(super.baseUrl, null, sslContext);
 	}
 }

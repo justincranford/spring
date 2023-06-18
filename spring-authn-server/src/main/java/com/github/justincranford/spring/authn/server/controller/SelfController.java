@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.justincranford.spring.util.model.User;
 import com.github.justincranford.spring.util.util.JsonUtil;
 
@@ -27,11 +28,11 @@ public class SelfController {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@GetMapping(path = "/self1")
-	public String getBuildInUser(final Principal principal) {
+	public String getBuildInUser(final Principal principal) throws JsonProcessingException {
 		// UsernamePasswordAuthenticationToken > AbstractAuthenticationToken > Authentication+CredentialsContainer > Principal
 		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		final String principalStr = (principal instanceof User bu) ? bu.toString() : authentication.getPrincipal().toString();
-		return JsonUtil.pojoToJsonString(
+		return JsonUtil.toJson(
 			Map.of(
 				"name", authentication.getName(),
 				"authorities", authentication.getAuthorities().toString(),

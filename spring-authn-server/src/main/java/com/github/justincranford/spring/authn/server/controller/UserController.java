@@ -79,10 +79,14 @@ public class UserController {
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN','OPS_USER'})")
 	@GetMapping(path = "/users")
 	public List<User> reads(final Principal principal, @RequestParam(name = "id", required=false) final List<Long> ids) {
-		if (ids == null) {
+		if ((ids == null) || (ids.isEmpty())) {
 			return this.userCrudRepository.findAll();
 		}
-		return this.userCrudRepository.findAllById(ids);
+		final List<User> users = this.userCrudRepository.findAllById(ids);
+		if ((users == null) || (users.isEmpty())) {
+			throw new UserNotFoundException();
+		}
+		return users;
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
@@ -94,10 +98,10 @@ public class UserController {
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@DeleteMapping(path = "/users")
 	public List<User> deletes(final Principal principal, @RequestParam(name = "id", required=false) final List<Long> ids) {
-		final List<User> users = this.userCrudRepository.findAllById(ids);
-		if (users == null) {
-			throw new UserNotFoundException();
+		if ((ids == null) || (ids.isEmpty())) {
+			throw new IllegalArgumentException("Atleast one 'id' parameter is required.");
 		}
+		final List<User> users = this.reads(principal, ids);
 		this.userCrudRepository.deleteAllById(ids);
 		return users;
 	}

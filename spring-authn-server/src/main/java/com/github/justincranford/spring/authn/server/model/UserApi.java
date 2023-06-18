@@ -30,20 +30,20 @@ public class UserApi extends RestClient {
 		super(restClient);
 	}
 
-	public User createOrUpdateUser(final String method, final String realm, final User user) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
-		return firstOrNull(createOrUpdateUsers(method, realm, array(user)));
+	public User createOrUpdateUser(final String method, final User user, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
+		return firstOrNull(createOrUpdateUsers(method, array(user), additionalParameters));
 	}
-	public User getOrDeleteUser(final String method, final String realm, final Long id) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
-		return firstOrNull(getOrDeleteUsers(method, realm, array(id)));
+	public User getOrDeleteUser(final String method, final Long id, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
+		return firstOrNull(getOrDeleteUsers(method, array(id), additionalParameters));
 	}
-	public User[] createOrUpdateUsers(final String method, final String realm, final User[] users) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
-		final String url = (users.length == 1) ? crudUrl(parameters("realm", realm)) : crudsUrl(parameters("realm", realm));
+	public User[] createOrUpdateUsers(final String method, final User[] users, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
+		final String url = (users.length == 1) ? crudUrl(additionalParameters) : crudsUrl(additionalParameters);
 		final BodyPublisher body = (users.length == 1) ? BodyPublishers.ofString(toJson(users[0])) : BodyPublishers.ofString(toJson(users));
 		final HttpResponse<String> response = super.doRequest(url, method, POST_OR_PUT_HEADERS, body, BodyHandlers.ofString());
 		return parse(method, response, users.length == 1);
 	}
-	public User[] getOrDeleteUsers(final String method, final String realm, final Long[] ids) throws URISyntaxException, IOException, InterruptedException, HttpResponseException  {
-		final String url = (ids.length == 1) ? crudUrl(parameters("realm", realm, "id", ids[0])) : crudsUrl(parameters("realm", realm, "id", ids));
+	public User[] getOrDeleteUsers(final String method, final Long[] ids, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException  {
+		final String url = (ids.length == 1) ? crudUrl(merge(additionalParameters, "id", ids[0])) : crudsUrl(merge(additionalParameters, "id", ids));
 		final HttpResponse<String> response = super.doRequest(url, method, POST_OR_PUT_HEADERS, BodyPublishers.noBody(), BodyHandlers.ofString());
 		return parse(method, response, ids.length == 1);
 	}

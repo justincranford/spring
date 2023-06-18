@@ -16,6 +16,7 @@ import java.net.http.HttpResponse.BodyHandler;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.logging.log4j.util.Strings;
-import org.bouncycastle.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -114,8 +114,19 @@ public class RestClient {
 		}
 	}
 
-	public static LinkedMultiValueMap<String, String> parameters(final Object... objects) {
-		if (Arrays.isNullOrEmpty(objects)) {
+	public static MultiValueMap<String, String> merge(final MultiValueMap<String, String> additionalParameters, final Object... objects) {
+		return merge(additionalParameters, parameters(objects));
+	}
+
+	@SafeVarargs
+	public static MultiValueMap<String, String> merge(final MultiValueMap<String, String>... maps) {
+		final MultiValueMap<String, String> merged = new LinkedMultiValueMap<String, String>();
+		Arrays.stream(maps).forEach(map -> merged.putAll(map));
+		return merged;
+	}
+
+	public static MultiValueMap<String, String> parameters(final Object... objects) {
+		if ((objects == null) || (objects.length == 0)) {
 			throw new IllegalArgumentException("Key value objects must not be null");
 		} else if (objects.length % 2 == 1) {
 			throw new IllegalArgumentException("Key value objects must be even number");

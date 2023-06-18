@@ -11,6 +11,7 @@ import static com.github.justincranford.spring.util.model.UserUtils.firstNames;
 import static com.github.justincranford.spring.util.model.UserUtils.lastNames;
 import static com.github.justincranford.spring.util.model.UserUtils.userIds;
 import static com.github.justincranford.spring.util.model.UserUtils.usernames;
+import static com.github.justincranford.spring.util.rest.RestClient.parameters;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -77,13 +78,13 @@ public class UserApiIT extends AbstractIT {
 		@Test
 		public void whenGetUserNoCredentials_thenUnauthorized() throws Exception {
 			final User user = requireNonNull(userClientOpsAdmin().createOrUpdateUser("POST", TEST_REALM, constructUser(TEST_REALM)));
-			final HttpResponse<?> response = restClientNoCreds().doRequest(userClientNoCreds().crudUrl(null, user.getId()), "GET", null, BodyPublishers.noBody(), BodyHandlers.ofString());
+			final HttpResponse<?> response = restClientNoCreds().doRequest(userClientNoCreds().crudUrl(parameters("id", user.getId())), "GET", null, BodyPublishers.noBody(), BodyHandlers.ofString());
 			printResponseAndVerifyStatusCode(response, HttpStatus.UNAUTHORIZED);
 		}
 		@Test
 		public void whenGetUserInvalidCredentials_thenUnauthorized() throws Exception {
 			final User user = requireNonNull(userClientOpsAdmin().createOrUpdateUser("POST", TEST_REALM, constructUser(TEST_REALM)));
-			final HttpResponse<?> response = restClientNoCreds().doRequest(userClientNoCreds().crudUrl(TEST_REALM, user.getId()), "GET", null, BodyPublishers.noBody(), BodyHandlers.ofString());
+			final HttpResponse<?> response = restClientNoCreds().doRequest(userClientNoCreds().crudUrl(parameters("realm", TEST_REALM, "id", user.getId())), "GET", null, BodyPublishers.noBody(), BodyHandlers.ofString());
 			printResponseAndVerifyStatusCode(response, HttpStatus.UNAUTHORIZED);
 		}
 	}
@@ -93,7 +94,7 @@ public class UserApiIT extends AbstractIT {
 		@Test
 		public void whenGetUserValidCredentialsInvalidAuthorities_thenForbidden() throws Exception {
 			final User user = userClientOpsAdmin().createOrUpdateUser("POST", TEST_REALM, constructUser(TEST_REALM));
-			final HttpResponse<?> response = restClientAppUser().doRequest(userClientNoCreds().crudUrl(TEST_REALM, user.getId()), "GET", null, BodyPublishers.noBody(), BodyHandlers.ofString());
+			final HttpResponse<?> response = restClientAppUser().doRequest(userClientNoCreds().crudUrl(parameters("realm", TEST_REALM, "id", user.getId())), "GET", null, BodyPublishers.noBody(), BodyHandlers.ofString());
 			printResponseAndVerifyStatusCode(response, HttpStatus.FORBIDDEN);
 		}
 	}

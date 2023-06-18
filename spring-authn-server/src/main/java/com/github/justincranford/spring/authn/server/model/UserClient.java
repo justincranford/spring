@@ -36,27 +36,21 @@ public class UserClient extends RestClient {
 	public User getOrDeleteUser(final String method, final String realm, final Long id) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
 		return firstOrNull(getOrDeleteUsers(method, realm, array(id)));
 	}
-
 	public User[] createOrUpdateUsers(final String method, final String realm, final User[] users) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
-		final String url = (users.length == 1) ? crudUrl(realm, null) : crudsUrl(realm, null);
+		final String url = (users.length == 1) ? crudUrl(parameters("realm", realm)) : crudsUrl(parameters("realm", realm));
 		final BodyPublisher body = (users.length == 1) ? BodyPublishers.ofString(toJson(users[0])) : BodyPublishers.ofString(toJson(users));
 		final HttpResponse<String> response = super.doRequest(url, method, POST_OR_PUT_HEADERS, body, BodyHandlers.ofString());
 		return parse(method, response, users.length == 1);
 	}
 	public User[] getOrDeleteUsers(final String method, final String realm, final Long[] ids) throws URISyntaxException, IOException, InterruptedException, HttpResponseException  {
-		final String url = (ids.length == 1) ? crudUrl(realm, ids[0]) : crudsUrl(realm, ids);
+		final String url = (ids.length == 1) ? crudUrl(parameters("realm", realm, "id", ids[0])) : crudsUrl(parameters("realm", realm, "id", ids));
 		final HttpResponse<String> response = super.doRequest(url, method, POST_OR_PUT_HEADERS, BodyPublishers.noBody(), BodyHandlers.ofString());
 		return parse(method, response, ids.length == 1);
 	}
-
 	public User[] getOrDeleteFiltered(final String method, final MultiValueMap<String, String> parameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
 		final HttpResponse<String> response = super.doRequest(filteredUrl(parameters), method, POST_OR_PUT_HEADERS, BodyPublishers.noBody(), BodyHandlers.ofString());
 		return parse(method, response, false);
 	}
-
-	///////////////////////////////
-	// HTTP response helper methods
-	///////////////////////////////
 
 	private User[] parse(final String method, final HttpResponse<String> response, final boolean isSingle) throws JsonProcessingException, JsonMappingException, HttpResponseException {
 		if ((response.statusCode() == HttpStatus.CREATED.value()) || (response.statusCode() == HttpStatus.OK.value())) {
@@ -67,17 +61,13 @@ public class UserClient extends RestClient {
 		throw new HttpResponseException(response);
 	}
 
-	//////////////////////////
-	// URL path helper methods
-	//////////////////////////
-
-	public String crudUrl(final String realm, final Long id) {
-		final String crudUrl = "/api/user" +  RestClient.queryString(parameters("realm", realm, "id", id));
+	public String crudUrl(final MultiValueMap<String, String> parameters) {
+		final String crudUrl = "/api/user" +  RestClient.queryString(parameters);
 		logger.info("User relative URL: {}", crudUrl);
 		return crudUrl;
 	}
-	public  String crudsUrl(final String realm, final Long[] ids) {
-		final String crudsUrl = "/api/users" + RestClient.queryString(parameters("realm", realm, "id", ids));
+	public  String crudsUrl(final MultiValueMap<String, String> parameters) {
+		final String crudsUrl = "/api/users" + RestClient.queryString(parameters);
 		logger.info("Users relative URL: {}", crudsUrl);
 		return crudsUrl;
 	}

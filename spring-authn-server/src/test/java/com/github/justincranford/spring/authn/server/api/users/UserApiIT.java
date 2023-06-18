@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 import com.github.justincranford.spring.authn.server.AbstractIT;
-import com.github.justincranford.spring.authn.server.model.UserApi;
+import com.github.justincranford.spring.authn.server.model.RestApi;
 import com.github.justincranford.spring.util.model.User;
 import com.github.justincranford.spring.util.rest.RestClient;
 import com.github.justincranford.spring.util.rest.RestClient.HttpResponseException;
@@ -46,12 +46,12 @@ public class UserApiIT extends AbstractIT {
 	private Logger logger = LoggerFactory.getLogger(UserApiIT.class);
 	private static final String TEST_REALM = "Test";
 
-	private UserApi userClientOpsAdmin()     { return new UserApi(super.restClientOpsAdmin());     }
-	private UserApi userClientOpsUser()      { return new UserApi(super.restClientOpsUser());      }
-	private UserApi userClientAppAdmin()     { return new UserApi(super.restClientAppAdmin());     }
-	private UserApi userClientAppUser()      { return new UserApi(super.restClientAppUser());      }
-	private UserApi userClientNoCreds()      { return new UserApi(super.restClientNoCreds());      }
-	private UserApi userClientInvalidCreds() { return new UserApi(super.restClientInvalidCreds()); }
+	private RestApi<User> userClientOpsAdmin()     { return new RestApi<User>(User.class, "Users", super.restClientOpsAdmin());     }
+	private RestApi<User> userClientOpsUser()      { return new RestApi<User>(User.class, "Users", super.restClientOpsUser());      }
+	private RestApi<User> userClientAppAdmin()     { return new RestApi<User>(User.class, "Users", super.restClientAppAdmin());     }
+	private RestApi<User> userClientAppUser()      { return new RestApi<User>(User.class, "Users", super.restClientAppUser());      }
+	private RestApi<User> userClientNoCreds()      { return new RestApi<User>(User.class, "Users", super.restClientNoCreds());      }
+	private RestApi<User> userClientInvalidCreds() { return new RestApi<User>(User.class, "Users", super.restClientInvalidCreds()); }
 
 	@Nested
 	public class WellKnownRealmsAndUsers extends AbstractIT {

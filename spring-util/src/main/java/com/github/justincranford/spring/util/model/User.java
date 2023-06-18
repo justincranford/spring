@@ -24,10 +24,14 @@ import jakarta.persistence.Table;
 @Transactional
 @Entity()
 @Table(name = "users")
-public class User implements UserDetails {
+public class User implements PluralName, UserDetails {
 	private static final long serialVersionUID = 1L;
 
 	public static final User[] EMPTY_LIST = new User[0];
+
+	public static String pluralName() {
+		return "Users";
+	}
 
 	// TODO Address, Phone Number
 

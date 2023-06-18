@@ -8,6 +8,8 @@ import static com.github.justincranford.spring.util.util.ArrayUtil.firstOrNull;
 import static com.github.justincranford.spring.util.util.JsonUtil.fromJson;
 import static com.github.justincranford.spring.util.util.JsonUtil.toJson;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.http.HttpRequest.BodyPublisher;
@@ -22,20 +24,25 @@ import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.github.justincranford.spring.util.model.PluralName;
 import com.github.justincranford.spring.util.rest.RestClient;
 
-public class RestApi<ENTITY> extends RestClient {
+public class RestApi<ENTITY extends PluralName> extends RestClient {
 	private static Logger logger = LoggerFactory.getLogger(RestApi.class);
 
 	private final Class<ENTITY> clazz;
 	private final String entitySingleName;
 	private final String entityPluralName;
 
-	public RestApi(final Class<ENTITY> clazz, final String entityPluralName, final RestClient restClient) {
+	public RestApi(final Class<ENTITY> clazz, final RestClient restClient) {
 		super(restClient);
 		this.clazz = clazz;
 		this.entitySingleName = this.clazz.getSimpleName();
-		this.entityPluralName = entityPluralName;
+		try {
+			this.entityPluralName = (String) clazz.getMethod("pluralName").invoke(null);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public ENTITY createOrUpdate(final String method, final ENTITY entity, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {
@@ -78,7 +85,7 @@ public class RestApi<ENTITY> extends RestClient {
 			case FILTERED: url = "/api/" + this.entityPluralName.toLowerCase() + "/filtered" + RestClient.queryString(parameters); break;
 			default: throw new IllegalArgumentException("Invalid API_TYPE " + apiType);
 		}
-		logger.info("{} {}relative URL: {}", (SINGLE.equals(apiType) ? entitySingleName : entityPluralName), (FILTERED.equals(apiType) ? "filtered " : ""), url);
+		logger.info("{}{} relative URL: {}", (SINGLE.equals(apiType) ? this.entitySingleName : this.entityPluralName), (FILTERED.equals(apiType) ? " filtered" : ""), url);
 		return url;
  	}
 }

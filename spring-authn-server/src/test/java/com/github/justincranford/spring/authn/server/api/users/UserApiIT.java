@@ -46,12 +46,12 @@ public class UserApiIT extends AbstractIT {
 	private Logger logger = LoggerFactory.getLogger(UserApiIT.class);
 	private static final String TEST_REALM = "Test";
 
-	private RestApi<User> userClientOpsAdmin()     { return new RestApi<User>(User.class, "Users", super.restClientOpsAdmin());     }
-	private RestApi<User> userClientOpsUser()      { return new RestApi<User>(User.class, "Users", super.restClientOpsUser());      }
-	private RestApi<User> userClientAppAdmin()     { return new RestApi<User>(User.class, "Users", super.restClientAppAdmin());     }
-	private RestApi<User> userClientAppUser()      { return new RestApi<User>(User.class, "Users", super.restClientAppUser());      }
-	private RestApi<User> userClientNoCreds()      { return new RestApi<User>(User.class, "Users", super.restClientNoCreds());      }
-	private RestApi<User> userClientInvalidCreds() { return new RestApi<User>(User.class, "Users", super.restClientInvalidCreds()); }
+	private RestApi<User> userClientOpsAdmin()     { return new RestApi<User>(User.class, super.restClientOpsAdmin());     }
+	private RestApi<User> userClientOpsUser()      { return new RestApi<User>(User.class, super.restClientOpsUser());      }
+	private RestApi<User> userClientAppAdmin()     { return new RestApi<User>(User.class, super.restClientAppAdmin());     }
+	private RestApi<User> userClientAppUser()      { return new RestApi<User>(User.class, super.restClientAppUser());      }
+	private RestApi<User> userClientNoCreds()      { return new RestApi<User>(User.class, super.restClientNoCreds());      }
+	private RestApi<User> userClientInvalidCreds() { return new RestApi<User>(User.class, super.restClientInvalidCreds()); }
 
 	@Nested
 	public class WellKnownRealmsAndUsers extends AbstractIT {

@@ -71,9 +71,8 @@ public class UserClient extends RestClient {
 	// URL path helper methods
 	//////////////////////////
 
-	// TODO Change id from pathParam to queryParam in controller
 	public String crudUrl(final String realm, final Long id) {
-		final String crudUrl = "/api/user" + RestClient.pathSuffix(id) + RestClient.queryString(parameters("realm", realm));
+		final String crudUrl = "/api/user" +  RestClient.queryString(parameters("realm", realm, "id", id));
 		logger.info("User relative URL: {}", crudUrl);
 		return crudUrl;
 	}

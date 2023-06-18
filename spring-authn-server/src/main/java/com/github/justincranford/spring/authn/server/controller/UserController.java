@@ -4,7 +4,6 @@ import static com.github.justincranford.spring.authn.server.model.Realms.APP;
 import static com.github.justincranford.spring.authn.server.model.Realms.OPS;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-import java.security.Principal;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,26 +41,26 @@ public class UserController {
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@PostMapping(path = "/user", consumes = { APPLICATION_JSON_VALUE })
 	@ResponseStatus(HttpStatus.CREATED)
-	public User create(final Principal principal, @RequestBody final User user) {
+	public User create(@RequestBody final User user) {
 		return this.userCrudRepository.save(user);
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN','OPS_USER'})")
-	@GetMapping(path = "/user/{id}")
-	public User read(final Principal principal, @PathVariable final Long id) {
+	@GetMapping(path = "/user")
+	public User read(@RequestParam(name = "id", required=true) final Long id) {
 		return this.userCrudRepository.findById(id).orElseThrow(UserNotFoundException::new);
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@PutMapping(path = "/user", consumes = { APPLICATION_JSON_VALUE })
-	public User update(final Principal principal, @RequestBody final User user) {
+	public User update(@RequestBody final User user) {
 		this.userCrudRepository.findById(user.getId()).orElseThrow(UserNotFoundException::new);
 		return this.userCrudRepository.save(user);
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
-	@DeleteMapping(path = "/user/{id}")
-	public User delete(final Principal principal, @PathVariable final Long id) {
+	@DeleteMapping(path = "/user")
+	public User delete(@RequestParam(name = "id", required=true) final Long id) {
 		final User user = this.userCrudRepository.findById(id).orElseThrow(UserNotFoundException::new);
 		this.userCrudRepository.deleteById(id);
 		return user;
@@ -72,13 +71,13 @@ public class UserController {
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@PostMapping(path = "/users", consumes = { APPLICATION_JSON_VALUE })
 	@ResponseStatus(HttpStatus.CREATED)
-	public List<User> creates(final Principal principal, @RequestBody final Iterable<User> users) {
+	public List<User> creates(@RequestBody final Iterable<User> users) {
 		return this.userCrudRepository.saveAll(users);
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN','OPS_USER'})")
 	@GetMapping(path = "/users")
-	public List<User> reads(final Principal principal, @RequestParam(name = "id", required=false) final List<Long> ids) {
+	public List<User> reads(@RequestParam(name = "id", required=false) final List<Long> ids) {
 		if ((ids == null) || (ids.isEmpty())) {
 			return this.userCrudRepository.findAll();
 		}
@@ -91,17 +90,17 @@ public class UserController {
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@PutMapping(path = "/users", consumes = { APPLICATION_JSON_VALUE })
-	public List<User> updates(final Principal principal, @RequestBody final Iterable<User> users) {
+	public List<User> updates(@RequestBody final Iterable<User> users) {
 		return this.userCrudRepository.saveAll(users);
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@DeleteMapping(path = "/users")
-	public List<User> deletes(final Principal principal, @RequestParam(name = "id", required=false) final List<Long> ids) {
+	public List<User> deletes(@RequestParam(name = "id", required=false) final List<Long> ids) {
 		if ((ids == null) || (ids.isEmpty())) {
 			throw new IllegalArgumentException("Atleast one 'id' parameter is required.");
 		}
-		final List<User> users = this.reads(principal, ids);
+		final List<User> users = this.reads(ids);
 		this.userCrudRepository.deleteAllById(ids);
 		return users;
 	}
@@ -111,7 +110,6 @@ public class UserController {
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN','OPS_USER'})")
 	@GetMapping(path = "/users/filtered")
 	public List<User> filteredReads(
-		final Principal principal,
 		@RequestParam(required=false) final String realm,
 		@RequestParam(required=false) final String[] username,
 		@RequestParam(required=false) final String[] emailAddress,
@@ -149,7 +147,6 @@ public class UserController {
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@DeleteMapping(path = "/users/filtered")
 	public List<User> filteredDeletes(
-		final Principal principal,
 		@RequestParam(required=true)  final String realm,
 		@RequestParam(required=false) final String[] username,
 		@RequestParam(required=false) final String[] emailAddress,
@@ -159,7 +156,7 @@ public class UserController {
 		if (List.of(OPS, APP).contains(realm)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Delete by realm ['" + realm + "'] not allowed.");
 		}
-		final List<User> users = this.filteredReads(principal, realm, username, emailAddress, firstName, lastName);
+		final List<User> users = this.filteredReads(realm, username, emailAddress, firstName, lastName);
 		this.userCrudRepository.deleteAll(users);
 		return users;
 	}

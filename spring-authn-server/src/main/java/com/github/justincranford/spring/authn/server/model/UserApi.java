@@ -23,10 +23,10 @@ import com.github.justincranford.spring.util.model.User;
 import com.github.justincranford.spring.util.rest.RestClient;
 
 // TODO Generic
-public class UserClient extends RestClient {
-	private static Logger logger = LoggerFactory.getLogger(UserClient.class);
+public class UserApi extends RestClient {
+	private static Logger logger = LoggerFactory.getLogger(UserApi.class);
 
-	public UserClient(final RestClient restClient) {
+	public UserApi(final RestClient restClient) {
 		super(restClient);
 	}
 

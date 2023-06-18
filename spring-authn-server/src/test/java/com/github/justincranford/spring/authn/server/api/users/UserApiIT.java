@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 import com.github.justincranford.spring.authn.server.AbstractIT;
-import com.github.justincranford.spring.authn.server.model.UserClient;
+import com.github.justincranford.spring.authn.server.model.UserApi;
 import com.github.justincranford.spring.util.model.User;
 import com.github.justincranford.spring.util.rest.RestClient;
 import com.github.justincranford.spring.util.rest.RestClient.HttpResponseException;
@@ -44,12 +44,12 @@ public class UserApiIT extends AbstractIT {
 	private Logger logger = LoggerFactory.getLogger(UserApiIT.class);
 	private static final String TEST_REALM = "Test";
 
-	private UserClient userClientOpsAdmin()     { return new UserClient(super.restClientOpsAdmin());     }
-	private UserClient userClientOpsUser()      { return new UserClient(super.restClientOpsUser());      }
-	private UserClient userClientAppAdmin()     { return new UserClient(super.restClientAppAdmin());     }
-	private UserClient userClientAppUser()      { return new UserClient(super.restClientAppUser());      }
-	private UserClient userClientNoCreds()      { return new UserClient(super.restClientNoCreds());      }
-	private UserClient userClientInvalidCreds() { return new UserClient(super.restClientInvalidCreds()); }
+	private UserApi userClientOpsAdmin()     { return new UserApi(super.restClientOpsAdmin());     }
+	private UserApi userClientOpsUser()      { return new UserApi(super.restClientOpsUser());      }
+	private UserApi userClientAppAdmin()     { return new UserApi(super.restClientAppAdmin());     }
+	private UserApi userClientAppUser()      { return new UserApi(super.restClientAppUser());      }
+	private UserApi userClientNoCreds()      { return new UserApi(super.restClientNoCreds());      }
+	private UserApi userClientInvalidCreds() { return new UserApi(super.restClientInvalidCreds()); }
 
 	@Nested
 	public class WellKnownRealmsAndUsers extends AbstractIT {

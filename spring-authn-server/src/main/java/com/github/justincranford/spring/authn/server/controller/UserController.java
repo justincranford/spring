@@ -1,11 +1,10 @@
 package com.github.justincranford.spring.authn.server.controller;
 
-import static com.github.justincranford.spring.authn.server.model.Realms.APP;
-import static com.github.justincranford.spring.authn.server.model.Realms.OPS;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,7 +23,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.github.justincranford.spring.authn.server.model.UserCrudRepository;
 import com.github.justincranford.spring.authn.server.model.UserNotFoundException;
+import com.github.justincranford.spring.authn.server.model.WellKnownRealmsAndUsers;
 import com.github.justincranford.spring.util.model.User;
+
+import springfox.documentation.annotations.ApiIgnore;
 
 @CrossOrigin(origins={"https://127.0.0.1:8443"})
 @RestController
@@ -33,6 +35,9 @@ public class UserController {
 	@Autowired
 	private UserCrudRepository userCrudRepository;
 
+	@Autowired
+	private WellKnownRealmsAndUsers wellKnownUsers;
+
 	// TODO @PatchMapping
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,26 +45,26 @@ public class UserController {
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@PostMapping(path = "/user", consumes = { APPLICATION_JSON_VALUE })
 	@ResponseStatus(HttpStatus.CREATED)
-	public User create(@RequestBody final User user) {
+	public User create(@RequestBody final User user, @RequestParam @ApiIgnore final Map<String, String> allRequestParams) {
 		return this.userCrudRepository.save(user);
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN','OPS_USER'})")
 	@GetMapping(path = "/user")
-	public User read(@RequestParam(name = "id", required=true) final Long id) {
+	public User read(@RequestParam(name = "id", required=true) final Long id, @RequestParam @ApiIgnore final Map<String, String> allRequestParams) {
 		return this.userCrudRepository.findById(id).orElseThrow(UserNotFoundException::new);
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@PutMapping(path = "/user", consumes = { APPLICATION_JSON_VALUE })
-	public User update(@RequestBody final User user) {
+	public User update(@RequestBody final User user, @RequestParam @ApiIgnore final Map<String, String> allRequestParams) {
 		this.userCrudRepository.findById(user.getId()).orElseThrow(UserNotFoundException::new);
 		return this.userCrudRepository.save(user);
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@DeleteMapping(path = "/user")
-	public User delete(@RequestParam(name = "id", required=true) final Long id) {
+	public User delete(@RequestParam(name = "id", required=true) final Long id, @RequestParam @ApiIgnore final Map<String, String> allRequestParams) {
 		final User user = this.userCrudRepository.findById(id).orElseThrow(UserNotFoundException::new);
 		this.userCrudRepository.deleteById(id);
 		return user;
@@ -70,13 +75,13 @@ public class UserController {
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@PostMapping(path = "/users", consumes = { APPLICATION_JSON_VALUE })
 	@ResponseStatus(HttpStatus.CREATED)
-	public List<User> creates(@RequestBody final Iterable<User> users) {
+	public List<User> creates(@RequestBody final Iterable<User> users, @RequestParam @ApiIgnore final Map<String, String> allRequestParams) {
 		return this.userCrudRepository.saveAll(users);
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN','OPS_USER'})")
 	@GetMapping(path = "/users")
-	public List<User> reads(@RequestParam(name = "id", required=false) final List<Long> ids) {
+	public List<User> reads(@RequestParam(name = "id", required=false) final List<Long> ids, @RequestParam @ApiIgnore final Map<String, String> allRequestParams) {
 		if ((ids == null) || (ids.isEmpty())) {
 			return this.userCrudRepository.findAll();
 		}
@@ -89,17 +94,17 @@ public class UserController {
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@PutMapping(path = "/users", consumes = { APPLICATION_JSON_VALUE })
-	public List<User> updates(@RequestBody final Iterable<User> users) {
+	public List<User> updates(@RequestBody final Iterable<User> users, @RequestParam @ApiIgnore final Map<String, String> allRequestParams) {
 		return this.userCrudRepository.saveAll(users);
 	}
 
 	@PreAuthorize("hasAnyRole({'OPS_ADMIN','APP_ADMIN'})")
 	@DeleteMapping(path = "/users")
-	public List<User> deletes(@RequestParam(name = "id", required=false) final List<Long> ids) {
+	public List<User> deletes(@RequestParam(name = "id", required=false) final List<Long> ids, @RequestParam @ApiIgnore final Map<String, String> allRequestParams) {
 		if ((ids == null) || (ids.isEmpty())) {
 			throw new IllegalArgumentException("Atleast one 'id' parameter is required.");
 		}
-		final List<User> users = this.reads(ids);
+		final List<User> users = this.reads(ids, allRequestParams);
 		this.userCrudRepository.deleteAllById(ids);
 		return users;
 	}
@@ -113,7 +118,8 @@ public class UserController {
 		@RequestParam(required=false) final String[] username,
 		@RequestParam(required=false) final String[] emailAddress,
 		@RequestParam(required=false) final String[] firstName,
-		@RequestParam(required=false) final String[] lastName
+		@RequestParam(required=false) final String[] lastName,
+		@RequestParam @ApiIgnore final Map<String, String> allRequestParams
 	) {
 		final String[][] nonRealmParameters = { username, emailAddress, firstName, lastName };
 		if (Arrays.stream(nonRealmParameters).filter(p -> p != null).count() > 1) {
@@ -150,12 +156,17 @@ public class UserController {
 		@RequestParam(required=false) final String[] username,
 		@RequestParam(required=false) final String[] emailAddress,
 		@RequestParam(required=false) final String[] firstName,
-		@RequestParam(required=false) final String[] lastName
+		@RequestParam(required=false) final String[] lastName,
+		@RequestParam @ApiIgnore final Map<String, String> allRequestParams
 	) {
-		if (List.of(OPS, APP).contains(realm)) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Delete by realm ['" + realm + "'] not allowed.");
+		if (this.wellKnownUsers.realms().contains(realm)) {
+			// at least one other filter must be present to allow bulk delete in a protected realm (e.g. OPS, APP)
+			final String[][] nonRealmParameters = { username, emailAddress, firstName, lastName };
+			if (Arrays.stream(nonRealmParameters).filter(p -> p != null).count() == 0) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Delete by realm ['" + realm + "'] not allowed.");
+			}
 		}
-		final List<User> users = this.filteredReads(realm, username, emailAddress, firstName, lastName);
+		final List<User> users = this.filteredReads(realm, username, emailAddress, firstName, lastName, allRequestParams);
 		this.userCrudRepository.deleteAll(users);
 		return users;
 	}

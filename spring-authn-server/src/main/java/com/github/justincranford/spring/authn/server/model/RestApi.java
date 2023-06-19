@@ -29,7 +29,7 @@ import com.github.justincranford.spring.util.rest.RestClient;
 public class RestApi<ENTITY extends Names> extends RestClient {
 	private static Logger logger = LoggerFactory.getLogger(RestApi.class);
 
-	private final Class<ENTITY> clazz;
+	private final Class<ENTITY> clazz; // TODO Need type ENTITY and class instance, due to ENTITY type erasure
 	private final String entitySingleName;
 	private final String entityPluralName;
 

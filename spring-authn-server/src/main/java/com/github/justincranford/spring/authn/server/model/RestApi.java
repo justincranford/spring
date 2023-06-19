@@ -7,6 +7,7 @@ import static com.github.justincranford.spring.util.util.ArrayUtil.array;
 import static com.github.justincranford.spring.util.util.ArrayUtil.firstOrNull;
 import static com.github.justincranford.spring.util.util.JsonUtil.fromJson;
 import static com.github.justincranford.spring.util.util.JsonUtil.toJson;
+import static com.github.justincranford.spring.util.util.ReflectionUtil.invokeStaticMethod;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -22,10 +23,10 @@ import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.github.justincranford.spring.util.model.PluralName;
+import com.github.justincranford.spring.util.model.Names;
 import com.github.justincranford.spring.util.rest.RestClient;
 
-public class RestApi<ENTITY extends PluralName> extends RestClient {
+public class RestApi<ENTITY extends Names> extends RestClient {
 	private static Logger logger = LoggerFactory.getLogger(RestApi.class);
 
 	private final Class<ENTITY> clazz;
@@ -35,12 +36,8 @@ public class RestApi<ENTITY extends PluralName> extends RestClient {
 	public RestApi(final Class<ENTITY> clazz, final RestClient restClient) {
 		super(restClient);
 		this.clazz = clazz;
-		this.entitySingleName = this.clazz.getSimpleName();
-		try {
-			this.entityPluralName = (String) clazz.getMethod("pluralName").invoke(null);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		this.entitySingleName = (String) invokeStaticMethod(clazz, "singleName");
+		this.entityPluralName = (String) invokeStaticMethod(clazz, "pluralName");
 	}
 
 	public ENTITY createOrUpdate(final String method, final ENTITY entity, final MultiValueMap<String, String> additionalParameters) throws URISyntaxException, IOException, InterruptedException, HttpResponseException {

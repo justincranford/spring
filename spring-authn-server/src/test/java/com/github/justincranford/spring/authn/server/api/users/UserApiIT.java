@@ -34,7 +34,7 @@ import org.springframework.http.HttpStatus;
 
 import com.github.justincranford.spring.authn.server.AbstractIT;
 import com.github.justincranford.spring.authn.server.model.RestApi;
-import com.github.justincranford.spring.authn.server.model.WellKnownRealmsAndUsers;
+import com.github.justincranford.spring.authn.server.model.WellKnownUsers;
 import com.github.justincranford.spring.util.model.User;
 import com.github.justincranford.spring.util.rest.RestClient;
 import com.github.justincranford.spring.util.rest.RestClient.HttpResponseException;
@@ -43,6 +43,9 @@ import com.github.justincranford.spring.util.rest.RestClient.HttpResponseExcepti
 public class UserApiIT extends AbstractIT {
 	private Logger logger = LoggerFactory.getLogger(UserApiIT.class);
 	private static final String TEST_REALM = "Test";
+
+	@Autowired
+	private WellKnownUsers wellKnownUsers;
 
 	private RestApi<User> userApiOpsAdmin()     { return new RestApi<User>(User.class, super.restClientOpsAdmin());     }
 	private RestApi<User> userApiOpsUser()      { return new RestApi<User>(User.class, super.restClientOpsUser());      }
@@ -56,18 +59,15 @@ public class UserApiIT extends AbstractIT {
 	public class FindWellKnownRealmsAndUsers extends AbstractIT {
 		private record Args(String realm, String username) { }
 
-		@Autowired
-		private WellKnownRealmsAndUsers wellKnownRealmsAndUsers;
-
 		public Stream<Args> args() {
-			return this.wellKnownRealmsAndUsers.realmAndUsernamePairs().stream().map(pair -> new Args(pair.realm(), pair.username()));
+			return wellKnownUsers.usernameAndRealms().stream().map(x -> new Args(x.realm(), x.username()));
 		}
 		@ParameterizedTest @MethodSource("args")
-		void whenGetWellKnownUserByUserNameAndRealm_thenOK(final Args args) throws Exception {
+		void whenGetWellKnownUserByUsernameAndRealm_thenOK(final Args args) throws Exception {
 			verify(args, userApiOpsAdmin().getOrDelete("GET", RestClient.parameters("realm", args.realm(), "username", args.username())));
 		}
 		@ParameterizedTest @MethodSource("args")
-		void whenGetWellKnownUserByUserName_thenOK(final Args args) throws Exception {
+		void whenGetWellKnownUserByUsername_thenOK(final Args args) throws Exception {
 			verify(args, userApiOpsAdmin().getOrDelete("GET", RestClient.parameters("username", args.username())));
 		}
 		private void verify(final Args args, final User[] users) {
@@ -215,7 +215,7 @@ public class UserApiIT extends AbstractIT {
 			});
 		}
 		@ParameterizedTest @MethodSource("args")
-		public void whenGetUsersByUserName_thenOK(final Args args) throws Exception {
+		public void whenGetUsersByUsername_thenOK(final Args args) throws Exception {
 			final User[] created = userApiOpsAdmin().createOrUpdate("POST", constructUsers(TEST_REALM, args.count()), parameters("realm", TEST_REALM));
 			final User[] got = userApiOpsAdmin().getOrDelete("GET", merge(parameters("realm", TEST_REALM), "emailAddress", emailAddresses(created)));
 			assertThat(got).contains(created);
@@ -278,11 +278,8 @@ public class UserApiIT extends AbstractIT {
 	public class FilteredDeletesProtectedRealmErrors extends AbstractIT {
 		private record Args(String realm) { }
 
-		@Autowired
-		private WellKnownRealmsAndUsers wellKnownRealmsAndUsers;
-
 		public Stream<Args> args() {
-			return this.wellKnownRealmsAndUsers.realms().stream().map(realm -> new Args(realm));
+			return wellKnownUsers.realms().stream().map(realm -> new Args(realm));
 		}
 
 		@ParameterizedTest @MethodSource("args")

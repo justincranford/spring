@@ -23,7 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.github.justincranford.spring.authn.server.model.UserCrudRepository;
 import com.github.justincranford.spring.authn.server.model.UserNotFoundException;
-import com.github.justincranford.spring.authn.server.model.WellKnownRealmsAndUsers;
+import com.github.justincranford.spring.authn.server.model.WellKnownUsers;
 import com.github.justincranford.spring.util.model.User;
 
 import springfox.documentation.annotations.ApiIgnore;
@@ -36,7 +36,7 @@ public class UserController {
 	private UserCrudRepository userCrudRepository;
 
 	@Autowired
-	private WellKnownRealmsAndUsers wellKnownUsers;
+	private WellKnownUsers wellKnownUsers;
 
 	// TODO @PatchMapping
 

@@ -14,32 +14,32 @@ import com.github.justincranford.spring.util.model.UserConfig.ConfiguredUsers;
 import jakarta.annotation.PostConstruct;
 
 @Component
-public class WellKnownRealmsAndUsers {
-	public static record RealmAndUsernamePair(String realm, String username) { }
+public class WellKnownUsers {
+	public static record UsernameAndReam(String realm, String username) { }
 
 	@Autowired
 	private ConfiguredUsers configuredUsers;
 
 	public List<String> realms;
 	public List<String> usernames;
-	public List<RealmAndUsernamePair> realmAndUsernamePairs;
+	public List<UsernameAndReam> usernameAndRealms;
 
 	@PostConstruct
 	private void postConstruct() {
 		this.realms = new ArrayList<>();
 		this.usernames = new ArrayList<>();
-		this.realmAndUsernamePairs = new ArrayList<>();
+		this.usernameAndRealms = new ArrayList<>();
 		for (final Map.Entry<String, Map<String, ConfiguredUser>> realmEntry : this.configuredUsers.getUsers().entrySet()) {
 			final String realm = realmEntry.getKey();
 			this.realms.add(realm);
 			for (final String username : realmEntry.getValue().keySet()) {
 				this.usernames.add(username);
-				this.realmAndUsernamePairs.add(new RealmAndUsernamePair(realm, username));
+				this.usernameAndRealms.add(new UsernameAndReam(realm, username));
 			}
 		}
 		this.realms = Collections.unmodifiableList(this.realms);
 		this.usernames = Collections.unmodifiableList(this.usernames);
-		this.realmAndUsernamePairs = Collections.unmodifiableList(this.realmAndUsernamePairs);
+		this.usernameAndRealms = Collections.unmodifiableList(this.usernameAndRealms);
 	}
 
 	public List<String> realms() {
@@ -50,8 +50,8 @@ public class WellKnownRealmsAndUsers {
 		return this.usernames;
 	}
 
-	public List<RealmAndUsernamePair> realmAndUsernamePairs() {
-		return this.realmAndUsernamePairs;
+	public List<UsernameAndReam> usernameAndRealms() {
+		return this.usernameAndRealms;
 	}
 
 	public static final String OPS = "ops";

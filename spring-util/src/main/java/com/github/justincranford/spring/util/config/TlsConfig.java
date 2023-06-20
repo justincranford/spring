@@ -86,9 +86,9 @@ public class TlsConfig {
         factory.getTomcatProtocolHandlerCustomizers().addAll(protocolHandlerCustomizers.orderedStream().toList());
 
         // add "http://${server.address}:80" listener to redirect to "https://${server.address}:${server.port}"
-//      if (this.serverSslEnabled || this.serverSslAutoGenerateCertificates) {
+        if (this.serverSslEnabled || this.serverSslAutoGenerateCertificates) {
             factory.addAdditionalTomcatConnectors(this.createRedirectConnector());
-//      }
+        }
 
         // add life cycle listener to log all Tomcat life cycle events
         factory.setContextLifecycleListeners(Stream.concat(factory.getContextLifecycleListeners().stream(), List.of(new MyLifecycleLogger()).stream()).toList());

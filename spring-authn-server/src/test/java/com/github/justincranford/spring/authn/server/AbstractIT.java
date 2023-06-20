@@ -22,10 +22,10 @@ import com.github.justincranford.spring.util.rest.RestClient;
 @ContextConfiguration
 //@ActiveProfiles(profiles = { "default","test" })
 public class AbstractIT extends com.github.justincranford.spring.AbstractIT {
-	@Autowired protected UserController     userController;
-	@Autowired protected UserDetailsService userDetailsService;
-	@Autowired protected UserCrudRepository userCrudRepository;
-	@Autowired protected SSLContext         clientSslContext;
+	@Autowired                 protected UserController     userController;
+	@Autowired                 protected UserDetailsService userDetailsService;
+	@Autowired                 protected UserCrudRepository userCrudRepository;
+	@Autowired(required=false) protected SSLContext         clientSslContext;
 
 	protected RestClient restClientOpsAdmin() {
 		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("opsadmin", "opsadmin".toCharArray()), clientSslContext);

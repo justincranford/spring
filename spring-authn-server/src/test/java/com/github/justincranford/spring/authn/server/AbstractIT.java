@@ -25,28 +25,24 @@ public class AbstractIT extends com.github.justincranford.spring.AbstractIT {
 	@Autowired protected UserController     userController;
 	@Autowired protected UserDetailsService userDetailsService;
 	@Autowired protected UserCrudRepository userCrudRepository;
-
-	protected SSLContext sslContext = RestClient.createClientSslContext();
-	static {
-		System.getProperties().setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
-	}
+	@Autowired protected SSLContext         clientSslContext;
 
 	protected RestClient restClientOpsAdmin() {
-		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("opsadmin", "opsadmin".toCharArray()), sslContext);
+		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("opsadmin", "opsadmin".toCharArray()), clientSslContext);
 	}
 	protected RestClient restClientOpsUser() {
-		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("opsuser", "opsuser".toCharArray()), sslContext);
+		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("opsuser", "opsuser".toCharArray()), clientSslContext);
 	}
 	protected RestClient restClientAppAdmin() {
-		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("appadmin", "appadmin".toCharArray()), sslContext);
+		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("appadmin", "appadmin".toCharArray()), clientSslContext);
 	}
 	protected RestClient restClientAppUser() {
-		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("appuser", "appuser".toCharArray()), sslContext);
+		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("appuser", "appuser".toCharArray()), clientSslContext);
 	}
 	protected RestClient restClientInvalidCreds() {
-		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("invalid" , "invalid".toCharArray()), sslContext);
+		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("invalid" , "invalid".toCharArray()), clientSslContext);
 	}
 	protected RestClient restClientNoCreds() {
-		return new RestClient(super.baseUrl, null, sslContext);
+		return new RestClient(super.baseUrl, null, clientSslContext);
 	}
 }

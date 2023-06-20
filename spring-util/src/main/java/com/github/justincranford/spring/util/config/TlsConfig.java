@@ -13,6 +13,7 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -22,6 +23,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleEvent;
@@ -267,4 +272,22 @@ public class TlsConfig {
             return sb.toString();
         }
     }
+
+    // TODO Add the generated CA cert
+    @Bean
+	public SSLContext clientSslContext() {
+		System.getProperties().setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+		try {
+			final X509TrustManager trustAll = new X509TrustManager () {
+				@Override public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException { }
+				@Override public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException { }
+				@Override public X509Certificate[] getAcceptedIssuers() { return null; }
+			};
+			final SSLContext clientSslContext = SSLContext.getInstance("TLSv1.3", "SunJSSE");
+			clientSslContext.init(null, new TrustManager[] { trustAll }, new SecureRandom());
+			return clientSslContext;
+		} catch(Throwable t) {
+			throw new RuntimeException(t);
+		}
+	}
 }

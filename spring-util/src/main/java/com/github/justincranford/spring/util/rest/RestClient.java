@@ -13,17 +13,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
@@ -76,7 +73,7 @@ public class RestClient {
 		final BodyHandler<T> bodyHandler
 	) throws URISyntaxException, IOException, InterruptedException {
 		final HttpClient.Builder clientBuilder = HttpClient.newBuilder()
-//			.connectTimeout(Duration.of(3, ChronoUnit.SECONDS))
+			.connectTimeout(Duration.of(3, ChronoUnit.SECONDS))
 			.followRedirects(Redirect.NEVER);
 		if (this.credentials != null) {
 			clientBuilder.authenticator(new Authenticator() {
@@ -99,21 +96,6 @@ public class RestClient {
 			}
 		}
 		return clientBuilder.build().send(requestBuilder.build(), bodyHandler);
-	}
-
-	public static SSLContext createClientSslContext() {
-		try {
-			final X509TrustManager trustAll = new X509TrustManager () {
-				@Override public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException { }
-				@Override public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException { }
-				@Override public X509Certificate[] getAcceptedIssuers() { return null; }
-			};
-			final SSLContext clientSslContext = SSLContext.getInstance("TLSv1.3", "SunJSSE");
-			clientSslContext.init(null, new TrustManager[] { trustAll }, new SecureRandom());
-			return clientSslContext;
-		} catch(Throwable t) {
-			throw new RuntimeException(t);
-		}
 	}
 
 	public static MultiValueMap<String, String> merge(final MultiValueMap<String, String> additionalParameters, final Object... objects) {

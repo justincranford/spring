@@ -1,6 +1,7 @@
 package com.github.justincranford.spring.util.model;
 
-public interface Names {
+public interface BaseEntity {
+	// implementations must override these static methods
 	public static String singleName() {
 		throw new UnsupportedOperationException();
 	}

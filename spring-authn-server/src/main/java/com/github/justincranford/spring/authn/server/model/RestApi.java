@@ -23,10 +23,10 @@ import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.github.justincranford.spring.util.model.Names;
+import com.github.justincranford.spring.util.model.BaseEntity;
 import com.github.justincranford.spring.util.rest.RestClient;
 
-public class RestApi<ENTITY extends Names> extends RestClient {
+public class RestApi<ENTITY extends BaseEntity> extends RestClient {
 	private static Logger logger = LoggerFactory.getLogger(RestApi.class);
 
 	private final Class<ENTITY> clazz; // TODO Need type ENTITY and class instance, due to ENTITY type erasure
@@ -65,13 +65,17 @@ public class RestApi<ENTITY extends Names> extends RestClient {
 	private ENTITY[] parse(final String method, final HttpResponse<String> response, final boolean isOne) throws JsonProcessingException, JsonMappingException, HttpResponseException {
 		if ((response.statusCode() == HttpStatus.OK.value()) || (response.statusCode() == HttpStatus.CREATED.value())) {
 			@SuppressWarnings("unchecked")
-			final ENTITY[] returned = isOne ? array(fromJson(response.body(), this.clazz)) : (ENTITY[]) fromJson(response.body(), this.clazz.arrayType());
+			final ENTITY[] returned = (ENTITY[])  (isOne ? array(this.clazz, fromJson(this.clazz, response.body())) : fromJson(this.clazz.arrayType(), response.body()));
 			logger.info("{} ENTITY{}: {}", method, isOne ? "" : "s", (Object[]) returned);
 			return returned;
 		}
 		throw new HttpResponseException(response);
 	}
 
+	// Example using singleName="User" and pluralName="Users":
+	//  - SINGLE:   /api/user
+	//  - BULK:     /api/users
+	//  - FILTERED: /api/users/filter
 	public String url(final ApiType apiType, final MultiValueMap<String, String> parameters) {
 		final String url;
 		switch(apiType) {

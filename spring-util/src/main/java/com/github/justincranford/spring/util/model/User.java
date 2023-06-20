@@ -24,15 +24,15 @@ import jakarta.persistence.Table;
 @Transactional
 @Entity()
 @Table(name = "users")
-public class User implements Names, UserDetails {
+public class User implements BaseEntity, UserDetails {
 	private static final long serialVersionUID = 1L;
 
-	public static final User[] EMPTY_LIST = new User[0];
+	public static final User[] EMPTY_ARRAY = new User[0];
+	public static final User[] NULL_ARRAY = null;
 
 	public static String singleName() {
 		return "User";
 	}
-
 	public static String pluralName() {
 		return "Users";
 	}
@@ -96,7 +96,7 @@ public class User implements Names, UserDetails {
 		final boolean isAccountNonLocked,
 		final boolean isCredentialsNonExpired
 	) {
-		this.id = 0;//Long.MIN_VALUE;
+		this.id = 0;
 		this.realm = realm;
 		this.username = username;
 		this.password = password;

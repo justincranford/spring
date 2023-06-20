@@ -19,7 +19,6 @@ import com.github.justincranford.spring.util.util.JsonUtil;
 @RestController
 @RequestMapping(path="/api", produces={APPLICATION_JSON_VALUE,APPLICATION_XML_VALUE})
 public class UptimeController {
-
     Logger logger = LoggerFactory.getLogger(UptimeController.class);
 
     @Autowired
@@ -28,8 +27,7 @@ public class UptimeController {
     @GetMapping(path = "/uptime")
     public Uptime uptime() throws JsonProcessingException {
     	final Uptime uptime = uptimeFactory.getObject();
-        final String uptimeJsonString = JsonUtil.toJson(uptime);
-		this.logger.info(uptimeJsonString);
+		this.logger.info(JsonUtil.toJson(uptime));
 		return uptime;
     }
 }

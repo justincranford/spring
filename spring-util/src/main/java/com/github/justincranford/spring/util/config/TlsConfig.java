@@ -13,6 +13,7 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.security.spec.ECGenParameterSpec;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Base64;
@@ -111,18 +112,33 @@ public class TlsConfig {
 
     @Bean
     public TlsAutoConfig tlsAutoConfig(
-    	@Value(value="${server.ssl.auto-generate-certificates:false}") final boolean serverSslAutoGenerateCertificates
+    	@Value(value="${server.ssl.auto-generate-certificates:false}") final boolean serverSslAutoGenerateEnabled,
+    	@Value(value="${server.ssl.auto-generate.algorithm:EC}") final String  serverSslAutoGenerateAlgorithm
     ) throws Exception {
-    	if (!serverSslAutoGenerateCertificates) {
+    	if (!serverSslAutoGenerateEnabled) {
             return new TlsAutoConfig(false, null, null, null, null);
     	}
     	// TODO EC-P384
-        final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", Security.getProvider("SunRsaSign"));
-        keyPairGenerator.initialize(2048, SECURE_RANDOM);
+    	final String signingAlgorithm;
+    	final Provider signingProvider;
+        final KeyPairGenerator keyPairGenerator;
+        if (serverSslAutoGenerateAlgorithm.equalsIgnoreCase("RSA")) {
+        	keyPairGenerator = KeyPairGenerator.getInstance("RSA", Security.getProvider("SunRsaSign"));
+            keyPairGenerator.initialize(2048, SECURE_RANDOM);
+            signingAlgorithm = "SHA256withRSA";
+            signingProvider = Security.getProvider("SunRsaSign");
+        } else if (serverSslAutoGenerateAlgorithm.equalsIgnoreCase("EC")) {
+        	keyPairGenerator = KeyPairGenerator.getInstance("EC", Security.getProvider("SunEC"));
+            keyPairGenerator.initialize(new ECGenParameterSpec("secp384r1"), SECURE_RANDOM);
+            signingAlgorithm = "SHA256withECDSA"; // TODO
+            signingProvider = Security.getProvider("SunEC");
+        } else {
+        	throw new IllegalArgumentException("Unsupported server.ssl.auto-generate.algorithm=" + serverSslAutoGenerateAlgorithm);
+        }
 
         // create root CA: key pair, and self-signed certificate containing root CA related extensions
         final KeyPair caKeyPair = keyPairGenerator.generateKeyPair();
-        final X509Certificate caCert = createCert(
+		final X509Certificate caCert = createCert(
             Date.from(ZonedDateTime.of(1970,  1,  1,  0,  0,  0,         0, ZoneOffset.UTC).toInstant()),
             Date.from(ZonedDateTime.of(2099, 12, 31, 23, 59, 59, 999999999, ZoneOffset.UTC).toInstant()),
             new BigInteger(159, SECURE_RANDOM),
@@ -130,8 +146,8 @@ public class TlsConfig {
             new X500Name(RFC4519Style.INSTANCE, "DC=example.com"),
             caKeyPair.getPrivate(),
             new X500Name(RFC4519Style.INSTANCE, "DC=example.com"),
-            "SHA256withRSA",
-            Security.getProvider("SunRsaSign"),
+            signingAlgorithm,
+            signingProvider,
             new Extensions(new Extension[] {
                 new Extension(Extension.basicConstraints, true, new BasicConstraints(0)           .toASN1Primitive().getEncoded()),
                 new Extension(Extension.keyUsage,         true, new KeyUsage(KeyUsage.keyCertSign).toASN1Primitive().getEncoded())
@@ -148,8 +164,8 @@ public class TlsConfig {
             new X500Name(RFC4519Style.INSTANCE, "CN=server,DC=example.com"),
             caKeyPair.getPrivate(),
             new X500Name(RFC4519Style.INSTANCE, "DC=example.com"),
-            "SHA256withRSA",
-            Security.getProvider("SunRsaSign"),
+            signingAlgorithm,
+            signingProvider,
             new Extensions(new Extension[] {
                 new Extension(Extension.keyUsage,               true,  new KeyUsage(KeyUsage.digitalSignature).toASN1Primitive().getEncoded()),
                 new Extension(Extension.extendedKeyUsage,       false, new ExtendedKeyUsage(KeyPurposeId.id_kp_serverAuth).toASN1Primitive().getEncoded()),
@@ -259,7 +275,7 @@ public class TlsConfig {
                     // Encode server privateKey, server cert, and root CA cert as PEM
                     final String caCertPem           = toPem("CERTIFICATE",     this.tlsAutoConfig.x509CaCertificate().getEncoded());
                     final String serverCertPem       = toPem("CERTIFICATE",     this.tlsAutoConfig.x509ServerCertificate().getEncoded());
-                    final String serverPrivateKeyPem = toPem("RSA PRIVATE KEY", PrivateKeyInfo.getInstance(this.tlsAutoConfig.serverPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
+                    final String serverPrivateKeyPem = toPem(this.tlsAutoConfig.serverPrivateKey().getAlgorithm().toUpperCase() + " PRIVATE KEY", PrivateKeyInfo.getInstance(this.tlsAutoConfig.serverPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
 
                     // Log server privateKey, server cert, and root CA cert as PEM
                     TlsConfig.this.logger.info("CA certificate chain:\n{}\n",     caCertPem);

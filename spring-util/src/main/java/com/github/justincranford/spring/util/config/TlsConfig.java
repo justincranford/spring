@@ -73,7 +73,7 @@ public class TlsConfig {
     private static final AtomicInteger HTTP_PORT = new AtomicInteger(80);
 
     private record TlsAutoConfig(boolean enabled,
-    	X509Certificate x509CaCertificate, PrivateKey caPrivateKey,
+    	X509Certificate x509CaCertificate,     PrivateKey caPrivateKey,
     	X509Certificate x509ServerCertificate, PrivateKey serverPrivateKey
     ) { }
 
@@ -85,8 +85,8 @@ public class TlsConfig {
 
     @Bean
     public ServletWebServerFactory servletWebServerFactory(
-        final ObjectProvider<TomcatConnectorCustomizer> connectorCustomizers,
-        final ObjectProvider<TomcatContextCustomizer> contextCustomizers,
+        final ObjectProvider<TomcatConnectorCustomizer>          connectorCustomizers,
+        final ObjectProvider<TomcatContextCustomizer>            contextCustomizers,
         final ObjectProvider<TomcatProtocolHandlerCustomizer<?>> protocolHandlerCustomizers,
         final TlsAutoConfig tlsAutoConfig
     ) throws Exception {
@@ -100,7 +100,7 @@ public class TlsConfig {
 
         // add "http://${server.address}:80" listener to redirect to "https://${server.address}:${server.port}"
         if (tlsAutoConfig.enabled() || this.serverSslEnabled) {
-            factory.addAdditionalTomcatConnectors(this.createRedirectConnector());
+            factory.addAdditionalTomcatConnectors(this.createHttpToHttpsRedirectConnector());
         }
 
         // add life cycle listener to log all Tomcat life cycle events
@@ -110,10 +110,13 @@ public class TlsConfig {
     }
 
     @Bean
-    public TlsAutoConfig tlsAutoConfig(@Value(value="${server.ssl.auto-generate-certificates:false}") final boolean serverSslAutoGenerateCertificates) throws Exception {
+    public TlsAutoConfig tlsAutoConfig(
+    	@Value(value="${server.ssl.auto-generate-certificates:false}") final boolean serverSslAutoGenerateCertificates
+    ) throws Exception {
     	if (!serverSslAutoGenerateCertificates) {
             return new TlsAutoConfig(false, null, null, null, null);
     	}
+    	// TODO EC-P384
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", Security.getProvider("SunRsaSign"));
         keyPairGenerator.initialize(2048, SECURE_RANDOM);
 
@@ -290,7 +293,7 @@ public class TlsConfig {
     }
 
     // create "http://${server.address}:80" listener to redirect to "https://${server.address}:${server.port}"
-    private Connector createRedirectConnector() {
+    private Connector createHttpToHttpsRedirectConnector() {
         final Connector connector = new Connector(TomcatServletWebServerFactory.DEFAULT_PROTOCOL);    // Http11NioProtocol
         connector.setRejectSuspiciousURIs(true);
         connector.setSecure(false);

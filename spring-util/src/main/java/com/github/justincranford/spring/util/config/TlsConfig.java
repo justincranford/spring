@@ -110,6 +110,7 @@ public class TlsConfig {
         return factory;
     }
 
+    // TODO Rename auto-generate-certificates to auto-generate.enabled
     @Bean
     public TlsAutoConfig tlsAutoConfig(
     	@Value(value="${server.ssl.auto-generate-certificates:false}") final boolean serverSslAutoGenerateEnabled,
@@ -130,7 +131,7 @@ public class TlsConfig {
         } else if (serverSslAutoGenerateAlgorithm.equalsIgnoreCase("EC")) {
         	keyPairGenerator = KeyPairGenerator.getInstance("EC", Security.getProvider("SunEC"));
             keyPairGenerator.initialize(new ECGenParameterSpec("secp384r1"), SECURE_RANDOM);
-            signingAlgorithm = "SHA256withECDSA"; // TODO
+            signingAlgorithm = "SHA256withECDSA";
             signingProvider = Security.getProvider("SunEC");
         } else {
         	throw new IllegalArgumentException("Unsupported server.ssl.auto-generate.algorithm=" + serverSslAutoGenerateAlgorithm);

@@ -12,7 +12,6 @@ import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -73,12 +72,9 @@ public class TlsConfig {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final AtomicInteger HTTP_PORT = new AtomicInteger(80);
 
-    private record TlsAutoConfig(
-    	boolean enabled,
-    	KeyStore.PrivateKeyEntry tlsServerChain, // PrivateKeyEntry = [ privateKey, certificateChain ]
-    	Path caCertificatePath,
-    	Path serverCertificatePath,
-    	Path serverPrivateKeyPath
+    private record TlsAutoConfig(boolean enabled,
+    	X509Certificate x509CaCertificate, PrivateKey caPrivateKey,
+    	X509Certificate x509ServerCertificate, PrivateKey serverPrivateKey
     ) { }
 
     @Value(value="${server.port}")
@@ -123,7 +119,7 @@ public class TlsConfig {
 
         // create root CA: key pair, and self-signed certificate containing root CA related extensions
         final KeyPair caKeyPair = keyPairGenerator.generateKeyPair();
-        final Certificate caCert = createCert(
+        final X509Certificate caCert = createCert(
             Date.from(ZonedDateTime.of(1970,  1,  1,  0,  0,  0,         0, ZoneOffset.UTC).toInstant()),
             Date.from(ZonedDateTime.of(2099, 12, 31, 23, 59, 59, 999999999, ZoneOffset.UTC).toInstant()),
             new BigInteger(159, SECURE_RANDOM),
@@ -141,7 +137,7 @@ public class TlsConfig {
 
         // create TLS Server: key pair, and CA-signed certificate containing TLS server related extensions
         final KeyPair serverKeyPair = keyPairGenerator.generateKeyPair();
-        final Certificate serverCert = createCert(
+        final X509Certificate serverCert = createCert(
             Date.from(ZonedDateTime.of(1970,  1,  1,  0,  0,  0,         0, ZoneOffset.UTC).toInstant()),
             Date.from(ZonedDateTime.of(2099, 12, 31, 23, 59, 59, 999999999, ZoneOffset.UTC).toInstant()),
             new BigInteger(159, SECURE_RANDOM),
@@ -160,24 +156,7 @@ public class TlsConfig {
             })
         );
 
-        // Encode server privateKey, server cert, and root CA cert as PEM
-        final String caCertPem           = toPem("CERTIFICATE",     caCert.getEncoded());
-        final String serverCertPem       = toPem("CERTIFICATE",     serverCert.getEncoded());
-        final String serverPrivateKeyPem = toPem("RSA PRIVATE KEY", PrivateKeyInfo.getInstance(serverKeyPair.getPrivate().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
-
-        // Log server privateKey, server cert, and root CA cert as PEM
-        this.logger.info("CA certificate chain:\n{}\n",     caCertPem);
-        this.logger.info("Server certificate chain:\n{}\n", serverCertPem);
-        this.logger.info("Server private key:\n{}\n",       serverPrivateKeyPem);
-
-        // Save server privateKey, server cert, and root CA cert as PEM to temp files (JVM shutdown hooks delete them)
-        return new TlsAutoConfig(
-        	true,
-        	new KeyStore.PrivateKeyEntry(serverKeyPair.getPrivate(), new Certificate[] {serverCert, caCert}),
-        	Files.writeString(Files.createTempFile("ca",     ".crt"), caCertPem,           StandardOpenOption.CREATE),
-        	Files.writeString(Files.createTempFile("server", ".crt"), serverCertPem,       StandardOpenOption.CREATE),
-        	Files.writeString(Files.createTempFile("server", ".p8"),  serverPrivateKeyPem, StandardOpenOption.CREATE)
-        );
+        return new TlsAutoConfig(true, caCert, caKeyPair.getPrivate(), serverCert, serverKeyPair.getPrivate());
     }
 
     @Bean
@@ -186,10 +165,9 @@ public class TlsConfig {
     		return null;
     	}
 		try {
-			final Certificate[] serverCertChain = tlsAutoConfig.tlsServerChain().getCertificateChain();
 			final KeyStore trustStore = KeyStore.getInstance("PKCS12", "SunJSSE");
 			trustStore.load(null,  null);
-			trustStore.setCertificateEntry("trustedca", serverCertChain[serverCertChain.length - 1]);
+			trustStore.setCertificateEntry("trustedca", tlsAutoConfig.x509CaCertificate);
 
 			final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX", "SunJSSE");
 			trustManagerFactory.init(trustStore);
@@ -271,16 +249,36 @@ public class TlsConfig {
         @Override
         public void customizeConnector(final Connector connector) {
         	if (this.tlsAutoConfig.enabled()) {
-                try { // Replace server.ssl.* properties in memory, pointing to the temp PEM files
+        		final Path caCertificatePath;
+        		final Path serverCertificatePath;
+        		final Path serverPrivateKeyPath;
+            	try {
+                    // Encode server privateKey, server cert, and root CA cert as PEM
+                    final String caCertPem           = toPem("CERTIFICATE",     this.tlsAutoConfig.x509CaCertificate().getEncoded());
+                    final String serverCertPem       = toPem("CERTIFICATE",     this.tlsAutoConfig.x509ServerCertificate().getEncoded());
+                    final String serverPrivateKeyPem = toPem("RSA PRIVATE KEY", PrivateKeyInfo.getInstance(this.tlsAutoConfig.serverPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
+
+                    // Log server privateKey, server cert, and root CA cert as PEM
+                    TlsConfig.this.logger.info("CA certificate chain:\n{}\n",     caCertPem);
+                    TlsConfig.this.logger.info("Server certificate chain:\n{}\n", serverCertPem);
+                    TlsConfig.this.logger.info("Server private key:\n{}\n",       serverPrivateKeyPem);
+
+                    caCertificatePath     = Files.writeString(Files.createTempFile("ca",     ".crt"), caCertPem,           StandardOpenOption.CREATE);
+                	serverCertificatePath = Files.writeString(Files.createTempFile("server", ".crt"), serverCertPem,       StandardOpenOption.CREATE);
+                	serverPrivateKeyPath  = Files.writeString(Files.createTempFile("server", ".p8"),  serverPrivateKeyPem, StandardOpenOption.CREATE);
+                } catch(Exception e) {
+                    throw new RuntimeException("Save certs and keys to disk failed during Tomcat TLS customization", e);
+                }
+            	try { // Replace server.ssl.* properties in memory, pointing to the temp PEM files
                     final Ssl ssl = new Ssl();
                     ssl.setEnabled(true);
                     ssl.setProtocol(PROTOCOLS_TLS13_ONLY.get(0));
                     ssl.setClientAuth(ClientAuth.WANT);
                     ssl.setEnabledProtocols(PROTOCOLS_TLS13_TLS12.toArray(new String[0]));
                     ssl.setCiphers(CIPHERS_TLS13_TLS12.toArray(new String[0]));
-                    ssl.setTrustCertificate(this.tlsAutoConfig.caCertificatePath().toFile().toString());
-                    ssl.setCertificate(this.tlsAutoConfig.serverCertificatePath().toFile().toString());
-                    ssl.setCertificatePrivateKey(this.tlsAutoConfig.serverPrivateKeyPath().toFile().toString());
+                    ssl.setTrustCertificate(caCertificatePath.toFile().toString());
+                    ssl.setCertificate(serverCertificatePath.toFile().toString());
+                    ssl.setCertificatePrivateKey(serverPrivateKeyPath.toFile().toString());
                     this.setSsl(ssl);
                 } catch(Exception e) {
                     throw new RuntimeException("Cert creation failed during Tomcat TLS customization", e);

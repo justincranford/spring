@@ -113,28 +113,28 @@ public class TlsConfig {
     // TODO Rename auto-generate-certificates to auto-generate.enabled
     @Bean
     public TlsAutoConfig tlsAutoConfig(
-    	@Value(value="${server.ssl.auto-generate-certificates:false}") final boolean serverSslAutoGenerateEnabled,
-    	@Value(value="${server.ssl.auto-generate.algorithm:EC}") final String  serverSslAutoGenerateAlgorithm
+    	@Value(value="${server.ssl.auto-config.enabled:false}") final boolean serverSslAutoConfigEnabled,
+    	@Value(value="${server.ssl.auto-config.algorithm:EC}") final String  serverSslAutoConfigAlgorithm
     ) throws Exception {
-    	if (!serverSslAutoGenerateEnabled) {
+    	if (!serverSslAutoConfigEnabled) {
             return new TlsAutoConfig(false, null, null, null, null);
     	}
     	// TODO EC-P384
     	final String signingAlgorithm;
     	final Provider signingProvider;
         final KeyPairGenerator keyPairGenerator;
-        if (serverSslAutoGenerateAlgorithm.equalsIgnoreCase("RSA")) {
+        if (serverSslAutoConfigAlgorithm.equalsIgnoreCase("RSA")) {
         	keyPairGenerator = KeyPairGenerator.getInstance("RSA", Security.getProvider("SunRsaSign"));
             keyPairGenerator.initialize(2048, SECURE_RANDOM);
             signingAlgorithm = "SHA256withRSA";
             signingProvider = Security.getProvider("SunRsaSign");
-        } else if (serverSslAutoGenerateAlgorithm.equalsIgnoreCase("EC")) {
+        } else if (serverSslAutoConfigAlgorithm.equalsIgnoreCase("EC")) {
         	keyPairGenerator = KeyPairGenerator.getInstance("EC", Security.getProvider("SunEC"));
             keyPairGenerator.initialize(new ECGenParameterSpec("secp384r1"), SECURE_RANDOM);
             signingAlgorithm = "SHA256withECDSA";
             signingProvider = Security.getProvider("SunEC");
         } else {
-        	throw new IllegalArgumentException("Unsupported server.ssl.auto-generate.algorithm=" + serverSslAutoGenerateAlgorithm);
+        	throw new IllegalArgumentException("Unsupported server.ssl.auto-config.algorithm=" + serverSslAutoConfigAlgorithm);
         }
 
         // create root CA: key pair, and self-signed certificate containing root CA related extensions

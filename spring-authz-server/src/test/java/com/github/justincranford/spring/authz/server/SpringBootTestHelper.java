@@ -54,16 +54,16 @@ public class SpringBootTestHelper {
 	// Oauth2 Authorization Server
 	@Autowired protected RegisteredClientRepository       registeredClientRepository;
 
-    @Value(value="${spring.application.name}")                     protected String springApplicationName;
-    @Value(value="${local.server.port}")                           protected int    localServerPort;		// same as @LocalServerPort
-//	@Value(value="${local.management.port}")                       protected int    localManagementPort;	// same as @LocalManagementPort
-	@Value(value="${server.address}")                              protected String serverAddress;
-    @Value(value="${server.port}")                                 protected int    serverPort;
-//	@Value(value="${management.port}")                             protected int    managementPort;
-//	@Value(value="${management.server.address}")                   protected String managementServerAddress;
-//	@Value(value="${management.server.port}")                      protected String managementServerPort;
-    @Value(value="${server.ssl.enabled:false}")                    public boolean serverSslEnabled;
-    @Value(value="${server.ssl.auto-generate-certificates:false}") public boolean serverSslAutoGenerateCertificates;
+    @Value(value="${spring.application.name}")              protected String springApplicationName;
+    @Value(value="${local.server.port}")                    protected int    localServerPort;		// same as @LocalServerPort
+//	@Value(value="${local.management.port}")                protected int    localManagementPort;	// same as @LocalManagementPort
+	@Value(value="${server.address}")                       protected String serverAddress;
+    @Value(value="${server.port}")                          protected int    serverPort;
+//	@Value(value="${management.port}")                      protected int    managementPort;
+//	@Value(value="${management.server.address}")            protected String managementServerAddress;
+//	@Value(value="${management.server.port}")               protected String managementServerPort;
+    @Value(value="${server.ssl.enabled:false}")             public boolean serverSslEnabled;
+    @Value(value="${server.ssl.auto-config.enabled:false}") public boolean serverSslAutoConfigEnabled;
 
     // TODO: Remove relaxedHTTPSValidation(), replace with trustStore()
     // TODO: Remove allowALlHostnames()
@@ -85,7 +85,7 @@ public class SpringBootTestHelper {
 
 	protected String baseUrl;
 	@BeforeEach public void beforeEach() throws Exception {
-	    final boolean useHttps = (this.serverSslEnabled || this.serverSslAutoGenerateCertificates);
+	    final boolean useHttps = (this.serverSslEnabled || this.serverSslAutoConfigEnabled);
 		this.baseUrl = (useHttps ? "https" : "http") + "://localhost:" + this.localServerPort; // random port
 	}
 

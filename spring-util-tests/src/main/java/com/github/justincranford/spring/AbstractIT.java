@@ -55,16 +55,16 @@ public class AbstractIT {
 	@Autowired protected PasswordEncoder passwordEncoder;
 	@Autowired protected String baseUrl;
 
-    @Value(value="${spring.application.name}")                     protected String  springApplicationName;
-    @Value(value="${local.server.port}")                           protected int     localServerPort;		// same as @LocalServerPort
-//	@Value(value="${local.management.port}")                       protected int     localManagementPort;	// same as @LocalManagementPort
-	@Value(value="${server.address}")                              protected String  serverAddress;
-    @Value(value="${server.port}")                                 protected int     serverPort;
-//	@Value(value="${management.port}")                             protected int     managementPort;
-//	@Value(value="${management.server.address}")                   protected String  managementServerAddress;
-//	@Value(value="${management.server.port}")                      protected String  managementServerPort;
-    @Value(value="${server.ssl.enabled:false}")                    protected boolean serverSslEnabled;
-    @Value(value="${server.ssl.auto-generate-certificates:false}") protected boolean serverSslAutoGenerateCertificates;
+    @Value(value="${spring.application.name}")              protected String  springApplicationName;
+    @Value(value="${local.server.port}")                    protected int     localServerPort;		// same as @LocalServerPort
+//	@Value(value="${local.management.port}")                protected int     localManagementPort;	// same as @LocalManagementPort
+	@Value(value="${server.address}")                       protected String  serverAddress;
+    @Value(value="${server.port}")                          protected int     serverPort;
+//	@Value(value="${management.port}")                      protected int     managementPort;
+//	@Value(value="${management.server.address}")            protected String  managementServerAddress;
+//	@Value(value="${management.server.port}")               protected String  managementServerPort;
+    @Value(value="${server.ssl.enabled:false}")             protected boolean serverSslEnabled;
+    @Value(value="${server.ssl.auto-config.enabled:false}") protected boolean serverSslAutoConfigEnabled;
 
 	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(restAssuredConfig());
 	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(restAssuredConfig()).auth().basic("invalid", "invalid");

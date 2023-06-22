@@ -114,8 +114,8 @@ public class SecurityFilterChainConfig {
     @Value(value="${server.ssl.enabled:false}")
     public boolean serverSslEnabled;
 
-    @Value(value="${server.ssl.auto-generate-certificates:false}")
-    public boolean serverSslAutoGenerateCertificates;
+    @Value(value="${server.ssl.auto-config.enabled:false}")
+    public boolean serverSslAutoConfigEnabled;
 
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(
@@ -292,7 +292,7 @@ public class SecurityFilterChainConfig {
     // spring security oauth2 authorization server
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
-        final boolean useHttps = (this.serverSslEnabled || this.serverSslAutoGenerateCertificates);
+        final boolean useHttps = (this.serverSslEnabled || this.serverSslAutoConfigEnabled);
         final RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("internal-oauth2-login")
             .clientName("Internal OAuth2 Login")

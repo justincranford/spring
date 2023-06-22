@@ -13,10 +13,9 @@ import org.springframework.test.context.TestPropertySource;
 
 import com.github.justincranford.spring.authn.server.controller.UserController;
 import com.github.justincranford.spring.authn.server.model.UserCrudRepository;
-import com.github.justincranford.spring.util.config.RestConfig;
 import com.github.justincranford.spring.util.rest.RestClient;
 
-@SpringBootTest(classes={RestConfig.class, SpringAuthnServer.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
+@SpringBootTest(classes={SpringAuthnServer.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
 @TestPropertySource(properties = {"management.port=0"})
 @ComponentScan(basePackages={"com.github.justincranford.spring"})
 @ContextConfiguration

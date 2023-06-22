@@ -53,7 +53,9 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
 import org.springframework.boot.web.embedded.tomcat.TomcatContextCustomizer;
 import org.springframework.boot.web.embedded.tomcat.TomcatProtocolHandlerCustomizer;
@@ -63,6 +65,7 @@ import org.springframework.boot.web.server.Ssl.ClientAuth;
 import org.springframework.boot.web.servlet.server.ServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
 @Configuration
@@ -73,10 +76,33 @@ public class TlsConfig {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final AtomicInteger HTTP_PORT = new AtomicInteger(80);
 
-    private record TlsAutoConfig(boolean enabled,
-    	X509Certificate x509CaCertificate,     PrivateKey caPrivateKey,
-    	X509Certificate x509ServerCertificate, PrivateKey serverPrivateKey
-    ) { }
+	@Configuration
+	public static class TlsSettings {
+	    @Value(value="${server.port}")
+	    public int serverPort;
+
+	    @Value(value="${server.ssl.enabled:false}")
+	    public boolean serverSslEnabled;
+
+	    @Autowired
+	    public TlsAutoConfig tlsAutoConfig;
+
+		@Configuration
+		@ConfigurationProperties(prefix="server.ssl.auto-config")
+		public static class TlsAutoConfig {
+			private boolean       enabled = true;
+			public  boolean       enabled() { return this.enabled; }
+			public  TlsAutoConfig enabled(final boolean enabled) { this.enabled = enabled; return this; }
+
+			private String        algorithm = "EC";
+			public  String        algorithm() { return this.algorithm; }
+			public  TlsAutoConfig algorithm(final String algorithm) { this.algorithm = algorithm; return this; }
+		}
+
+		public int serverPort() { return this.serverPort; }
+		public boolean serverSslEnabled() { return this.serverSslEnabled; }
+		public TlsAutoConfig tlsAutoConfig() { return this.tlsAutoConfig; }
+	}
 
     @Value(value="${server.port}")
     public int serverPort;
@@ -84,15 +110,84 @@ public class TlsConfig {
     @Value(value="${server.ssl.enabled:false}")
     public boolean serverSslEnabled;
 
+	@Configuration
+	@ConfigurationProperties(prefix="server.ssl.auto-config")
+	public static class TlsAutoConfig {
+		private boolean       enabled = true;
+		public  boolean       enabled() { return this.enabled; }
+		public  TlsAutoConfig enabled(final boolean enabled) { this.enabled = enabled; return this; }
+
+		private String        algorithm = "EC";
+		public  String        algorithm() { return this.algorithm; }
+		public  TlsAutoConfig algorithm(final String algorithm) { this.algorithm = algorithm; return this; }
+	}
+
+	@Configuration
+	@ConfigurationProperties(prefix="server")
+	public static class ServerSettings {
+		private int               port;
+		public  int               port() { return this.port; }
+		public  ServerSettings    port(final int port) { this.port = port; return this; }
+
+		private ServerTlsSettings ssl;
+		public  ServerTlsSettings ssl() { return this.ssl; }
+		public  ServerSettings    ssl(final ServerTlsSettings serverTlsSettings) { this.ssl = serverTlsSettings; return this; }
+
+		@Configuration
+		@ConfigurationProperties
+		public static class ServerTlsSettings {
+			private boolean           enabled = true;
+			public  boolean           enabled() { return this.enabled; }
+			public  ServerTlsSettings enabled(final boolean enabled) { this.enabled = enabled; return this; }
+
+			private ServerTlsAutoConfigSettings autoConfig;
+			public  ServerTlsAutoConfigSettings autoConfig() { return this.autoConfig; }
+			public  ServerTlsSettings           autoConfig(final ServerTlsAutoConfigSettings autoConfig) { this.autoConfig = autoConfig; return this; }
+
+			@Configuration
+			@ConfigurationProperties
+			public static class ServerTlsAutoConfigSettings {
+				private boolean                     enabled = true;
+				public  boolean                     enabled() { return this.enabled; }
+				public  ServerTlsAutoConfigSettings enabled(final boolean enabled) { this.enabled = enabled; return this; }
+
+				private String                      algorithm = "EC";
+				public  String                      algorithm() { return this.algorithm; }
+				public  ServerTlsAutoConfigSettings algorithm(final String algorithm) { this.algorithm = algorithm; return this; }
+			}
+		}
+	}
+
+    private record TlsGeneratedConfig(boolean enabled,
+    	X509Certificate x509CaCertificate,     PrivateKey caPrivateKey,
+    	X509Certificate x509ServerCertificate, PrivateKey serverPrivateKey
+    ) { }
+
+	@Lazy // wait until after TlsGeneratedConfig is created and local.server.port is available
+	@Configuration
+	public class RestConfig {
+		@Bean
+		public String baseUrl(
+			@Value(value="${server.ssl.enabled:false}")             final boolean serverSslEnabled,
+		    @Value(value="${server.ssl.auto-config.enabled:false}") final boolean serverSslAutoConfigEnabled,
+		    @Value(value="${server.address}")                       final String  serverAddress,
+		    @Value(value="${local.server.port}")                    final int     localServerPort
+		) throws Exception {
+		    final boolean useHttps = serverSslEnabled || serverSslAutoConfigEnabled;
+		    final String baseUrl = (useHttps ? "https" : "http") + "://" + serverAddress + ":" + localServerPort;
+			return baseUrl;
+		}
+	}
+
     @Bean
     public ServletWebServerFactory servletWebServerFactory(
         final ObjectProvider<TomcatConnectorCustomizer>          connectorCustomizers,
         final ObjectProvider<TomcatContextCustomizer>            contextCustomizers,
         final ObjectProvider<TomcatProtocolHandlerCustomizer<?>> protocolHandlerCustomizers,
-        final TlsAutoConfig tlsAutoConfig
+        final TlsGeneratedConfig tlsGeneratedConfig
     ) throws Exception {
         // use ${server.ssl.*} settings to start Tomcat with auto-generated TLS server PEM files
-        final TomcatServletWebServerFactory factory = new TlsTomcatServletWebServerFactory(tlsAutoConfig);
+        final TomcatServletWebServerFactory factory = new TlsTomcatServletWebServerFactory(tlsGeneratedConfig);
 
         // Same internal steps as ServletWebServerFactoryConfiguration$EmbeddedTomcat
         factory.getTomcatConnectorCustomizers().addAll(connectorCustomizers.orderedStream().toList());
@@ -100,7 +195,7 @@ public class TlsConfig {
         factory.getTomcatProtocolHandlerCustomizers().addAll(protocolHandlerCustomizers.orderedStream().toList());
 
         // add "http://${server.address}:80" listener to redirect to "https://${server.address}:${server.port}"
-        if (tlsAutoConfig.enabled() || this.serverSslEnabled) {
+        if (tlsGeneratedConfig.enabled() || this.serverSslEnabled) {
             factory.addAdditionalTomcatConnectors(this.createHttpToHttpsRedirectConnector());
         }
 
@@ -110,31 +205,30 @@ public class TlsConfig {
         return factory;
     }
 
-    // TODO Rename auto-generate-certificates to auto-generate.enabled
     @Bean
-    public TlsAutoConfig tlsAutoConfig(
-    	@Value(value="${server.ssl.auto-config.enabled:false}") final boolean serverSslAutoConfigEnabled,
-    	@Value(value="${server.ssl.auto-config.algorithm:EC}") final String  serverSslAutoConfigAlgorithm
+    public TlsGeneratedConfig tlsGeneratedConfig(
+    	final TlsAutoConfig tlsAutoConfig,
+    	final ServerSettings serverSettings,
+    	final TlsSettings tlsSettings
     ) throws Exception {
-    	if (!serverSslAutoConfigEnabled) {
-            return new TlsAutoConfig(false, null, null, null, null);
+    	if (!tlsAutoConfig.enabled()) {
+            return new TlsGeneratedConfig(false, null, null, null, null);
     	}
-    	// TODO EC-P384
     	final String signingAlgorithm;
     	final Provider signingProvider;
         final KeyPairGenerator keyPairGenerator;
-        if (serverSslAutoConfigAlgorithm.equalsIgnoreCase("RSA")) {
+        if ("RSA".equalsIgnoreCase(tlsAutoConfig.algorithm())) {
         	keyPairGenerator = KeyPairGenerator.getInstance("RSA", Security.getProvider("SunRsaSign"));
             keyPairGenerator.initialize(2048, SECURE_RANDOM);
             signingAlgorithm = "SHA256withRSA";
             signingProvider = Security.getProvider("SunRsaSign");
-        } else if (serverSslAutoConfigAlgorithm.equalsIgnoreCase("EC")) {
+        } else if ("EC".equalsIgnoreCase(tlsAutoConfig.algorithm())) {
         	keyPairGenerator = KeyPairGenerator.getInstance("EC", Security.getProvider("SunEC"));
             keyPairGenerator.initialize(new ECGenParameterSpec("secp384r1"), SECURE_RANDOM);
             signingAlgorithm = "SHA256withECDSA";
             signingProvider = Security.getProvider("SunEC");
         } else {
-        	throw new IllegalArgumentException("Unsupported server.ssl.auto-config.algorithm=" + serverSslAutoConfigAlgorithm);
+        	throw new IllegalArgumentException("Unsupported server.ssl.auto-config.algorithm=" + tlsAutoConfig.algorithm());
         }
 
         // create root CA: key pair, and self-signed certificate containing root CA related extensions
@@ -176,18 +270,18 @@ public class TlsConfig {
             })
         );
 
-        return new TlsAutoConfig(true, caCert, caKeyPair.getPrivate(), serverCert, serverKeyPair.getPrivate());
+        return new TlsGeneratedConfig(true, caCert, caKeyPair.getPrivate(), serverCert, serverKeyPair.getPrivate());
     }
 
     @Bean
-	public SSLContext clientSslContext(final TlsAutoConfig tlsAutoConfig) {
-    	if (!tlsAutoConfig.enabled()) {
+	public SSLContext clientSslContext(final TlsGeneratedConfig tlsGeneratedConfig) {
+    	if (!tlsGeneratedConfig.enabled()) {
     		return null;
     	}
 		try {
 			final KeyStore trustStore = KeyStore.getInstance("PKCS12", "SunJSSE");
 			trustStore.load(null,  null);
-			trustStore.setCertificateEntry("trustedca", tlsAutoConfig.x509CaCertificate);
+			trustStore.setCertificateEntry("trustedca", tlsGeneratedConfig.x509CaCertificate);
 
 			final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX", "SunJSSE");
 			trustManagerFactory.init(trustStore);
@@ -249,14 +343,14 @@ public class TlsConfig {
         private static final List<String> CIPHERS_TLS12_ONLY = List.of("ECDHE-ECDSA-CHACHA20-POLY1305", "ECDHE-RSA-CHACHA20-POLY1305", "ECDHE-ECDSA-AES256-GCM-SHA384", "ECDHE-RSA-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-RSA-AES128-GCM-SHA256", "DHE-RSA-AES256-GCM-SHA384", "DHE-RSA-AES128-GCM-SHA256");
         private static final List<String> CIPHERS_TLS13_TLS12 = Stream.concat(CIPHERS_TLS13_ONLY.stream(), CIPHERS_TLS12_ONLY.stream()).toList();
 
-        private final TlsAutoConfig tlsAutoConfig;
-        public TlsTomcatServletWebServerFactory(final TlsAutoConfig tlsAutoConfig) {
-        	this.tlsAutoConfig = tlsAutoConfig;
+        private final TlsGeneratedConfig tlsGeneratedConfig;
+        public TlsTomcatServletWebServerFactory(final TlsGeneratedConfig tlsGeneratedConfig) {
+        	this.tlsGeneratedConfig = tlsGeneratedConfig;
         }
 
         @Override
         protected void postProcessContext(final Context servletContext) {
-            if (this.tlsAutoConfig.enabled() || TlsConfig.this.serverSslEnabled) {
+            if (this.tlsGeneratedConfig.enabled() || TlsConfig.this.serverSslEnabled) {
                 final SecurityCollection webResourceCollection = new SecurityCollection();
                 webResourceCollection.addPattern("/*");
                 final SecurityConstraint securityConstraint = new SecurityConstraint();
@@ -268,15 +362,15 @@ public class TlsConfig {
 
         @Override
         public void customizeConnector(final Connector connector) {
-        	if (this.tlsAutoConfig.enabled()) {
+        	if (this.tlsGeneratedConfig.enabled()) {
         		final Path caCertificatePath;
         		final Path serverCertificatePath;
         		final Path serverPrivateKeyPath;
             	try {
                     // Encode server privateKey, server cert, and root CA cert as PEM
-                    final String caCertPem           = toPem("CERTIFICATE",     this.tlsAutoConfig.x509CaCertificate().getEncoded());
-                    final String serverCertPem       = toPem("CERTIFICATE",     this.tlsAutoConfig.x509ServerCertificate().getEncoded());
-                    final String serverPrivateKeyPem = toPem(this.tlsAutoConfig.serverPrivateKey().getAlgorithm().toUpperCase() + " PRIVATE KEY", PrivateKeyInfo.getInstance(this.tlsAutoConfig.serverPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
+                    final String caCertPem           = toPem("CERTIFICATE",     this.tlsGeneratedConfig.x509CaCertificate().getEncoded());
+                    final String serverCertPem       = toPem("CERTIFICATE",     this.tlsGeneratedConfig.x509ServerCertificate().getEncoded());
+                    final String serverPrivateKeyPem = toPem(this.tlsGeneratedConfig.serverPrivateKey().getAlgorithm().toUpperCase() + " PRIVATE KEY", PrivateKeyInfo.getInstance(this.tlsGeneratedConfig.serverPrivateKey().getEncoded()).parsePrivateKey().toASN1Primitive().getEncoded());
 
                     // Log server privateKey, server cert, and root CA cert as PEM
                     TlsConfig.this.logger.info("CA certificate chain:\n{}\n",     caCertPem);

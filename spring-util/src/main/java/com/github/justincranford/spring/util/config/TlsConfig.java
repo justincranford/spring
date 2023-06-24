@@ -302,9 +302,9 @@ public class TlsConfig {
 	private record EcGenAndSign(String genAlgorithm, String curve, String genProvider, String signingAlgorithm, String signingProvider) { }
 	private EcGenAndSign ecGenAndSign(final String configuredAlgorithm) {
 		return switch (configuredAlgorithm) {
-		    case "EC-P256" -> new EcGenAndSign("EC", "secp256r1", "SunEC", "SHA256withECDSA", "SunEC");
+//		    case "EC-P256" -> new EcGenAndSign("EC", "secp256r1", "SunEC", "SHA256withECDSA", "SunEC");
 		    case "EC-P384" -> new EcGenAndSign("EC", "secp384r1", "SunEC", "SHA384withECDSA", "SunEC");
-		    case "EC-P521" -> new EcGenAndSign("EC", "secp521r1", "SunEC", "SHA512withECDSA", "SunEC");
+//		    case "EC-P521" -> new EcGenAndSign("EC", "secp521r1", "SunEC", "SHA512withECDSA", "SunEC");
 		    default -> throw new IllegalArgumentException("Unsupported algorithm " + configuredAlgorithm);
 		};
 	}

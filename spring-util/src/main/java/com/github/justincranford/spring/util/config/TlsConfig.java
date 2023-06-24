@@ -279,22 +279,22 @@ public class TlsConfig {
 	private record RsaGenAndSign(String genAlgorithm, int keySize, String genProvider, String signingAlgorithm, String signingProvider) { }
 	private RsaGenAndSign rsaGenAndSign(final String configuredAlgorithm) {
 		return switch (configuredAlgorithm) {
-			case  "RSA-1024" -> new RsaGenAndSign("RSA", 1024, "SunRsaSign", "SHA256withRSA", "SunRsaSign");
-			case  "RSA-2048" -> new RsaGenAndSign("RSA", 2048, "SunRsaSign", "SHA256withRSA", "SunRsaSign");
-		    case  "RSA-3072" -> new RsaGenAndSign("RSA", 3072, "SunRsaSign", "SHA256withRSA", "SunRsaSign");
-		    case  "RSA-4096" -> new RsaGenAndSign("RSA", 4096, "SunRsaSign", "SHA384withRSA", "SunRsaSign");
-		    case  "RSA-5120" -> new RsaGenAndSign("RSA", 5120, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
-		    case  "RSA-6144" -> new RsaGenAndSign("RSA", 6144, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
-		    case  "RSA-7168" -> new RsaGenAndSign("RSA", 7168, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
-		    case  "RSA-8192" -> new RsaGenAndSign("RSA", 8192, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
-		    case  "RSA-9216" -> new RsaGenAndSign("RSA", 9216, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
-		    case "RSA-10240" -> new RsaGenAndSign("RSA",10240, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
-		    case "RSA-11264" -> new RsaGenAndSign("RSA",11264, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
-		    case "RSA-12288" -> new RsaGenAndSign("RSA",12288, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
-		    case "RSA-13312" -> new RsaGenAndSign("RSA",13312, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
-		    case "RSA-14336" -> new RsaGenAndSign("RSA",14336, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
-		    case "RSA-15360" -> new RsaGenAndSign("RSA",15360, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
-		    case "RSA-16384" -> new RsaGenAndSign("RSA",16384, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+			case  "RSA-1024" -> new RsaGenAndSign("RSA",  1024, "SunRsaSign", "SHA256withRSA", "SunRsaSign");
+			case  "RSA-2048" -> new RsaGenAndSign("RSA",  2048, "SunRsaSign", "SHA256withRSA", "SunRsaSign");
+		    case  "RSA-3072" -> new RsaGenAndSign("RSA",  3072, "SunRsaSign", "SHA256withRSA", "SunRsaSign");
+		    case  "RSA-4096" -> new RsaGenAndSign("RSA",  4096, "SunRsaSign", "SHA384withRSA", "SunRsaSign");
+		    case  "RSA-5120" -> new RsaGenAndSign("RSA",  5120, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+		    case  "RSA-6144" -> new RsaGenAndSign("RSA",  6144, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+		    case  "RSA-7168" -> new RsaGenAndSign("RSA",  7168, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+		    case  "RSA-8192" -> new RsaGenAndSign("RSA",  8192, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+		    case  "RSA-9216" -> new RsaGenAndSign("RSA",  9216, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+		    case "RSA-10240" -> new RsaGenAndSign("RSA", 10240, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+		    case "RSA-11264" -> new RsaGenAndSign("RSA", 11264, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+		    case "RSA-12288" -> new RsaGenAndSign("RSA", 12288, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+		    case "RSA-13312" -> new RsaGenAndSign("RSA", 13312, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+		    case "RSA-14336" -> new RsaGenAndSign("RSA", 14336, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+		    case "RSA-15360" -> new RsaGenAndSign("RSA", 15360, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
+		    case "RSA-16384" -> new RsaGenAndSign("RSA", 16384, "SunRsaSign", "SHA512withRSA", "SunRsaSign");
 		    default -> throw new IllegalArgumentException("Unsupported algorithm " + configuredAlgorithm);
 		};
 	}

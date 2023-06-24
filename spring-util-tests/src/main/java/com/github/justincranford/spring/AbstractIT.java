@@ -63,8 +63,6 @@ public class AbstractIT {
 //	@Value(value="${management.port}")                      protected int     managementPort;
 //	@Value(value="${management.server.address}")            protected String  managementServerAddress;
 //	@Value(value="${management.server.port}")               protected String  managementServerPort;
-    @Value(value="${server.ssl.enabled:false}")             protected boolean serverSslEnabled;
-    @Value(value="${server.ssl.auto-config.enabled:false}") protected boolean serverSslAutoConfigEnabled;
 
 	protected final RequestSpecification restAssuredNoCreds      = RestAssured.given().config(restAssuredConfig());
 	protected final RequestSpecification restAssuredInvalidCreds = RestAssured.given().config(restAssuredConfig()).auth().basic("invalid", "invalid");

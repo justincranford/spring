@@ -13,6 +13,7 @@ import org.springframework.test.context.TestPropertySource;
 
 import com.github.justincranford.spring.authn.server.controller.UserController;
 import com.github.justincranford.spring.authn.server.model.UserCrudRepository;
+import com.github.justincranford.spring.util.config.TlsConfig.TlsSettings;
 import com.github.justincranford.spring.util.rest.RestClient;
 
 @SpringBootTest(classes={SpringAuthnServer.class}, webEnvironment=WebEnvironment.RANDOM_PORT, properties={"spring.main.allow-bean-definition-overriding=true"})
@@ -25,6 +26,7 @@ public class AbstractIT extends com.github.justincranford.spring.AbstractIT {
 	@Autowired                 protected UserDetailsService userDetailsService;
 	@Autowired                 protected UserCrudRepository userCrudRepository;
 	@Autowired(required=false) protected SSLContext         clientSslContext;
+	@Autowired                 protected TlsSettings        tlsSettings;
 
 	protected RestClient restClientOpsAdmin() {
 		return new RestClient(super.baseUrl, new UsernamePasswordAuthenticationToken("opsadmin", "opsadmin".toCharArray()), clientSslContext);

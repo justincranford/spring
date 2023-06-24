@@ -82,7 +82,7 @@ public class RestClient {
 				}
 			});
 		}
-		if (sslContext != null) {
+		if (this.sslContext != null) {
 			clientBuilder.sslContext(this.sslContext);
 		}
 		final HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()

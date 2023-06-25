@@ -7,8 +7,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,21 +17,11 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.test.context.junit.jupiter.EnabledIf;
 
-import com.github.justincranford.spring.authz.server.SpringBootTestHelper;
+import com.github.justincranford.spring.authz.server.AbstractIT;
 
-public class TestOauth2Config extends SpringBootTestHelper {
+public class TestOauth2Config extends AbstractIT {
 	@SuppressWarnings("unused")
 	private Logger logger = LoggerFactory.getLogger(TestOauth2Config.class);
-
-	@BeforeEach
-	public void beforeEach() throws Exception {
-		super.beforeEach();
-	}
-
-	@AfterEach
-	public void afterEach() throws Exception {
-		super.afterEach();
-	}
 
 	@EnabledIf(expression = "#{environment.acceptsProfiles('oauth2')}", loadContext = true)
 	@Test
@@ -87,8 +75,8 @@ public class TestOauth2Config extends SpringBootTestHelper {
 
 	@Test
 	public void testOauth2AuthorizedClientRepository() {
-		assertThat(super.oauth2AuthorizedClientService, is(notNullValue()));
-		final OAuth2AuthorizedClient facebook = super.oauth2AuthorizedClientService.loadAuthorizedClient("facebook-login", "justincranford@hotmail.com");
+		assertThat(super.oAuth2AuthorizedClientService, is(notNullValue()));
+		final OAuth2AuthorizedClient facebook = super.oAuth2AuthorizedClientService.loadAuthorizedClient("facebook-login", "justincranford@hotmail.com");
 		assertThat(facebook, is(nullValue()));
 //		assertThat(facebook, is(notNullValue()));
 //		assertThat(facebook.getClientRegistration(), is(notNullValue()));

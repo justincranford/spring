@@ -250,6 +250,7 @@ public class TlsConfig {
                 new Extension(Extension.keyUsage,         true, new KeyUsage(KeyUsage.keyCertSign).toASN1Primitive().getEncoded())
             })
         );
+		caCert.verify(caCert.getPublicKey());
 
         // create TLS Server: key pair, and CA-signed certificate containing TLS server related extensions
         final KeyPair serverKeyPair = keyPairGenerator.generateKeyPair();
@@ -271,6 +272,7 @@ public class TlsConfig {
                 }).toASN1Primitive().getEncoded())
             })
         );
+		serverCert.verify(caCert.getPublicKey());
 
         return new TlsGeneratedConfig(caCert, caKeyPair.getPrivate(), serverCert, serverKeyPair.getPrivate());
     }

@@ -110,7 +110,7 @@ public class SecurityFilterChainConfig {
     public static final String OIDC_USER           = "OIDC_USER";
 
     @Autowired public TlsSettings tlsSettings;
-    @Autowired public String baseUrl;
+//    @Autowired public String baseUrl;
 
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(
